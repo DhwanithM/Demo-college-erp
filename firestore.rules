@@ -1,0 +1,87 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdminProfile() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roleId in ['super-admin', 'admin'];
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create, update: if isAdminProfile();
+      allow delete: if false;
+    }
+
+    match /roles/{roleId} {
+      allow read: if isSignedIn();
+      allow create, update: if isAdminProfile();
+      allow delete: if false;
+    }
+
+    match /students/{documentId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if false;
+    }
+
+    match /studentAdmissions/{documentId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if false;
+    }
+
+    match /studentDocuments/{documentId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if false;
+    }
+
+    match /studentPromotions/{documentId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if false;
+    }
+
+    match /studentTransfers/{documentId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if false;
+    }
+
+    match /studentIdCards/{documentId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if false;
+    }
+
+    match /staffMembers/{documentId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if false;
+    }
+
+    match /departments/{documentId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if false;
+    }
+
+    match /staffLeaveRecords/{documentId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if false;
+    }
+
+    match /staffAttendanceRecords/{documentId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if false;
+    }
+
+    match /studentAttendanceRecords/{documentId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if false;
+    }
+
+    match /attendanceNotifications/{documentId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if false;
+    }
+  }
+}

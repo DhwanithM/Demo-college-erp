@@ -2,28 +2,49 @@ import { Link, useNavigate } from 'react-router-dom';
 import { GraduationCap, Lock, Mail, UserRound } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import { loginWithEmail, registerWithEmail } from '../firebase/auth';
+import { isFirebaseConfigured } from '../firebase/config';
 
-export default function AuthPage({ mode = 'login', onAuth }) {
+function getAuthErrorMessage(error) {
+  const code = error?.code || '';
+  if (code.includes('invalid-credential')) return 'Invalid email or password.';
+  if (code.includes('email-already-in-use')) return 'This email is already registered.';
+  if (code.includes('weak-password')) return 'Password should be at least 6 characters.';
+  if (code.includes('network-request-failed')) return 'Network error while contacting Firebase.';
+  return error?.message || 'Authentication failed. Please try again.';
+}
+
+export default function AuthPage({ mode = 'login' }) {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     name: 'Admin',
     email: '',
     password: '',
   });
+  const [submitting, setSubmitting] = useState(false);
 
   const isRegister = mode === 'register';
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
-    const user = {
-      name: isRegister ? form.name || 'Admin' : 'Admin',
-      email: form.email,
-      role: 'Admin',
-    };
-    localStorage.setItem('collegeERPUser', JSON.stringify(user));
-    onAuth(user);
-    toast.success(isRegister ? 'Demo account created' : 'Signed in');
-    navigate('/students');
+    setSubmitting(true);
+    try {
+      if (isRegister) {
+        await registerWithEmail({
+          name: form.name.trim() || 'Admin',
+          email: form.email.trim(),
+          password: form.password,
+        });
+      } else {
+        await loginWithEmail(form.email.trim(), form.password);
+      }
+      toast.success(isRegister ? 'Account created' : 'Signed in');
+      navigate('/students');
+    } catch (error) {
+      toast.error(getAuthErrorMessage(error));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -39,8 +60,10 @@ export default function AuthPage({ mode = 'login', onAuth }) {
 
         <form onSubmit={submit} className="p-7 space-y-4">
           <div>
-            <h2 className="text-xl font-bold text-slate-900">{isRegister ? 'Create demo account' : 'Admin login'}</h2>
-            <p className="text-sm text-slate-500 mt-1">Use any email and any password for this demo.</p>
+            <h2 className="text-xl font-bold text-slate-900">{isRegister ? 'Create account' : 'Admin login'}</h2>
+            <p className="text-sm text-slate-500 mt-1">
+              {isFirebaseConfigured ? 'Use your registered ERP account.' : 'Add Firebase values to .env before signing in.'}
+            </p>
           </div>
 
           {isRegister && (
@@ -79,20 +102,24 @@ export default function AuthPage({ mode = 'login', onAuth }) {
               <input
                 type="password"
                 required
+                minLength={6}
                 value={form.password}
                 onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}
                 className="w-full h-11 rounded-lg bg-[#f5f5f6] border border-slate-200 pl-10 pr-3 outline-none focus:ring-2 focus:ring-orange-100"
-                placeholder="anything works"
+                placeholder="minimum 6 characters"
               />
             </div>
           </label>
 
-          <button className="w-full h-11 rounded-full bg-[#fb9a5b] text-white font-bold">
-            {isRegister ? 'Register' : 'Login'}
+          <button
+            disabled={!isFirebaseConfigured || submitting}
+            className="w-full h-11 rounded-full bg-[#fb9a5b] text-white font-bold disabled:cursor-not-allowed disabled:bg-slate-300"
+          >
+            {submitting ? 'Please wait...' : isRegister ? 'Register' : 'Login'}
           </button>
 
           <p className="text-sm text-center text-slate-500">
-            {isRegister ? 'Already have a demo account?' : 'Need a demo account?'}{' '}
+            {isRegister ? 'Already have an account?' : 'Need an account?'}{' '}
             <Link className="font-bold text-[#fb8d49]" to={isRegister ? '/login' : '/register'}>
               {isRegister ? 'Login' : 'Register'}
             </Link>

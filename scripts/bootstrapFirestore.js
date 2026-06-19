@@ -41,7 +41,22 @@ if (missing.length) {
 const collections = {
   students: {
     purpose: 'Main student profile records',
-    fields: ['admissionNo', 'studentId', 'name', 'className', 'section', 'program', 'guardianName', 'phone', 'email', 'status'],
+    fields: [
+      'admissionNo',
+      'studentId',
+      'name',
+      'className',
+      'section',
+      'program',
+      'guardianName',
+      'phone',
+      'email',
+      'status',
+      'createdAtText',
+      'updatedAtText',
+      'archivedAtText',
+      'restoredAtText',
+    ],
   },
   studentAdmissions: {
     purpose: 'Admission form, admission workflow, and status history',
@@ -49,19 +64,63 @@ const collections = {
   },
   studentDocuments: {
     purpose: 'Student document repository',
-    fields: ['studentId', 'documentType', 'fileName', 'fileUrl', 'verificationStatus', 'uploadedAt'],
+    fields: [
+      'studentRecordId',
+      'studentId',
+      'documentType',
+      'fileName',
+      'fileSize',
+      'fileType',
+      'fileUrl',
+      'storagePath',
+      'verificationStatus',
+      'uploadedAtText',
+      'verifiedAtText',
+    ],
   },
   studentPromotions: {
     purpose: 'Student promotion records',
-    fields: ['studentId', 'fromClass', 'toClass', 'academicYear', 'status', 'approvedBy'],
+    fields: ['studentRecordId', 'studentId', 'fromClass', 'toClass', 'academicYear', 'status', 'approvedBy', 'approvedAtText'],
   },
   studentTransfers: {
     purpose: 'Student transfer requests and certificate tracking',
-    fields: ['studentId', 'transferType', 'reason', 'status', 'requestedAt', 'certificateUrl'],
+    fields: ['studentRecordId', 'studentId', 'transferType', 'reason', 'status', 'requestedAtText', 'certificateUrl'],
   },
   studentIdCards: {
     purpose: 'Generated student ID card metadata',
-    fields: ['studentId', 'cardNumber', 'issuedAt', 'validUntil', 'status', 'downloadUrl'],
+    fields: ['studentRecordId', 'studentId', 'cardNumber', 'issuedAtText', 'validUntil', 'status', 'downloadUrl'],
+  },
+  users: {
+    purpose: 'ERP user profiles linked to Firebase Auth users',
+    fields: ['uid', 'name', 'email', 'roleId', 'status', 'createdBy', 'createdAtText', 'updatedAtText'],
+  },
+  roles: {
+    purpose: 'ERP role definitions and permission maps',
+    fields: ['id', 'name', 'description', 'locked', 'permissions'],
+  },
+  staffMembers: {
+    purpose: 'Faculty and staff master records',
+    fields: ['employeeId', 'name', 'staffType', 'department', 'designation', 'phone', 'email', 'qualification', 'status', 'createdAtText', 'updatedAtText', 'archivedAtText', 'restoredAtText'],
+  },
+  departments: {
+    purpose: 'Department master data and allocation support',
+    fields: ['name', 'headName', 'status'],
+  },
+  staffLeaveRecords: {
+    purpose: 'Faculty and staff leave requests and approvals',
+    fields: ['staffRecordId', 'employeeId', 'leaveType', 'fromDate', 'toDate', 'reason', 'status', 'requestedAtText', 'decidedAtText'],
+  },
+  staffAttendanceRecords: {
+    purpose: 'Faculty and staff daily attendance tracking',
+    fields: ['staffRecordId', 'employeeId', 'dateText', 'status', 'markedAtText'],
+  },
+  studentAttendanceRecords: {
+    purpose: 'Student daily attendance tracking',
+    fields: ['entityType', 'entityRecordId', 'entityId', 'entityName', 'className', 'section', 'dateText', 'status', 'markedAtText', 'parentNotified', 'parentNotifiedAtText'],
+  },
+  attendanceNotifications: {
+    purpose: 'Parent notification queue metadata for attendance events',
+    fields: ['studentRecordId', 'studentId', 'studentName', 'channel', 'reason', 'status', 'attendanceRecordId', 'createdAtText'],
   },
 };
 
