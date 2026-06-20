@@ -15,7 +15,7 @@ function SelectBox({ label, width = 'w-64' }) {
 
 export default function TopHeader({ user, onLogout }) {
   return (
-    <header className="h-[72px] bg-white border-b border-slate-200 flex items-center justify-between px-5 lg:px-10 shrink-0">
+    <header className="erp-header h-[72px] bg-white border-b border-slate-200 flex items-center justify-between px-5 lg:px-10 shrink-0">
       <div className="flex items-center gap-5 min-w-0">
         <button
           onClick={() => toast.success('Menu toggled')}

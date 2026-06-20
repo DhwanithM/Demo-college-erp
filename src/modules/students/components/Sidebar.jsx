@@ -20,7 +20,7 @@ export default function Sidebar({ activePage, currentUser, onNavigate }) {
     });
 
   return (
-    <aside className="w-[276px] bg-white border-r border-slate-200 shrink-0 hidden lg:flex flex-col">
+    <aside className="erp-sidebar w-[276px] bg-white border-r border-slate-200 shrink-0 hidden lg:flex flex-col">
       <div className="px-9 pt-5 pb-4">
         <div className="flex items-center gap-3">
           <div className="h-12 w-12 rounded-full border-2 border-emerald-700 flex items-center justify-center text-emerald-700">

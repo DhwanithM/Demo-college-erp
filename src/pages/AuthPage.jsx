@@ -48,8 +48,8 @@ export default function AuthPage({ mode = 'login' }) {
   };
 
   return (
-    <main className="min-h-screen bg-[#f1f2f4] flex items-center justify-center p-6">
-      <section className="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-[0_18px_60px_rgba(15,23,42,0.12)] overflow-hidden">
+    <main className="auth-shell min-h-screen bg-[#f1f2f4] flex items-center justify-center p-6">
+      <section className="auth-panel w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-[0_18px_60px_rgba(15,23,42,0.12)] overflow-hidden">
         <div className="bg-[#1b1f21] text-white p-7">
           <div className="h-14 w-14 rounded-full bg-white text-emerald-700 flex items-center justify-center mb-5">
             <GraduationCap size={30} />

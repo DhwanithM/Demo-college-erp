@@ -4,6 +4,7 @@ import AuthPage from './pages/AuthPage';
 import StudentInformationManagement from './modules/students/StudentInformationManagement';
 import { logoutUser, subscribeToAuthState } from './firebase/auth';
 import { getUserProfile } from './firebase/db';
+import ParticleBackground from './components/ParticleBackground';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -35,14 +36,19 @@ export default function App() {
 
   if (authLoading) {
     return (
-      <main className="min-h-screen bg-[#f1f2f4] flex items-center justify-center text-sm font-semibold text-slate-600">
-        Loading ERP...
-      </main>
+      <div className="app-background">
+        <ParticleBackground />
+        <main className="relative z-[1] min-h-screen bg-transparent flex items-center justify-center text-sm font-semibold text-[#00ff88]">
+          Loading ERP...
+        </main>
+      </div>
     );
   }
 
   return (
-    <Routes>
+    <div className="app-background">
+      <ParticleBackground />
+      <Routes>
       <Route path="/" element={<Navigate to={user ? '/students' : '/login'} replace />} />
       <Route path="/login" element={<AuthPage mode="login" />} />
       <Route path="/register" element={<AuthPage mode="register" />} />
@@ -51,6 +57,7 @@ export default function App() {
         element={user ? <StudentInformationManagement user={user} onLogout={logout} /> : <Navigate to="/login" replace />}
       />
       <Route path="*" element={<Navigate to={user ? '/students' : '/login'} replace />} />
-    </Routes>
+      </Routes>
+    </div>
   );
 }

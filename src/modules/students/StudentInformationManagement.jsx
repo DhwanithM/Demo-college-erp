@@ -430,14 +430,14 @@ export default function StudentInformationManagement({ user, onLogout }) {
   };
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
+    <div className="erp-shell min-h-screen bg-white text-slate-900">
         <div className="flex min-h-screen">
           <Sidebar activePage={activePage} currentUser={user} onNavigate={setActivePage} />
           <main className="flex-1 min-w-0 bg-[#f0f1f3] flex flex-col">
             <TopHeader user={user} onLogout={onLogout} />
 
             <div className="flex-1 p-4 lg:p-5">
-              <section className="bg-white min-h-full p-5 lg:p-7">
+              <section className="erp-workspace bg-white min-h-full p-5 lg:p-7">
                 {!canOpenActiveModule ? (
                   <div className="rounded-lg bg-[#f5f5f6] p-6 text-sm text-slate-600">
                     You do not have permission to open this module.
