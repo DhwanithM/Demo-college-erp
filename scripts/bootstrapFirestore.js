@@ -49,6 +49,8 @@ const collections = {
       'section',
       'program',
       'guardianName',
+      'idHolder',
+      'academicYear',
       'phone',
       'email',
       'status',
@@ -60,7 +62,7 @@ const collections = {
   },
   studentAdmissions: {
     purpose: 'Admission form, admission workflow, and status history',
-    fields: ['studentId', 'admissionNo', 'academicYear', 'status', 'submittedAt', 'approvedAt'],
+    fields: ['studentId', 'admissionNo', 'academicYear', 'idHolder', 'status', 'submittedAt', 'approvedAt'],
   },
   studentDocuments: {
     purpose: 'Student document repository',
@@ -68,6 +70,8 @@ const collections = {
       'studentRecordId',
       'studentId',
       'documentType',
+      'academicYear',
+      'uploadedBy',
       'fileName',
       'fileSize',
       'fileType',
@@ -84,11 +88,7 @@ const collections = {
   },
   studentTransfers: {
     purpose: 'Student transfer requests and certificate tracking',
-    fields: ['studentRecordId', 'studentId', 'transferType', 'reason', 'status', 'requestedAtText', 'certificateUrl'],
-  },
-  studentIdCards: {
-    purpose: 'Generated student ID card metadata',
-    fields: ['studentRecordId', 'studentId', 'cardNumber', 'issuedAtText', 'validUntil', 'status', 'downloadUrl'],
+    fields: ['studentRecordId', 'studentId', 'transferType', 'reason', 'academicYear', 'status', 'requestedAtText', 'certificateUrl'],
   },
   users: {
     purpose: 'ERP user profiles linked to Firebase Auth users',

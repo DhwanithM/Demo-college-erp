@@ -23,6 +23,7 @@ assert.equal(
   validateStudentProfile({
     name: 'Asha Rao',
     guardianName: 'Meera Rao',
+    idHolder: 'Asha Rao',
     phone: '+91 98765 43210',
     email: 'asha@student.edu',
     className: 'Class XI',
@@ -37,6 +38,7 @@ assert.equal(
   validateStudentProfile({
     name: 'Asha Rao',
     guardianName: 'Meera Rao',
+    idHolder: 'Asha Rao',
     phone: 'bad',
     email: 'asha@student.edu',
     className: 'Class XI',

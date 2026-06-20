@@ -18,6 +18,7 @@ export function validateStudentProfile(form) {
   const requiredFields = [
     ['name', 'Student name'],
     ['guardianName', 'Guardian name'],
+    ['idHolder', 'ID holder'],
     ['phone', 'Phone'],
     ['className', 'Class'],
     ['section', 'Section'],

@@ -6,6 +6,7 @@ const defaultForm = {
   section: 'A',
   program: 'PU Science',
   guardianName: '',
+  idHolder: '',
   phone: '',
   email: '',
   status: 'Admission Review',
@@ -26,6 +27,7 @@ export default function StudentModal({ initialStudent = null, mode = 'create', o
       section: form.section.trim(),
       program: form.program.trim(),
       guardianName: form.guardianName.trim(),
+      idHolder: form.idHolder.trim(),
       phone: form.phone.trim(),
       email: form.email.trim(),
       status: form.status,
@@ -48,6 +50,7 @@ export default function StudentModal({ initialStudent = null, mode = 'create', o
           {[
             ['name', 'Student Name'],
             ['guardianName', 'Guardian Name'],
+            ['idHolder', 'ID Holder'],
             ['phone', 'Phone'],
             ['email', 'Email'],
             ['className', 'Class'],

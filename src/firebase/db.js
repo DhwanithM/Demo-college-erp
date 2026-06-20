@@ -4,17 +4,20 @@ import {
   doc,
   getDoc,
   getDocs,
+  query as firestoreQuery,
   serverTimestamp,
   setDoc,
   updateDoc,
+  where,
 } from 'firebase/firestore';
 import { db } from './config';
 
 const SCHEMA_DOC_ID = '__schema';
 
-async function listCollection(collectionName) {
+async function listCollection(collectionName, constraints = []) {
   if (!db) return [];
-  const snapshot = await getDocs(collection(db, collectionName));
+  const collectionRef = collection(db, collectionName);
+  const snapshot = await getDocs(constraints.length ? firestoreQuery(collectionRef, ...constraints) : collectionRef);
   return snapshot.docs
     .filter((item) => item.id !== SCHEMA_DOC_ID)
     .map((item) => ({ id: item.id, ...item.data() }));
@@ -30,21 +33,20 @@ async function createCollectionDocument(collectionName, data) {
   return ref.id;
 }
 
-export async function getStudentInformationData() {
+export async function getStudentInformationData(academicYear = '') {
+  const yearConstraints = academicYear ? [where('academicYear', '==', academicYear)] : [];
   const [
     students,
     admissions,
     documents,
     promotions,
     transfers,
-    idCards,
   ] = await Promise.all([
-    listCollection('students'),
-    listCollection('studentAdmissions'),
-    listCollection('studentDocuments'),
-    listCollection('studentPromotions'),
-    listCollection('studentTransfers'),
-    listCollection('studentIdCards'),
+    listCollection('students', yearConstraints),
+    listCollection('studentAdmissions', yearConstraints),
+    listCollection('studentDocuments', yearConstraints),
+    listCollection('studentPromotions', yearConstraints),
+    listCollection('studentTransfers', yearConstraints),
   ]);
 
   return {
@@ -53,7 +55,6 @@ export async function getStudentInformationData() {
     documents,
     promotions,
     transfers,
-    idCards,
   };
 }
 
@@ -85,9 +86,6 @@ export async function createStudentTransfer(data) {
   return createCollectionDocument('studentTransfers', data);
 }
 
-export async function createStudentIdCard(data) {
-  return createCollectionDocument('studentIdCards', data);
-}
 
 export async function updateStudent(id, data) {
   if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;

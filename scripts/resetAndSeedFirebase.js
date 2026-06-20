@@ -23,12 +23,11 @@ const shouldReset = process.argv.includes('--reset');
 const confirmed = process.argv.includes('--yes-i-understand-this-deletes-data');
 
 const schemas = {
-  students: ['admissionNo', 'studentId', 'name', 'className', 'section', 'program', 'guardianName', 'guardianEmail', 'phone', 'email', 'status', 'createdAtText'],
-  studentAdmissions: ['studentRecordId', 'studentId', 'admissionNo', 'academicYear', 'status', 'submittedAtText'],
-  studentDocuments: ['studentRecordId', 'studentId', 'documentType', 'fileName', 'verificationStatus', 'uploadedAtText'],
+  students: ['admissionNo', 'studentId', 'name', 'className', 'section', 'program', 'guardianName', 'idHolder', 'guardianEmail', 'phone', 'email', 'academicYear', 'status', 'createdAtText'],
+  studentAdmissions: ['studentRecordId', 'studentId', 'admissionNo', 'academicYear', 'idHolder', 'status', 'submittedAtText'],
+  studentDocuments: ['studentRecordId', 'studentId', 'documentType', 'academicYear', 'uploadedBy', 'fileName', 'verificationStatus', 'uploadedAtText'],
   studentPromotions: ['studentRecordId', 'studentId', 'fromClass', 'toClass', 'academicYear', 'status', 'approvedBy', 'approvedAtText'],
-  studentTransfers: ['studentRecordId', 'studentId', 'transferType', 'reason', 'status', 'requestedAtText'],
-  studentIdCards: ['studentRecordId', 'studentId', 'cardNumber', 'issuedAtText', 'validUntil', 'status'],
+  studentTransfers: ['studentRecordId', 'studentId', 'transferType', 'reason', 'academicYear', 'status', 'requestedAtText'],
   users: ['uid', 'name', 'email', 'roleId', 'status', 'createdAtText'],
   roles: ['id', 'name', 'description', 'locked', 'permissions'],
   staffMembers: ['employeeId', 'name', 'staffType', 'department', 'designation', 'phone', 'email', 'qualification', 'status'],
@@ -76,23 +75,20 @@ const allPermissions = [
 
 const seed = {
   students: {
-    'seed-student-vivek': { admissionNo: 'ADM-2026-04449', studentId: 'STU-4449', name: 'Vivek Sharma', className: 'Class XII', section: 'A', program: 'CBSE Science', guardianName: 'Rajesh Sharma', guardianEmail: 'parent.vivek@example.com', phone: '+91 98765 43210', email: 'vivek.sharma@student.edu', status: 'Active', createdAtText: '03 Jun 2026' },
-    'seed-student-vaibhavi': { admissionNo: 'ADM-2026-04450', studentId: 'STU-4450', name: 'Vaibhavi Aggarwal', className: 'Class XI', section: 'B', program: 'PU Commerce', guardianName: 'Anita Aggarwal', guardianEmail: 'parent.vaibhavi@example.com', phone: '+91 99887 77665', email: 'vaibhavi@student.edu', status: 'Active', createdAtText: '01 Jun 2026' },
+    'seed-student-vivek': { admissionNo: 'ADM-2026-04449', studentId: 'STU-4449', name: 'Vivek Sharma', className: 'Class XII', section: 'A', program: 'CBSE Science', guardianName: 'Rajesh Sharma', idHolder: 'Vivek Sharma', guardianEmail: 'parent.vivek@example.com', phone: '+91 98765 43210', email: 'vivek.sharma@student.edu', academicYear: '2026-2027', status: 'Active', createdAtText: '03 Jun 2026' },
+    'seed-student-vaibhavi': { admissionNo: 'ADM-2026-04450', studentId: 'STU-4450', name: 'Vaibhavi Aggarwal', className: 'Class XI', section: 'B', program: 'PU Commerce', guardianName: 'Anita Aggarwal', idHolder: 'Vaibhavi Aggarwal', guardianEmail: 'parent.vaibhavi@example.com', phone: '+91 99887 77665', email: 'vaibhavi@student.edu', academicYear: '2026-2027', status: 'Active', createdAtText: '01 Jun 2026' },
   },
   studentAdmissions: {
-    'seed-admission-vivek': { studentRecordId: 'seed-student-vivek', studentId: 'STU-4449', admissionNo: 'ADM-2026-04449', academicYear: '2026-2027', status: 'Admission Review', submittedAtText: '03 Jun 2026' },
+    'seed-admission-vivek': { studentRecordId: 'seed-student-vivek', studentId: 'STU-4449', admissionNo: 'ADM-2026-04449', academicYear: '2026-2027', idHolder: 'Vivek Sharma', status: 'Admission Review', submittedAtText: '03 Jun 2026' },
   },
   studentDocuments: {
-    'seed-student-doc-vivek': { studentRecordId: 'seed-student-vivek', studentId: 'STU-4449', documentType: 'Admission Form', fileName: 'ADM-2026-04449-admission-form.pdf', verificationStatus: 'Pending Review', uploadedAtText: '03 Jun 2026' },
+    'seed-student-doc-vivek': { studentRecordId: 'seed-student-vivek', studentId: 'STU-4449', documentType: 'Admission Form', academicYear: '2026-2027', uploadedBy: 'Admin', fileName: 'ADM-2026-04449-admission-form.pdf', verificationStatus: 'Pending Review', uploadedAtText: '03 Jun 2026' },
   },
   studentPromotions: {
     'seed-promotion-vivek': { studentRecordId: 'seed-student-vivek', studentId: 'STU-4449', fromClass: 'Class XI', toClass: 'Class XII', academicYear: '2026-2027', status: 'Promoted', approvedBy: 'Academic Office', approvedAtText: '03 Jun 2026' },
   },
   studentTransfers: {
-    'seed-transfer-vivek': { studentRecordId: 'seed-student-vivek', studentId: 'STU-4449', transferType: 'Internal Class Transfer', reason: 'Promoted to next class', status: 'Not Requested', requestedAtText: '03 Jun 2026' },
-  },
-  studentIdCards: {
-    'seed-id-vivek': { studentRecordId: 'seed-student-vivek', studentId: 'STU-4449', cardNumber: 'STU-4449', issuedAtText: '03 Jun 2026', validUntil: '31 Mar 2027', status: 'Ready' },
+    'seed-transfer-vivek': { studentRecordId: 'seed-student-vivek', studentId: 'STU-4449', transferType: 'Internal Class Transfer', reason: 'Promoted to next class', academicYear: '2026-2027', status: 'Not Requested', requestedAtText: '03 Jun 2026' },
   },
   roles: {
     'super-admin': { id: 'super-admin', name: 'Super Admin', description: 'Full ERP control.', locked: true, permissions: allPermissions },

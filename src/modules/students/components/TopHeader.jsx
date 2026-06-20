@@ -1,19 +1,7 @@
-import { Bell, ChevronDown, LogOut, Menu, UserRound } from 'lucide-react';
+import { Bell, LogOut, Menu, UserRound } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-function SelectBox({ label, width = 'w-64' }) {
-  return (
-    <button
-      onClick={() => toast.success(`${label.replace('*', '')} selector opened`)}
-      className={`${width} h-11 bg-white border border-slate-200 rounded-lg shadow-[0_2px_8px_rgba(15,23,42,0.04)] px-4 flex items-center justify-between text-sm text-slate-600`}
-    >
-      <span>{label}<span className="text-orange-500">*</span></span>
-      <ChevronDown size={15} className="text-slate-400" />
-    </button>
-  );
-}
-
-export default function TopHeader({ user, onLogout }) {
+export default function TopHeader({ academicYear, academicYears = [], onAcademicYearChange, user, onLogout }) {
   return (
     <header className="erp-header h-[72px] bg-white border-b border-slate-200 flex items-center justify-between px-5 lg:px-10 shrink-0">
       <div className="flex items-center gap-5 min-w-0">
@@ -24,8 +12,18 @@ export default function TopHeader({ user, onLogout }) {
           <Menu size={20} />
         </button>
         <div className="hidden md:flex items-center gap-3">
-          <SelectBox label="Select Institute" />
-          <SelectBox label="Academic Year" width="w-44" />
+          <label className="text-xs font-semibold text-slate-500">
+            <span className="sr-only">Academic Year</span>
+            <select
+              value={academicYear}
+              onChange={(event) => onAcademicYearChange?.(event.target.value)}
+              className="w-44 h-11 bg-white border border-slate-200 rounded-lg shadow-[0_2px_8px_rgba(15,23,42,0.04)] px-4 text-sm text-slate-600 outline-none focus:border-[#fb9a5b] focus:ring-2 focus:ring-orange-100"
+            >
+              {academicYears.map((year) => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </label>
         </div>
       </div>
 

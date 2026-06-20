@@ -121,7 +121,7 @@ export const demoModuleContent = {
   },
   reports: {
     title: 'Reports',
-    subtitle: 'MIS snapshots for admissions, documents, ID cards, promotions, and transfers.',
+    subtitle: 'MIS snapshots for admissions, documents, promotions, and transfers.',
     actions: ['Generate Report', 'Download MIS', 'Schedule Email'],
     rows: [
       ['Admission Report', 'This academic year', 'Ready'],

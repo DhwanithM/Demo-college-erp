@@ -33,6 +33,10 @@ export default function StudentProfileCard({ student, onEdit }) {
             <div className="font-semibold">{student.guardianName}</div>
           </div>
           <div className="col-span-2">
+            <div className="text-xs text-slate-500">ID Holder</div>
+            <div className="font-semibold">{student.idHolder || '-'}</div>
+          </div>
+          <div className="col-span-2">
             <div className="text-xs text-slate-500">Contact</div>
             <div className="font-semibold">{student.phone}</div>
             <div className="text-slate-500">{student.email}</div>

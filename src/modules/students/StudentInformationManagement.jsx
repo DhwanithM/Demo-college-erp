@@ -6,7 +6,6 @@ import {
   Eye,
   FileText,
   GraduationCap,
-  IdCard,
   Plus,
   Search,
   Upload,
@@ -19,7 +18,6 @@ import {
   createStudent,
   createStudentAdmission,
   createStudentDocument,
-  createStudentIdCard,
   createStudentPromotion,
   createStudentTransfer,
   updateStudentDocument,
@@ -59,9 +57,134 @@ const tabs = [
   { id: 'admissions', label: 'Admissions', icon: <Plus size={15} /> },
   { id: 'profiles', label: 'Profiles', icon: <UserRound size={15} /> },
   { id: 'documents', label: 'Documents', icon: <FileText size={15} /> },
-  { id: 'ids', label: 'ID Cards', icon: <IdCard size={15} /> },
   { id: 'promotion', label: 'Promotion & Transfer', icon: <GraduationCap size={15} /> },
 ];
+
+function csvValue(value) {
+  return `"${String(value ?? '').replace(/"/g, '""')}"`;
+}
+
+function StudentReportView({ academicYear, admissions, documents, promotions, students, onBack }) {
+  const activeStudents = students.filter((student) => student.status !== 'Archived');
+  const archivedStudents = students.filter((student) => student.status === 'Archived');
+  const verifiedDocuments = documents.filter((item) => item.verificationStatus === 'Verified');
+  const classBreakdown = Object.entries(students.reduce((summary, student) => {
+    const classKey = `${student.className || 'Unassigned'} - ${student.section || '-'}`;
+    summary[classKey] = (summary[classKey] || 0) + 1;
+    return summary;
+  }, {}));
+
+  const downloadReport = () => {
+    const rows = [
+      ['Student Name', 'Student ID', 'Admission No', 'Class', 'Program', 'Guardian', 'ID Holder', 'Status', 'Created On'],
+      ...students.map((student) => [
+        student.name,
+        student.studentId,
+        student.admissionNo,
+        `${student.className || ''} ${student.section || ''}`.trim(),
+        student.program,
+        student.guardianName,
+        student.idHolder,
+        student.status,
+        student.createdAtText,
+      ]),
+    ];
+    const csv = rows.map((row) => row.map(csvValue).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `student-report-${academicYear}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success('Student report downloaded');
+  };
+
+  return (
+    <div>
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+        <div>
+          <div className="text-sm font-bold text-slate-500 mb-2">Academics / <span className="text-[#f39a5f]">Student Report</span></div>
+          <h1 className="text-2xl font-bold text-slate-900">Student Report</h1>
+          <p className="text-sm text-slate-500 mt-1">Academic year {academicYear}: admissions, profiles, documents, and promotions.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <button onClick={downloadReport} className="h-10 px-5 rounded-lg bg-[#33373e] text-white font-semibold text-sm flex items-center gap-2">
+            <Download size={16} /> Download CSV
+          </button>
+          <button onClick={() => window.print()} className="h-10 px-5 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm">
+            Print
+          </button>
+          <button onClick={onBack} className="h-10 px-5 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm">
+            Back to Students
+          </button>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-4 gap-4 py-5">
+        {[
+          ['Students', students.length],
+          ['Active', activeStudents.length],
+          ['Archived', archivedStudents.length],
+          ['Admissions', admissions.length],
+          ['Documents', documents.length],
+          ['Verified Docs', verifiedDocuments.length],
+          ['Promotions', promotions.length],
+          ['Classes', classBreakdown.length],
+        ].map(([label, value]) => (
+          <div key={label} className="rounded-lg bg-[#f5f5f6] p-4">
+            <div className="text-xs font-semibold text-slate-500">{label}</div>
+            <div className="text-2xl font-bold text-slate-900 mt-1">{value}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid xl:grid-cols-[1fr_2fr] gap-5">
+        <div className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm">
+          <h2 className="font-bold text-slate-900 mb-4">Class Summary</h2>
+          <div className="space-y-2 text-sm">
+            {classBreakdown.map(([classKey, count]) => (
+              <div key={classKey} className="flex items-center justify-between rounded-lg bg-[#f5f5f6] px-3 py-2">
+                <span>{classKey}</span>
+                <span className="font-bold">{count}</span>
+              </div>
+            ))}
+            {!classBreakdown.length && <div className="text-slate-500">No student records for this academic year.</div>}
+          </div>
+        </div>
+
+        <div className="overflow-x-auto rounded-lg border border-slate-100 bg-white shadow-sm">
+          <table className="w-full text-sm">
+            <thead className="bg-[#e7e7e9] text-left text-slate-900">
+              <tr>
+                <th className="px-4 py-3">Student</th>
+                <th className="px-4 py-3">Admission / ID</th>
+                <th className="px-4 py-3">Class</th>
+                <th className="px-4 py-3">ID Holder</th>
+                <th className="px-4 py-3">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {students.map((student) => (
+                <tr key={student.id} className="border-t border-slate-100">
+                  <td className="px-4 py-3 font-semibold">{student.name}<div className="text-xs font-normal text-slate-500">{student.guardianName}</div></td>
+                  <td className="px-4 py-3">{student.admissionNo}<div className="text-xs text-slate-500">{student.studentId}</div></td>
+                  <td className="px-4 py-3">{student.className} - {student.section}<div className="text-xs text-slate-500">{student.program}</div></td>
+                  <td className="px-4 py-3">{student.idHolder || '-'}</td>
+                  <td className="px-4 py-3"><StatusBadge value={student.status} /></td>
+                </tr>
+              ))}
+              {!students.length && (
+                <tr><td colSpan="5" className="px-4 py-10 text-center text-slate-500">No student records found for {academicYear}.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function StudentInformationManagement({ user, onLogout }) {
   const [students, setStudents] = useState(demoStudents);
   const [activePage, setActivePage] = useState('dashboard');
@@ -72,13 +195,14 @@ export default function StudentInformationManagement({ user, onLogout }) {
   const [studentDocuments, setStudentDocuments] = useState([]);
   const [promotions, setPromotions] = useState([]);
   const [transfers, setTransfers] = useState([]);
-  const [idCards, setIdCards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
   const [statusFilter, setStatusFilter] = useState('active');
   const [documentUploading, setDocumentUploading] = useState(false);
+  const [documentType, setDocumentType] = useState('Admission Form');
+  const [academicYear, setAcademicYear] = useState('2026-2027');
   const [promotionDraft, setPromotionDraft] = useState({ toClass: '', reason: '' });
   const documentInputRef = useRef(null);
   const currentRoleId = user?.roleId || 'admin';
@@ -88,16 +212,15 @@ export default function StudentInformationManagement({ user, onLogout }) {
   useEffect(() => {
     const loadStudentInformation = async () => {
       try {
-        const data = await getStudentInformationData();
-        if (data.students.length) {
+        const data = await getStudentInformationData(academicYear);
+        if (data.students.length || isFirebaseConfigured) {
           setStudents(data.students);
-          setSelectedId(data.students[0].id);
+          setSelectedId(data.students[0]?.id || '');
         }
         setAdmissions(data.admissions);
         setStudentDocuments(data.documents);
         setPromotions(data.promotions);
         setTransfers(data.transfers);
-        setIdCards(data.idCards);
       } catch (error) {
         console.warn('Using demo students because Firestore is not reachable.', error);
         setLoadError('Unable to load Firestore records. Showing demo/local records.');
@@ -106,19 +229,29 @@ export default function StudentInformationManagement({ user, onLogout }) {
       }
     };
     loadStudentInformation();
-  }, []);
+  }, [academicYear]);
 
-  const selectedStudent = students.find((student) => student.id === selectedId) || students[0];
+  const academicYearOptions = useMemo(() => {
+    const years = new Set(['2026-2027', '2025-2026', '2024-2025']);
+    [...students, ...admissions, ...studentDocuments, ...promotions, ...transfers].forEach((record) => {
+      if (record?.academicYear) years.add(record.academicYear);
+    });
+    return [...years].sort().reverse();
+  }, [admissions, promotions, studentDocuments, students, transfers]);
+
+  const studentBelongsToYear = (student) => (student.academicYear || '2026-2027') === academicYear;
+  const recordBelongsToYear = (record) => !record.academicYear || record.academicYear === academicYear;
+  const yearStudents = useMemo(() => students.filter(studentBelongsToYear), [academicYear, students]);
+
+  const selectedStudent = yearStudents.find((student) => student.id === selectedId) || yearStudents[0] || students[0];
   const suggestedPromotionClass = getNextClassName(selectedStudent?.className || '');
-  const selectedAdmissions = admissions.filter((record) => relationMatches(record, selectedStudent));
-  const selectedDocuments = studentDocuments.filter((record) => relationMatches(record, selectedStudent));
-  const selectedPromotions = promotions.filter((record) => relationMatches(record, selectedStudent));
-  const selectedTransfers = transfers.filter((record) => relationMatches(record, selectedStudent));
-  const selectedIdCards = idCards.filter((record) => relationMatches(record, selectedStudent));
+  const selectedAdmissions = admissions.filter((record) => relationMatches(record, selectedStudent) && recordBelongsToYear(record));
+  const selectedDocuments = studentDocuments.filter((record) => relationMatches(record, selectedStudent) && recordBelongsToYear(record));
+  const selectedPromotions = promotions.filter((record) => relationMatches(record, selectedStudent) && recordBelongsToYear(record));
+  const selectedTransfers = transfers.filter((record) => relationMatches(record, selectedStudent) && recordBelongsToYear(record));
   const latestAdmission = latestRecord(selectedAdmissions);
   const latestPromotion = latestRecord(selectedPromotions);
   const latestTransfer = latestRecord(selectedTransfers);
-  const latestIdCard = latestRecord(selectedIdCards);
   const selectedDocumentLabels = selectedDocuments.length
     ? selectedDocuments
     : selectedStudent.documents || [];
@@ -126,21 +259,20 @@ export default function StudentInformationManagement({ user, onLogout }) {
   const filteredStudents = useMemo(() => {
     const term = search.trim().toLowerCase();
     const visibleStudents = statusFilter === 'archived'
-      ? students.filter((student) => student.status === 'Archived')
-      : students.filter((student) => student.status !== 'Archived');
+      ? yearStudents.filter((student) => student.status === 'Archived')
+      : yearStudents.filter((student) => student.status !== 'Archived');
     if (!term) return visibleStudents;
     return visibleStudents.filter((student) =>
       [student.name, student.studentId, student.admissionNo, student.className, student.program]
         .filter(Boolean)
         .some((value) => value.toLowerCase().includes(term))
     );
-  }, [search, statusFilter, students]);
+  }, [search, statusFilter, yearStudents]);
 
   const stats = [
-    { label: 'Admissions', value: admissions.length || students.filter((s) => s.status !== 'Archived').length, icon: <Users size={22} /> },
-    { label: 'Profiles Completed', value: students.filter((s) => s.status !== 'Archived' && s.email && s.guardianName).length, icon: <UserRound size={22} /> },
-    { label: 'Documents Stored', value: studentDocuments.length || students.reduce((sum, s) => sum + (s.documents?.length || 0), 0), icon: <FileText size={22} /> },
-    { label: 'Generated IDs', value: idCards.length || students.filter((s) => s.studentId).length, icon: <IdCard size={22} /> },
+    { label: 'Admissions', value: admissions.filter((item) => item.academicYear === academicYear).length || yearStudents.filter((s) => s.status !== 'Archived').length, icon: <Users size={22} /> },
+    { label: 'Profiles Completed', value: yearStudents.filter((s) => s.status !== 'Archived' && s.email && s.guardianName && s.idHolder).length, icon: <UserRound size={22} /> },
+    { label: 'Documents Stored', value: studentDocuments.filter((item) => item.academicYear === academicYear).length || yearStudents.reduce((sum, s) => sum + (s.documents?.length || 0), 0), icon: <FileText size={22} /> },
   ];
 
   const saveStudent = async (form) => {
@@ -157,6 +289,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
       admissionNo: `ADM-2026-${nextNumber}`,
       studentId: `STU-${nextNumber}`,
       institute: 'COLLEGE NAME',
+      academicYear,
       status: 'Admission Review',
       createdAtText,
     };
@@ -168,7 +301,8 @@ export default function StudentInformationManagement({ user, onLogout }) {
         studentRecordId: created.id,
         studentId: created.studentId,
         admissionNo: created.admissionNo,
-        academicYear: '2026-2027',
+        academicYear,
+        idHolder: created.idHolder,
         status: 'Admission Review',
         submittedAtText: createdAtText,
       };
@@ -176,32 +310,22 @@ export default function StudentInformationManagement({ user, onLogout }) {
         studentRecordId: created.id,
         studentId: created.studentId,
         documentType: 'Admission Form',
+        academicYear,
+        uploadedBy: user?.name || 'Admin',
         fileName: `${created.admissionNo}-admission-form.pdf`,
         verificationStatus: 'Pending Review',
         uploadedAtText: createdAtText,
       };
-      const idCard = {
-        studentRecordId: created.id,
-        studentId: created.studentId,
-        cardNumber: created.studentId,
-        issuedAtText: createdAtText,
-        validUntil: '31 Mar 2027',
-        status: 'Ready',
-      };
-
       if (id) {
-        const [admissionId, documentId, idCardId] = await Promise.all([
+        const [admissionId, documentId] = await Promise.all([
           createStudentAdmission(admission),
           createStudentDocument(admissionForm),
-          createStudentIdCard(idCard),
         ]);
         setAdmissions((prev) => [{ id: admissionId, ...admission }, ...prev]);
         setStudentDocuments((prev) => [{ id: documentId, ...admissionForm }, ...prev]);
-        setIdCards((prev) => [{ id: idCardId, ...idCard }, ...prev]);
       } else {
         setAdmissions((prev) => [{ id: `local-admission-${Date.now()}`, ...admission }, ...prev]);
         setStudentDocuments((prev) => [{ id: `local-document-${Date.now()}`, ...admissionForm }, ...prev]);
-        setIdCards((prev) => [{ id: `local-card-${Date.now()}`, ...idCard }, ...prev]);
       }
 
       setStudents((prev) => [created, ...prev]);
@@ -214,7 +338,8 @@ export default function StudentInformationManagement({ user, onLogout }) {
         studentRecordId: local.id,
         studentId: local.studentId,
         admissionNo: local.admissionNo,
-        academicYear: '2026-2027',
+        academicYear,
+        idHolder: local.idHolder,
         status: 'Admission Review',
         submittedAtText: createdAtText,
       };
@@ -223,24 +348,15 @@ export default function StudentInformationManagement({ user, onLogout }) {
         studentRecordId: local.id,
         studentId: local.studentId,
         documentType: 'Admission Form',
+        academicYear,
+        uploadedBy: user?.name || 'Admin',
         fileName: `${local.admissionNo}-admission-form.pdf`,
         verificationStatus: 'Pending Review',
         uploadedAtText: createdAtText,
       };
-      const idCard = {
-        id: `local-card-${Date.now()}`,
-        studentRecordId: local.id,
-        studentId: local.studentId,
-        cardNumber: local.studentId,
-        issuedAtText: createdAtText,
-        validUntil: '31 Mar 2027',
-        status: 'Ready',
-      };
-
       setStudents((prev) => [local, ...prev]);
       setAdmissions((prev) => [admission, ...prev]);
       setStudentDocuments((prev) => [admissionForm, ...prev]);
-      setIdCards((prev) => [idCard, ...prev]);
       setSelectedId(local.id);
       toast.success('Student added locally. Check Firebase setup to persist it.');
     } finally {
@@ -333,7 +449,9 @@ export default function StudentInformationManagement({ user, onLogout }) {
       const payload = {
         studentRecordId: selectedStudent.id,
         studentId: selectedStudent.studentId,
-        documentType: 'Uploaded Document',
+        documentType: documentType.trim() || 'Uploaded Document',
+        academicYear,
+        uploadedBy: user?.name || 'Admin',
         verificationStatus: 'Pending Review',
         uploadedAtText,
         ...fileData,
@@ -345,7 +463,9 @@ export default function StudentInformationManagement({ user, onLogout }) {
       const payload = {
         studentRecordId: selectedStudent.id,
         studentId: selectedStudent.studentId,
-        documentType: 'Uploaded Document',
+        documentType: documentType.trim() || 'Uploaded Document',
+        academicYear,
+        uploadedBy: user?.name || 'Admin',
         fileName: file.name,
         fileSize: file.size,
         fileType: file.type || 'application/octet-stream',
@@ -395,7 +515,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
       studentId: selectedStudent.studentId,
       fromClass,
       toClass,
-      academicYear: '2026-2027',
+      academicYear,
       status: 'Promoted',
       approvedBy: 'Academic Office',
       approvedAtText: actionDateText,
@@ -406,6 +526,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
       transferType: 'Internal Class Transfer',
       reason: promotionDraft.reason.trim() || `Promoted from ${fromClass} to ${toClass}`,
       status: 'Not Requested',
+      academicYear,
       requestedAtText: actionDateText,
       certificateUrl: '',
     };
@@ -434,7 +555,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
         <div className="flex min-h-screen">
           <Sidebar activePage={activePage} currentUser={user} onNavigate={setActivePage} />
           <main className="flex-1 min-w-0 bg-[#f0f1f3] flex flex-col">
-            <TopHeader user={user} onLogout={onLogout} />
+            <TopHeader academicYear={academicYear} academicYears={academicYearOptions} onAcademicYearChange={setAcademicYear} user={user} onLogout={onLogout} />
 
             <div className="flex-1 p-4 lg:p-5">
               <section className="erp-workspace bg-white min-h-full p-5 lg:p-7">
@@ -448,7 +569,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
                   <div>
                     <div className="text-sm font-bold text-slate-500 mb-2">Academics / <span className="text-[#f39a5f]">Student Information Management</span></div>
                     <h1 className="text-2xl font-bold text-slate-900">Student Information Management</h1>
-                    <p className="text-sm text-slate-500 mt-1">Admissions, profiles, documents, ID generation, promotion and transfer management.</p>
+                    <p className="text-sm text-slate-500 mt-1">Admissions, profiles, documents, promotion and transfer management.</p>
                     {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist records.</p>}
                     {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
                   </div>
@@ -529,7 +650,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
 
                     <div className="bg-white border border-slate-100 rounded-lg p-5 shadow-sm">
                       <h3 className="font-bold mb-4">
-                        {activeTab === 'documents' ? 'Document Repository' : activeTab === 'ids' ? 'ID Generation' : activeTab === 'promotion' ? 'Promotion & Transfer' : 'Module Actions'}
+                        {activeTab === 'documents' ? 'Document Repository' : activeTab === 'promotion' ? 'Promotion & Transfer' : 'Module Actions'}
                       </h3>
                       {activeTab === 'documents' && (
                         <div className="space-y-3">
@@ -579,6 +700,15 @@ export default function StudentInformationManagement({ user, onLogout }) {
                               No documents uploaded for this student yet.
                             </div>
                           )}
+                          <label className="block">
+                            <span className="text-xs font-semibold text-slate-500 mb-1.5 block">Document Type</span>
+                            <input
+                              value={documentType}
+                              onChange={(event) => setDocumentType(event.target.value)}
+                              placeholder="Aadhaar Card, Transfer Certificate, Marks Card..."
+                              className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-[#fb9a5b] focus:ring-2 focus:ring-orange-100"
+                            />
+                          </label>
                           <input
                             ref={documentInputRef}
                             type="file"
@@ -591,23 +721,6 @@ export default function StudentInformationManagement({ user, onLogout }) {
                             className="w-full h-10 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm flex items-center justify-center gap-2 disabled:bg-slate-300 disabled:cursor-not-allowed"
                           >
                             <Upload size={16} /> {documentUploading ? 'Uploading...' : 'Upload Document'}
-                          </button>
-                        </div>
-                      )}
-                      {activeTab === 'ids' && (
-                        <div className="space-y-4">
-                          <div className="rounded-lg bg-[#33373e] text-white p-4">
-                            <div className="text-xs opacity-70">Generated Student ID</div>
-                            <div className="text-2xl font-bold mt-1">{latestIdCard?.cardNumber || selectedStudent.studentId}</div>
-                            <div className="text-xs opacity-70 mt-3">
-                              {selectedStudent.name} | {selectedStudent.className} | Valid until {latestIdCard?.validUntil || '31 Mar 2027'}
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => toast.success('ID card downloaded')}
-                            className="w-full h-10 rounded-full bg-[#33373e] text-white font-semibold text-sm flex items-center justify-center gap-2"
-                          >
-                            <Download size={16} /> Download ID Card
                           </button>
                         </div>
                       )}
@@ -643,7 +756,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
                           </button>
                         </div>
                       )}
-                      {!['documents', 'ids', 'promotion'].includes(activeTab) && (
+                      {!['documents', 'promotion'].includes(activeTab) && (
                         <div className="space-y-3 text-sm text-slate-600">
                           <div className="rounded-lg bg-[#f5f5f6] p-3">
                             Admission status: {latestAdmission?.status || selectedStudent.status}. Created on {selectedStudent.createdAtText || latestAdmission?.submittedAtText || 'today'}.
@@ -656,6 +769,15 @@ export default function StudentInformationManagement({ user, onLogout }) {
                   </aside>
                 </div>
                 </>
+                ) : activePage === 'reports' ? (
+                  <StudentReportView
+                    academicYear={academicYear}
+                    students={yearStudents}
+                    admissions={admissions.filter((item) => item.academicYear === academicYear)}
+                    documents={studentDocuments.filter((item) => item.academicYear === academicYear)}
+                    promotions={promotions.filter((item) => item.academicYear === academicYear)}
+                    onBack={() => setActivePage('dashboard')}
+                  />
                 ) : activePage === 'faculty-staff' ? (
                   <FacultyStaffManagement currentUser={user} />
                 ) : activePage === 'academics' ? (
@@ -688,13 +810,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
 
             <footer className="h-14 bg-white border-t border-slate-200 px-6 flex items-center justify-between text-xs text-slate-500">
               <span>Copyright © 2026 Devloft Technologies | College ERP</span>
-              <div className="hidden sm:flex gap-2">
-                {['f', 'x', 'in', 'ig', 'yt'].map((item) => (
-                  <span key={item} className="h-7 min-w-7 px-2 rounded-md bg-[#34363d] text-white flex items-center justify-center font-bold">
-                    {item}
-                  </span>
-                ))}
-              </div>
+
             </footer>
           </main>
         </div>
