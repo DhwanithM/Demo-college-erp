@@ -1,6 +1,6 @@
 export const demoInstituteSettings = {
   id: 'institute',
-  name: 'COLLEGE NAME',
+  name: 'Maurya Nursing College',
   instituteId: 'COL-097',
   code: 'COL-097',
   email: 'admin@college.edu',

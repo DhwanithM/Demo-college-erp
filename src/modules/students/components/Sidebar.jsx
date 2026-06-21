@@ -2,8 +2,9 @@ import { GraduationCap } from 'lucide-react';
 import { getEnabledModules } from '../../moduleRegistry';
 import { canAccess, defaultRoles } from '../../userRoles/rolePermissions';
 
-export default function Sidebar({ activePage, collapsed = false, currentUser, onNavigate }) {
+export default function Sidebar({ activePage, collapsed = false, currentUser, institute, onNavigate }) {
   const currentRoleId = currentUser?.roleId || 'admin';
+  const collegeName = institute?.name || currentUser?.selectedCollege?.name || 'College';
   const navItems = getEnabledModules()
     .filter((module) => !module.permission || canAccess(defaultRoles, currentRoleId, module.permission))
     .map((module) => {
@@ -26,7 +27,7 @@ export default function Sidebar({ activePage, collapsed = false, currentUser, on
           </div>
           {!collapsed && (
             <div className="leading-tight">
-              <div className="text-[13px] font-bold text-slate-900">COLLEGE NAME</div>
+              <div className="text-[13px] font-bold text-slate-900">{collegeName}</div>
               <div className="text-[10px] text-slate-500">ERP Management Suite</div>
             </div>
           )}

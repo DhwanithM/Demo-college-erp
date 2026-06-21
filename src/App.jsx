@@ -5,20 +5,21 @@ import AuthPage from './pages/AuthPage';
 import StudentInformationManagement from './modules/students/StudentInformationManagement';
 import { logoutUser, subscribeToAuthState } from './firebase/auth';
 import { getFallbackRoleId } from './firebase/demoRoles';
-import { getUserProfile } from './firebase/db';
+import { getSettingsData, getUserProfile } from './firebase/db';
 import ParticleBackground from './components/ParticleBackground';
+import { demoInstituteSettings } from './modules/settings/demoSettings';
 
 
-const availableColleges = [
-  {
+function buildCollegeFromInstitute(institute = demoInstituteSettings) {
+  return {
     id: 'main-campus',
-    name: 'COLLEGE NAME',
-    code: 'COL-097',
-    location: 'Main Campus',
-  },
-];
+    name: institute.name || 'College',
+    code: institute.instituteId || institute.code || 'COL-097',
+    location: institute.city || institute.address || 'Main Campus',
+  };
+}
 
-function CollegeSelection({ onSelect }) {
+function CollegeSelection({ colleges, onSelect }) {
   return (
     <main className="relative z-[1] min-h-screen bg-[#f1f2f4] flex items-center justify-center p-6">
       <section className="w-full max-w-4xl bg-white rounded-2xl border border-slate-200 shadow-[0_18px_60px_rgba(15,23,42,0.12)] overflow-hidden">
@@ -32,7 +33,7 @@ function CollegeSelection({ onSelect }) {
           </div>
         </div>
         <div className="p-7 grid md:grid-cols-2 gap-4">
-          {availableColleges.map((college) => (
+          {colleges.map((college) => (
             <button
               key={college.id}
               onClick={() => onSelect(college)}
@@ -58,6 +59,7 @@ function CollegeSelection({ onSelect }) {
 
 export default function App() {
   const [user, setUser] = useState(null);
+  const [institute, setInstitute] = useState(demoInstituteSettings);
   const [selectedCollege, setSelectedCollege] = useState(() => {
     const stored = sessionStorage.getItem('selectedCollege');
     return stored ? JSON.parse(stored) : null;
@@ -89,6 +91,18 @@ export default function App() {
     return unsubscribe;
   }, []);
 
+  useEffect(() => {
+    const loadInstitute = async () => {
+      try {
+        const data = await getSettingsData();
+        if (data.institute) setInstitute(data.institute);
+      } catch (error) {
+        console.warn('Using demo institute for college selection.', error);
+      }
+    };
+    loadInstitute();
+  }, []);
+
   const logout = async () => {
     setSelectedCollege(null);
     sessionStorage.removeItem('selectedCollege');
@@ -112,6 +126,7 @@ export default function App() {
   }
 
   const needsCollegeSelection = user?.roleId === 'super-admin' && !selectedCollege;
+  const colleges = [buildCollegeFromInstitute(institute)];
 
   return (
     <div className="app-background">
@@ -124,7 +139,7 @@ export default function App() {
         path="/students"
         element={user ? (
           needsCollegeSelection ? (
-            <CollegeSelection onSelect={selectCollege} />
+            <CollegeSelection colleges={colleges} onSelect={selectCollege} />
           ) : (
             <StudentInformationManagement user={{ ...user, selectedCollege }} onLogout={logout} />
           )

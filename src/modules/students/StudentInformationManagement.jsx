@@ -626,7 +626,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
   return (
     <div className="erp-shell min-h-screen bg-white text-slate-900">
         <div className="flex min-h-screen">
-          <Sidebar activePage={activePage} collapsed={sidebarCollapsed} currentUser={user} onNavigate={setActivePage} />
+          <Sidebar activePage={activePage} collapsed={sidebarCollapsed} currentUser={user} institute={institute} onNavigate={setActivePage} />
           <main className="flex-1 min-w-0 bg-[#f0f1f3] flex flex-col">
             <TopHeader
               academicYear={academicYear}
@@ -635,7 +635,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
               onAcademicYearChange={setAcademicYear}
               onMenuToggle={() => setSidebarCollapsed((prev) => !prev)}
               onNavigate={setActivePage}
-              user={user}
+              user={{ ...user, selectedCollege: { ...user?.selectedCollege, name: institute.name, code: institute.instituteId || institute.code } }}
               onLogout={onLogout}
             />
 
