@@ -95,7 +95,7 @@ export default function SettingsManagement({ currentUser }) {
         <section className="bg-white border border-slate-100 rounded-lg p-5">
           <h3 className="font-bold mb-4">Institute Profile</h3>
           <div className="grid sm:grid-cols-2 gap-3">
-            {['name', 'email', 'phone', 'city'].map((key) => (
+            {['name', 'instituteId', 'code', 'email', 'phone', 'city'].map((key) => (
               <label key={key}><span className="block text-xs font-semibold text-slate-500 mb-1.5 capitalize">{key}</span><input value={institute[key] || ''} onChange={(event) => setInstitute((prev) => ({ ...prev, [key]: event.target.value }))} className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm" /></label>
             ))}
             <label className="sm:col-span-2"><span className="block text-xs font-semibold text-slate-500 mb-1.5">Address</span><input value={institute.address || ''} onChange={(event) => setInstitute((prev) => ({ ...prev, address: event.target.value }))} className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm" /></label>

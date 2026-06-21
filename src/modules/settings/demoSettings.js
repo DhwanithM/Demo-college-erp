@@ -1,6 +1,8 @@
 export const demoInstituteSettings = {
   id: 'institute',
   name: 'COLLEGE NAME',
+  instituteId: 'COL-097',
+  code: 'COL-097',
   email: 'admin@college.edu',
   phone: '+91 98765 00000',
   address: 'Main Campus Road',

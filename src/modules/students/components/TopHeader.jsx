@@ -1,11 +1,13 @@
-import { Bell, LogOut, Menu, UserRound } from 'lucide-react';
+import { LogOut, Menu, MessageSquareText, UserRound } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { canAccess, defaultRoles, getRoleById } from '../../userRoles/rolePermissions';
 
-export default function TopHeader({ academicYear, academicYears = [], onAcademicYearChange, onMenuToggle, onNavigate, user, onLogout }) {
+export default function TopHeader({ academicYear, academicYears = [], institute, onAcademicYearChange, onMenuToggle, onNavigate, user, onLogout }) {
   const currentRoleId = user?.roleId || 'admin';
   const currentRole = getRoleById(defaultRoles, currentRoleId);
   const canViewNotices = canAccess(defaultRoles, currentRoleId, 'notices.view');
+  const userDisplayId = user?.displayId || user?.adminId || user?.employeeId || user?.uid?.slice(0, 8) || '-';
+  const instituteId = user?.selectedCollege?.code || institute?.instituteId || institute?.code || '-';
 
   const openNoticeBoard = () => {
     if (!canViewNotices) {
@@ -42,14 +44,14 @@ export default function TopHeader({ academicYear, academicYears = [], onAcademic
       </div>
 
       <div className="flex items-center gap-5">
-        <button onClick={openNoticeBoard} className="relative text-slate-500" title="Open notice board">
-          <Bell size={19} />
+        <button onClick={openNoticeBoard} className="erp-notification-button relative h-10 w-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500" title="Open notice board">
+          <MessageSquareText size={18} />
           {canViewNotices && <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-orange-500 border border-white" />}
         </button>
         <div className="hidden sm:block h-9 w-px bg-slate-200" />
         <div className="hidden sm:block text-xs text-slate-700 leading-5">
-          <div>Admin ID : ADM-001</div>
-          <div>Institute ID : 97</div>
+          <div>User ID : {userDisplayId}</div>
+          <div>Institute ID : {instituteId}</div>
         </div>
         <div className="hidden sm:block h-9 w-px bg-slate-200" />
         <div className="text-right leading-tight">

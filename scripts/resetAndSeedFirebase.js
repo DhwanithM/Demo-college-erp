@@ -29,7 +29,7 @@ const schemas = {
   studentDocuments: ['studentRecordId', 'studentId', 'documentType', 'academicYear', 'uploadedBy', 'fileName', 'verificationStatus', 'uploadedAtText'],
   studentPromotions: ['studentRecordId', 'studentId', 'fromClass', 'toClass', 'academicYear', 'status', 'approvedBy', 'approvedAtText'],
   studentTransfers: ['studentRecordId', 'studentId', 'transferType', 'reason', 'academicYear', 'status', 'requestedAtText'],
-  users: ['uid', 'name', 'email', 'roleId', 'status', 'createdAtText'],
+  users: ['uid', 'name', 'email', 'roleId', 'displayId', 'collegeIds', 'status', 'createdAtText'],
   roles: ['id', 'name', 'description', 'locked', 'permissions'],
   staffMembers: ['employeeId', 'name', 'staffType', 'department', 'designation', 'phone', 'email', 'qualification', 'status'],
   departments: ['name', 'headName', 'status'],
@@ -57,7 +57,7 @@ const schemas = {
   academicSubjects: ['subjectName', 'subjectCode', 'programName', 'creditHours', 'academicYear', 'status'],
   academicBatches: ['className', 'section', 'programName', 'classTeacher', 'capacity', 'academicYear', 'status'],
   academicCalendarEvents: ['title', 'eventType', 'eventDate', 'audience', 'academicYear', 'status'],
-  systemSettings: ['id', 'name', 'email', 'phone', 'startsOn', 'endsOn', 'student', 'admission', 'employee', 'moduleDefaults'],
+  systemSettings: ['id', 'name', 'instituteId', 'code', 'email', 'phone', 'startsOn', 'endsOn', 'student', 'admission', 'employee', 'moduleDefaults'],
 };
 
 const allPermissions = [
@@ -129,9 +129,9 @@ const seed = {
     parent: { id: 'parent', name: 'Parent', description: 'Parent portal access for academic visibility.', locked: false, permissions: parentPermissions },
   },
   users: {
-    'seed-super-admin-user': { uid: 'seed-super-admin-user', name: 'Super Admin', email: 'superadmin@college.edu', roleId: 'super-admin', collegeIds: ['main-campus'], status: 'Active', createdAtText: '19 Jun 2026' },
-    'seed-admin-user': { uid: 'seed-admin-user', name: 'ERP Admin', email: 'admin@college.edu', roleId: 'admin', collegeIds: ['main-campus'], status: 'Active', createdAtText: '19 Jun 2026' },
-    'seed-parent-user': { uid: 'seed-parent-user', name: 'Rajesh Sharma', email: 'parent.vivek@example.com', roleId: 'parent', collegeIds: ['main-campus'], status: 'Active', createdAtText: '19 Jun 2026' },
+    'seed-super-admin-user': { uid: 'seed-super-admin-user', name: 'Super Admin', email: 'superadmin@college.edu', roleId: 'super-admin', displayId: 'SA-001', collegeIds: ['main-campus'], status: 'Active', createdAtText: '19 Jun 2026' },
+    'seed-admin-user': { uid: 'seed-admin-user', name: 'ERP Admin', email: 'admin@college.edu', roleId: 'admin', displayId: 'ADM-001', collegeIds: ['main-campus'], status: 'Active', createdAtText: '19 Jun 2026' },
+    'seed-parent-user': { uid: 'seed-parent-user', name: 'Rajesh Sharma', email: 'parent.vivek@example.com', roleId: 'parent', displayId: 'PAR-001', collegeIds: ['main-campus'], status: 'Active', createdAtText: '19 Jun 2026' },
   },
   departments: {
     'seed-dept-science': { name: 'Science', headName: 'Dr. Kavita Menon', status: 'Active' },
@@ -213,7 +213,7 @@ const seed = {
     'seed-calendar-orientation': { title: 'Orientation Day', eventType: 'Academic', eventDate: '2026-06-01', audience: 'All', academicYear: '2026-2027', status: 'Published', createdAtText: '25 May 2026' },
   },
   systemSettings: {
-    institute: { id: 'institute', name: 'COLLEGE NAME', email: 'admin@college.edu', phone: '+91 98765 00000', address: 'Main Campus Road', city: 'Bengaluru', status: 'Active', updatedAtText: '19 Jun 2026' },
+    institute: { id: 'institute', name: 'COLLEGE NAME', instituteId: 'COL-097', code: 'COL-097', email: 'admin@college.edu', phone: '+91 98765 00000', address: 'Main Campus Road', city: 'Bengaluru', status: 'Active', updatedAtText: '19 Jun 2026' },
     academicYear: { id: 'academicYear', name: '2026-2027', startsOn: '2026-06-01', endsOn: '2027-03-31', status: 'Active', updatedAtText: '19 Jun 2026' },
     idFormats: { id: 'idFormats', student: 'STU-{number}', admission: 'ADM-{year}-{number}', employee: 'EMP-{number}', receipt: 'REC-{year}-{number}', updatedAtText: '19 Jun 2026' },
     moduleDefaults: { id: 'moduleDefaults', studentAdmissions: true, staffLeave: true, timetablePublishing: true, parentPortal: true, onlinePayments: false, receiptGeneration: false, communicationModule: false, updatedAtText: '19 Jun 2026' },

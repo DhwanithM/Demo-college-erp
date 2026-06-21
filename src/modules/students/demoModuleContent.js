@@ -150,9 +150,9 @@ export const demoModuleContent = {
     ],
   },
   calendar: {
-    title: 'Academic Calendar',
-    subtitle: 'Calendar view for classes, tests, holidays, admissions, and academic events.',
-    actions: ['Add Event', 'Publish Calendar', 'Download Calendar'],
+    title: 'Curriculum',
+    subtitle: 'Curriculum view for classes, tests, holidays, admissions, and academic events.',
+    actions: ['Add Event', 'Publish Curriculum', 'Download Curriculum'],
     rows: [
       ['Orientation Day', '01 Jun 2026', 'Published'],
       ['Internal Test - Physics', '13 Jun 2026', 'Active'],

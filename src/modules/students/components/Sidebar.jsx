@@ -18,7 +18,7 @@ export default function Sidebar({ activePage, collapsed = false, currentUser, on
     });
 
   return (
-    <aside className={`erp-sidebar bg-white border-r border-slate-200 shrink-0 hidden lg:flex flex-col transition-all duration-200 ${collapsed ? 'w-[92px]' : 'w-[276px]'}`}>
+    <aside className={`erp-sidebar ${collapsed ? 'is-collapsed' : ''} bg-white border-r border-slate-200 shrink-0 hidden lg:flex flex-col transition-all duration-300`}>
       <div className={collapsed ? 'px-5 pt-5 pb-4' : 'px-9 pt-5 pb-4'}>
         <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
           <div className="h-12 w-12 rounded-full border-2 border-emerald-700 flex items-center justify-center text-emerald-700 shrink-0">

@@ -28,21 +28,25 @@ const roleUsers = [
     name: 'ERP Super Admin',
     email: 'superadmin@college.edu',
     roleId: 'super-admin',
+    displayId: 'SA-001',
   },
   {
     name: 'College Admin',
     email: 'admin@college.edu',
     roleId: 'admin',
+    displayId: 'ADM-001',
   },
   {
     name: 'Faculty User',
     email: 'faculty@college.edu',
     roleId: 'faculty',
+    displayId: 'EMP-1001',
   },
   {
     name: 'Parent User',
     email: 'parent.vivek@example.com',
     roleId: 'parent',
+    displayId: 'PAR-001',
   },
 ];
 
@@ -75,6 +79,7 @@ for (const user of roleUsers) {
     name: user.name,
     email: user.email,
     roleId: user.roleId,
+    displayId: user.displayId,
     collegeIds: ['main-campus'],
     status: 'Active',
     createdAtText: '21 Jun 2026',

@@ -23,7 +23,7 @@ export const moduleRegistry = [
   },
   {
     id: 'calendar',
-    label: 'Academic Curriculum',
+    label: 'Curriculum',
     path: '/modules/calendar',
     group: 'Academic Management',
     icon: CalendarDays,

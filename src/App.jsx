@@ -81,6 +81,7 @@ export default function App() {
         roleId,
         status: profile?.status || 'Active',
         permissions: profile?.permissions || [],
+        displayId: profile?.displayId || profile?.adminId || profile?.employeeId || '',
         collegeIds: profile?.collegeIds || ['main-campus'],
       });
       setAuthLoading(false);

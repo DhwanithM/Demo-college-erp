@@ -22,6 +22,7 @@ import {
   createStudentTransfer,
   updateStudentDocument,
   getStudentInformationData,
+  getSettingsData,
   archiveStudent,
   restoreStudent,
   updateStudent,
@@ -52,6 +53,7 @@ import ParentPortal from '../parentPortal/ParentPortal';
 import { canAccess, defaultRoles } from '../userRoles/rolePermissions';
 import AcademicsManagement from '../academics/AcademicsManagement';
 import SettingsManagement from '../settings/SettingsManagement';
+import { demoInstituteSettings } from '../settings/demoSettings';
 
 const tabs = [
   { id: 'admissions', label: 'Admissions', icon: <Plus size={15} /> },
@@ -203,6 +205,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
   const [documentUploading, setDocumentUploading] = useState(false);
   const [documentType, setDocumentType] = useState('Admission Form');
   const [academicYear, setAcademicYear] = useState('2026-2027');
+  const [institute, setInstitute] = useState(demoInstituteSettings);
   const [promotionDraft, setPromotionDraft] = useState({ toClass: '', reason: '' });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const documentInputRef = useRef(null);
@@ -229,6 +232,18 @@ export default function StudentInformationManagement({ user, onLogout }) {
       setActivePage(accessibleModules[0]?.id || 'dashboard');
     }
   }, [accessibleModules, activePage, canViewStudents]);
+
+  useEffect(() => {
+    const loadShellSettings = async () => {
+      try {
+        const data = await getSettingsData();
+        if (data.institute) setInstitute(data.institute);
+      } catch (error) {
+        console.warn('Using demo institute settings because Firestore is not reachable.', error);
+      }
+    };
+    loadShellSettings();
+  }, []);
 
   useEffect(() => {
     const loadStudentInformation = async () => {
@@ -616,6 +631,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
             <TopHeader
               academicYear={academicYear}
               academicYears={academicYearOptions}
+              institute={institute}
               onAcademicYearChange={setAcademicYear}
               onMenuToggle={() => setSidebarCollapsed((prev) => !prev)}
               onNavigate={setActivePage}

@@ -96,7 +96,7 @@ const collections = {
   },
   users: {
     purpose: 'ERP user profiles linked to Firebase Auth users',
-    fields: ['uid', 'name', 'email', 'roleId', 'collegeIds', 'status', 'createdBy', 'createdAtText', 'updatedAtText'],
+    fields: ['uid', 'name', 'email', 'roleId', 'displayId', 'collegeIds', 'status', 'createdBy', 'createdAtText', 'updatedAtText'],
   },
   roles: {
     purpose: 'ERP role definitions and permission maps',
@@ -208,7 +208,7 @@ const collections = {
   },
   systemSettings: {
     purpose: 'Institute profile, academic year, ID formats, and module defaults',
-    fields: ['id', 'name', 'email', 'phone', 'address', 'city', 'startsOn', 'endsOn', 'student', 'admission', 'employee', 'receipt', 'studentAdmissions', 'staffLeave', 'timetablePublishing', 'parentPortal', 'onlinePayments', 'receiptGeneration', 'communicationModule', 'updatedAtText'],
+    fields: ['id', 'name', 'instituteId', 'code', 'email', 'phone', 'address', 'city', 'startsOn', 'endsOn', 'student', 'admission', 'employee', 'receipt', 'studentAdmissions', 'staffLeave', 'timetablePublishing', 'parentPortal', 'onlinePayments', 'receiptGeneration', 'communicationModule', 'updatedAtText'],
   },
 };
 

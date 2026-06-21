@@ -10,7 +10,6 @@ export default function DemoModulePage({ page, onOpenStudents }) {
     <div>
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-6 border-b border-slate-100">
         <div>
-          <div className="text-sm font-bold text-slate-500 mb-2">ERP / <span className="text-[#f39a5f]">{current.title}</span></div>
           <h1 className="text-2xl font-bold text-slate-900">{current.title}</h1>
           <p className="text-sm text-slate-500 mt-1">{current.subtitle}</p>
         </div>
@@ -38,8 +37,8 @@ export default function DemoModulePage({ page, onOpenStudents }) {
         ))}
       </div>
 
-      <div className="bg-white border border-slate-100 rounded-xl shadow-sm overflow-hidden">
-        <div className="grid grid-cols-3 bg-[#e7e7e9] text-sm font-bold text-slate-900">
+      <div className="erp-demo-table border border-slate-100 rounded-xl shadow-sm overflow-hidden">
+        <div className="grid grid-cols-3 bg-[#101e26] text-sm font-bold text-slate-500">
           <div className="px-5 py-3">Item</div>
           <div className="px-5 py-3">Details</div>
           <div className="px-5 py-3">Status</div>
@@ -48,7 +47,7 @@ export default function DemoModulePage({ page, onOpenStudents }) {
           <button
             key={item}
             onClick={() => toast.success(`${item} opened`)}
-            className="grid grid-cols-3 w-full text-left border-t border-slate-100 hover:bg-slate-50 text-sm"
+            className="grid grid-cols-3 w-full text-left border-t border-slate-100 bg-transparent hover:bg-[#101e26] text-sm"
           >
             <div className="px-5 py-4 font-semibold text-slate-900">{item}</div>
             <div className="px-5 py-4 text-slate-600">{detail}</div>
