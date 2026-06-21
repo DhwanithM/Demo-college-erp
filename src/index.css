@@ -124,6 +124,28 @@ html{color-scheme:dark}::selection{background:rgba(0,255,136,.2);color:#fff}::-w
   color:var(--erp-text)!important;
 }
 
+.erp-shell.light-mode .erp-workspace {
+  box-shadow:0 14px 40px rgba(66,78,112,.10)!important;
+}
+
+.erp-shell.light-mode [class*="rounded-lg"],
+.erp-shell.light-mode [class*="rounded-xl"],
+.erp-shell.light-mode table tbody tr {
+  border-color:#dde3ef!important;
+}
+
+.erp-shell.light-mode [class*="rounded-lg"]:not(button):not(input):not(select):not(textarea),
+.erp-shell.light-mode [class*="rounded-xl"]:not(button):not(input):not(select):not(textarea) {
+  box-shadow:0 0 0 1px #dde3ef, 0 10px 26px rgba(66,78,112,.06)!important;
+}
+
+.erp-shell.light-mode .erp-sidebar [class*="rounded-lg"],
+.erp-shell.light-mode .erp-header [class*="rounded-lg"],
+.erp-shell.light-mode .erp-sidebar [class*="rounded-xl"],
+.erp-shell.light-mode .erp-header [class*="rounded-xl"] {
+  box-shadow:none!important;
+}
+
 .erp-shell.light-mode h1 {
   background:none!important;
   -webkit-text-fill-color:var(--erp-text)!important;
@@ -149,8 +171,9 @@ html{color-scheme:dark}::selection{background:rgba(0,255,136,.2);color:#fff}::-w
 .erp-shell.light-mode select,
 .erp-shell.light-mode textarea {
   background:rgba(255,255,255,.86)!important;
-  border-color:var(--erp-border)!important;
+  border-color:#d8deeb!important;
   color:var(--erp-text)!important;
+  box-shadow:0 0 0 1px rgba(216,222,235,.45)!important;
 }
 
 .erp-shell.light-mode table thead,
@@ -166,7 +189,7 @@ html{color-scheme:dark}::selection{background:rgba(0,255,136,.2);color:#fff}::-w
 .erp-shell.light-mode table tbody td[class~="bg-white"] {
   background:#ffffff!important;
   color:var(--erp-text)!important;
-  box-shadow:0 0 0 1px var(--erp-border)!important;
+  box-shadow:0 0 0 1px #dde3ef!important;
 }
 
 .erp-shell.light-mode .erp-theme-toggle,
@@ -174,6 +197,15 @@ html{color-scheme:dark}::selection{background:rgba(0,255,136,.2);color:#fff}::-w
   background:#f1f3fb!important;
   color:#6576d8!important;
   border-color:#e4e8f2!important;
+}
+
+.erp-shell.light-mode button:not(.erp-theme-toggle):not(.erp-notification-button) {
+  border-color:#d8deeb!important;
+}
+
+.erp-shell.light-mode button:not([class*="bg-[#fb"]):not([class*="bg-orange"]):not([class*="bg-[#333"]):not([class*="bg-[#343"]):not(:disabled) {
+  background:#ffffff!important;
+  color:#657084!important;
 }
 
 .erp-shell.light-mode .erp-sidebar > div:first-child > div > div:first-child {
