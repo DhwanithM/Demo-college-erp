@@ -536,6 +536,14 @@ export async function createAcademicCalendarEvent(data) {
   return createCollectionDocument('academicCalendarEvents', data);
 }
 
+export async function updateAcademicCalendarEvent(id, data) {
+  requireDb();
+  await updateDoc(doc(db, 'academicCalendarEvents', id), {
+    ...data,
+    updatedAt: serverTimestamp(),
+  });
+}
+
 export async function getSettingsData() {
   const [settings] = await Promise.all([
     listCollection('systemSettings'),

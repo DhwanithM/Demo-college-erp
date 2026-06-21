@@ -2,7 +2,7 @@ import { Archive, Edit3 } from 'lucide-react';
 import StatusBadge from '../../students/components/StatusBadge';
 import { timeSlots, weekDays } from '../timetableUtils';
 
-export default function TimetableGrid({ canArchive, canEdit, entries, onArchive, onEdit }) {
+export default function TimetableGrid({ canArchive, canCreate, canEdit, entries, onArchive, onCreate, onEdit, selectedClass }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm border-separate border-spacing-1">
@@ -44,7 +44,17 @@ export default function TimetableGrid({ canArchive, canEdit, entries, onArchive,
                           </div>
                         </div>
                       ))}
-                      {!dayEntries.length && <div className="text-xs text-slate-400 p-2">No class</div>}
+                      {!dayEntries.length && (
+                        <button
+                          type="button"
+                          disabled={!canCreate}
+                          onClick={() => onCreate({ day, timeSlot: slot, classKey: selectedClass === 'All' ? '' : selectedClass })}
+                          className="w-full min-h-16 rounded-md border border-dashed border-slate-200 p-2 text-left text-xs text-slate-400 hover:border-emerald-300 hover:text-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
+                          title={canCreate ? 'Add timetable entry' : 'No permission to create timetable entries'}
+                        >
+                          + Add class
+                        </button>
+                      )}
                     </div>
                   </td>
                 );

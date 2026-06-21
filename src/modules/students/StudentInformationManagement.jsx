@@ -52,6 +52,7 @@ import DocumentManagement from '../documents/DocumentManagement';
 import ParentPortal from '../parentPortal/ParentPortal';
 import { canAccess, defaultRoles } from '../userRoles/rolePermissions';
 import AcademicsManagement from '../academics/AcademicsManagement';
+import CurriculumManagement from '../curriculum/CurriculumManagement';
 import SettingsManagement from '../settings/SettingsManagement';
 import { demoInstituteSettings } from '../settings/demoSettings';
 
@@ -903,6 +904,8 @@ export default function StudentInformationManagement({ user, onLogout }) {
                   <FacultyStaffManagement currentUser={user} academicYear={academicYear} />
                 ) : activePage === 'academics' ? (
                   <AcademicsManagement currentUser={user} academicYear={academicYear} />
+                ) : activePage === 'calendar' ? (
+                  <CurriculumManagement currentUser={user} academicYear={academicYear} />
                 ) : activePage === 'attendance' ? (
                   <AttendanceManagement currentUser={user} academicYear={academicYear} />
                 ) : activePage === 'timetable' ? (

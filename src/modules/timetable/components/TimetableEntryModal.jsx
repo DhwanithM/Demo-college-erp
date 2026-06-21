@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { timeSlots, weekDays } from '../timetableUtils';
 
-export default function TimetableEntryModal({ classOptions, classrooms, faculty, initialEntry = null, mode = 'create', onClose, onSave }) {
+export default function TimetableEntryModal({ classOptions, classrooms, faculty, initialEntry = null, initialValues = {}, mode = 'create', onClose, onSave }) {
   const isEdit = mode === 'edit';
   const [form, setForm] = useState({
-    classKey: initialEntry?.classKey || classOptions[0] || '',
+    classKey: initialEntry?.classKey || initialValues.classKey || classOptions[0] || '',
     subject: initialEntry?.subject || '',
     facultyId: initialEntry?.facultyId || faculty[0]?.id || '',
     classroomId: initialEntry?.classroomId || classrooms[0]?.id || '',
-    day: initialEntry?.day || weekDays[0],
-    timeSlot: initialEntry?.timeSlot || timeSlots[0],
+    day: initialEntry?.day || initialValues.day || weekDays[0],
+    timeSlot: initialEntry?.timeSlot || initialValues.timeSlot || timeSlots[0],
   });
 
   const submit = (event) => {

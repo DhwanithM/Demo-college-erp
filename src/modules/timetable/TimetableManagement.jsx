@@ -30,6 +30,7 @@ export default function TimetableManagement({ currentUser, academicYear = '2026-
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [showEntryModal, setShowEntryModal] = useState(false);
+  const [entryDefaults, setEntryDefaults] = useState({});
   const [editingEntry, setEditingEntry] = useState(null);
 
   useEffect(() => {
@@ -195,6 +196,11 @@ export default function TimetableManagement({ currentUser, academicYear = '2026-
     }
   };
 
+  const openEntryModal = (defaults = {}) => {
+    setEntryDefaults(defaults);
+    setShowEntryModal(true);
+  };
+
   return (
     <div>
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-6 border-b border-slate-100">
@@ -212,7 +218,7 @@ export default function TimetableManagement({ currentUser, academicYear = '2026-
           <button onClick={publishTimetable} disabled={!canPublish} className="h-10 px-5 rounded-lg bg-[#33373e] text-white font-semibold text-sm disabled:bg-slate-300">
             Publish
           </button>
-          <button onClick={() => setShowEntryModal(true)} disabled={!canCreate} className="h-10 px-5 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm flex items-center gap-2 disabled:bg-slate-300">
+          <button onClick={() => openEntryModal()} disabled={!canCreate} className="h-10 px-5 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm flex items-center gap-2 disabled:bg-slate-300">
             <Plus size={16} /> New Entry
           </button>
         </div>
@@ -247,7 +253,16 @@ export default function TimetableManagement({ currentUser, academicYear = '2026-
             <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search subject, faculty, classroom..." className="w-full h-11 rounded-lg bg-[#f0f0f2] border-0 pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-orange-100" />
           </div>
-          <TimetableGrid entries={filteredEntries} canEdit={canEdit} canArchive={canEdit} onEdit={setEditingEntry} onArchive={archiveEntry} />
+          <TimetableGrid
+            entries={filteredEntries}
+            canCreate={canCreate}
+            canEdit={canEdit}
+            canArchive={canEdit}
+            selectedClass={selectedClass}
+            onCreate={openEntryModal}
+            onEdit={setEditingEntry}
+            onArchive={archiveEntry}
+          />
         </div>
 
         <TimetableSidePanel classrooms={classrooms} facultyEntries={filteredEntries} publications={publications} selectedClass={selectedClass === 'All' ? '' : selectedClass} />
@@ -258,7 +273,11 @@ export default function TimetableManagement({ currentUser, academicYear = '2026-
           classOptions={classOptions}
           classrooms={classrooms}
           faculty={faculty}
-          onClose={() => setShowEntryModal(false)}
+          initialValues={entryDefaults}
+          onClose={() => {
+            setShowEntryModal(false);
+            setEntryDefaults({});
+          }}
           onSave={saveEntry}
         />
       )}
