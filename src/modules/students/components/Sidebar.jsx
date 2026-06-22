@@ -7,7 +7,7 @@ export default function Sidebar({ activePage, collapsed = false, currentUser, in
   const collegeName = institute?.name || currentUser?.selectedCollege?.name || 'College';
   const navItems = getEnabledModules()
     .filter((module) => !module.permission || canAccess(defaultRoles, currentRoleId, module.permission))
-    .filter((module) => !module.hideFromSidebar && !module.footer)
+    .filter((module) => !module.footer)
     .map((module) => {
       const Icon = module.icon;
       return {

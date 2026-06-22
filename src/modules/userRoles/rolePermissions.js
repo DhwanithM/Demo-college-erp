@@ -149,12 +149,9 @@ export const defaultRoles = [
     locked: false,
     permissions: [
       'attendance.view',
-      'attendance.markStudents',
-      'attendance.reports',
       'academicCurriculum.view',
       'timetable.view',
       'exams.view',
-      'exams.marks',
       'notices.view',
     ],
   },
@@ -166,6 +163,8 @@ export const defaultRoles = [
     permissions: [
       'academicCurriculum.view',
       'timetable.view',
+      'exams.view',
+      'documents.view',
       'parentPortal.view',
     ],
   },

@@ -14,24 +14,29 @@ assert.equal(getModuleById('missing-module'), null);
 const modulesWithoutPermission = moduleRegistry.filter((module) => !module.permission);
 assert.deepEqual(modulesWithoutPermission, []);
 
-const sidebarVisible = enabled.filter((module) => !module.hideFromSidebar && !module.footer).map((module) => module.id);
+const sidebarVisible = enabled.filter((module) => !module.footer).map((module) => module.id);
 assert.deepEqual(sidebarVisible, [
   'dashboard',
   'students',
+  'calendar',
+  'academics',
   'faculty-staff',
   'attendance',
   'timetable',
   'examination-results',
+  'user-roles',
+  'notice-board',
   'document-management',
   'fees',
   'financial-reports',
+  'parent-portal',
 ]);
 
 const footerVisible = enabled.filter((module) => module.footer).map((module) => module.id);
 assert.deepEqual(footerVisible, ['settings']);
 
 const parentVisible = enabled.filter((module) => canAccess(defaultRoles, 'parent', module.permission)).map((module) => module.id);
-assert.deepEqual(parentVisible, ['calendar', 'timetable', 'parent-portal']);
+assert.deepEqual(parentVisible, ['calendar', 'timetable', 'examination-results', 'document-management', 'parent-portal']);
 
 const facultyVisible = enabled.filter((module) => canAccess(defaultRoles, 'faculty', module.permission)).map((module) => module.id);
 assert.equal(facultyVisible.includes('calendar'), true);
@@ -41,6 +46,22 @@ assert.equal(facultyVisible.includes('notice-board'), true);
 assert.equal(facultyVisible.includes('document-management'), false);
 assert.equal(facultyVisible.includes('fees'), false);
 assert.equal(facultyVisible.includes('financial-reports'), false);
+
+const adminVisible = enabled.filter((module) => canAccess(defaultRoles, 'admin', module.permission)).map((module) => module.id);
+assert.deepEqual(adminVisible, [
+  'dashboard',
+  'students',
+  'calendar',
+  'academics',
+  'faculty-staff',
+  'attendance',
+  'timetable',
+  'examination-results',
+  'notice-board',
+  'document-management',
+  'fees',
+  'financial-reports',
+]);
 
 const remainingDemo = enabled.filter((module) => module.status === 'demo').map((module) => module.id);
 assert.deepEqual(remainingDemo, []);
