@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ArrowLeft,
   ArrowRight,
+  Archive as ArchiveIcon,
   CheckCircle,
   Download,
   Edit3,
@@ -195,6 +197,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
   const [activePage, setActivePage] = useState('dashboard');
   const [activeTab, setActiveTab] = useState('admissions');
   const [activeStudentTask, setActiveStudentTask] = useState('');
+  const [activeStudentBranch, setActiveStudentBranch] = useState('');
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState(demoStudents[0].id);
   const [admissions, setAdmissions] = useState([]);
@@ -231,6 +234,34 @@ export default function StudentInformationManagement({ user, onLogout }) {
   useEffect(() => {
     localStorage.setItem('erpThemeMode', themeMode);
   }, [themeMode]);
+
+  useEffect(() => {
+    const currentState = window.history.state || {};
+    window.history.replaceState({
+      ...currentState,
+      studentFlow: currentState.studentFlow || { page: 'dashboard', task: '', branch: '' },
+    }, '');
+
+    const handleHistoryBack = (event) => {
+      setShowModal(false);
+      setEditingStudent(null);
+      const flow = event.state?.studentFlow;
+      if (!flow) {
+        setActivePage('dashboard');
+        setActiveStudentTask('');
+        setActiveStudentBranch('');
+        return;
+      }
+      setActivePage(flow.page || 'dashboard');
+      setActiveStudentTask(flow.task || '');
+      setActiveStudentBranch(flow.branch || '');
+      if (flow.tab) setActiveTab(flow.tab);
+      if (flow.statusFilter) setStatusFilter(flow.statusFilter);
+    };
+
+    window.addEventListener('popstate', handleHistoryBack);
+    return () => window.removeEventListener('popstate', handleHistoryBack);
+  }, []);
 
   useEffect(() => {
     const isActivePageAllowed = activePage === 'reports'
@@ -318,77 +349,180 @@ export default function StudentInformationManagement({ user, onLogout }) {
     { label: 'Profiles Completed', value: yearStudents.filter((s) => s.status !== 'Archived' && s.email && s.guardianName && s.idHolder).length, icon: <UserRound size={22} /> },
     { label: 'Documents Stored', value: studentDocuments.filter((item) => item.academicYear === academicYear).length || yearStudents.reduce((sum, s) => sum + (s.documents?.length || 0), 0), icon: <FileText size={22} /> },
   ];
+
+  const pushStudentFlow = ({ page = 'dashboard', task = '', branch = '', tab = activeTab, nextStatusFilter = statusFilter }) => {
+    window.history.pushState({
+      ...(window.history.state || {}),
+      studentFlow: { page, task, branch, tab, statusFilter: nextStatusFilter },
+    }, '');
+  };
+
+  const openStudentTask = (taskId, tabId = taskId) => {
+    setActivePage('dashboard');
+    setActiveTab(tabId);
+    setActiveStudentTask(taskId);
+    setActiveStudentBranch('');
+    pushStudentFlow({ task: taskId, branch: '', tab: tabId });
+  };
+
+  const openStudentBranch = ({ branchId, tabId = activeStudentTask, nextStatusFilter = 'active', openModal = false }) => {
+    setActiveTab(tabId);
+    setStatusFilter(nextStatusFilter);
+    setActiveStudentBranch(branchId);
+    pushStudentFlow({ task: activeStudentTask, branch: branchId, tab: tabId, nextStatusFilter });
+    if (openModal) setShowModal(true);
+  };
+
+  const openStudentReports = () => {
+    setActivePage('reports');
+    setActiveStudentTask('reports');
+    setActiveStudentBranch('student-report');
+    pushStudentFlow({ page: 'reports', task: 'reports', branch: 'student-report', tab: 'reports' });
+  };
+
+  const goBackOneStudentStep = () => {
+    if (window.history.state?.studentFlow) {
+      window.history.back();
+      return;
+    }
+    if (activeStudentBranch) {
+      setActiveStudentBranch('');
+    } else {
+      setActiveStudentTask('');
+    }
+  };
+
   const studentTaskOptions = [
     {
       id: 'admissions',
       title: 'Admissions',
-      description: 'Start a new admission or review recently created admission records.',
+      description: 'Add or review admission records.',
       icon: <Plus size={22} />,
-      actionLabel: canCreateAdmission ? 'New or review admission' : 'Review admissions',
       meta: [
         `${admissions.filter((item) => item.academicYear === academicYear).length || yearStudents.length} records`,
         canCreateAdmission ? 'Can add new' : 'View only',
       ],
-      onOpen: () => {
-        setActiveTab('admissions');
-        setActiveStudentTask('admissions');
-      },
+      onOpen: () => openStudentTask('admissions'),
     },
     {
       id: 'profiles',
       title: 'Student Profiles',
-      description: 'Find a student, check their details, edit profile data, or download the record.',
+      description: 'Find, edit, archive, or download student details.',
       icon: <UserRound size={22} />,
-      actionLabel: 'Search and manage profiles',
       meta: [
         `${yearStudents.filter((student) => student.status !== 'Archived').length} active`,
         `${yearStudents.filter((student) => student.status === 'Archived').length} archived`,
       ],
-      onOpen: () => {
-        setActiveTab('profiles');
-        setActiveStudentTask('profiles');
-      },
+      onOpen: () => openStudentTask('profiles'),
     },
     {
       id: 'documents',
       title: 'Documents',
-      description: 'Open the document repository for a selected student and verify or upload files.',
+      description: 'Upload, open, verify, or reject student files.',
       icon: <FileText size={22} />,
-      actionLabel: 'Manage documents',
       meta: [
         `${studentDocuments.filter((item) => item.academicYear === academicYear).length || yearStudents.reduce((sum, student) => sum + (student.documents?.length || 0), 0)} stored`,
         canManageStudentDocuments ? 'Upload enabled' : 'View only',
       ],
-      onOpen: () => {
-        setActiveTab('documents');
-        setActiveStudentTask('documents');
-      },
+      onOpen: () => openStudentTask('documents'),
     },
     {
       id: 'promotion',
       title: 'Promotion & Transfer',
-      description: 'Review promotion status, update next class, and keep transfer notes together.',
+      description: 'Update class movement and transfer notes.',
       icon: <GraduationCap size={22} />,
-      actionLabel: 'Open promotion flow',
       meta: [
         `${promotions.filter((item) => item.academicYear === academicYear).length} promotions`,
         canPromoteStudents ? 'Update enabled' : 'View only',
       ],
-      onOpen: () => {
-        setActiveTab('promotion');
-        setActiveStudentTask('promotion');
-      },
+      onOpen: () => openStudentTask('promotion'),
     },
     {
       id: 'reports',
       title: 'Student Reports',
-      description: 'View, print, or download academic-year student summaries.',
+      description: 'Print or download student summaries.',
       icon: <Eye size={22} />,
-      actionLabel: 'View reports',
       meta: [`${yearStudents.length} students`, academicYear],
-      onOpen: () => setActivePage('reports'),
+      onOpen: openStudentReports,
     },
   ];
+
+  const studentBranchOptions = {
+    admissions: [
+      {
+        id: 'new-admission',
+        title: 'New Admission',
+        description: 'Open the admission form.',
+        icon: <Plus size={20} />,
+        disabled: !canCreateAdmission,
+        disabledText: 'No create permission',
+        onOpen: () => openStudentBranch({ branchId: 'new-admission', tabId: 'admissions', openModal: canCreateAdmission }),
+      },
+      {
+        id: 'review-admission',
+        title: 'Review Admission',
+        description: 'Search and select an admission record.',
+        icon: <Search size={20} />,
+        onOpen: () => openStudentBranch({ branchId: 'review-admission', tabId: 'admissions' }),
+      },
+    ],
+    profiles: [
+      {
+        id: 'active-profiles',
+        title: 'Active Students',
+        description: 'Search current student profiles.',
+        icon: <UserRound size={20} />,
+        onOpen: () => openStudentBranch({ branchId: 'active-profiles', tabId: 'profiles', nextStatusFilter: 'active' }),
+      },
+      {
+        id: 'archived-profiles',
+        title: 'Archived Students',
+        description: 'Review or restore archived profiles.',
+        icon: <ArchiveIcon size={20} />,
+        onOpen: () => openStudentBranch({ branchId: 'archived-profiles', tabId: 'profiles', nextStatusFilter: 'archived' }),
+      },
+    ],
+    documents: [
+      {
+        id: 'view-documents',
+        title: 'View Documents',
+        description: 'Open, verify, or reject files.',
+        icon: <FileText size={20} />,
+        onOpen: () => openStudentBranch({ branchId: 'view-documents', tabId: 'documents' }),
+      },
+      {
+        id: 'upload-documents',
+        title: 'Upload Document',
+        description: 'Select a student, then upload a file.',
+        icon: <Upload size={20} />,
+        disabled: !canManageStudentDocuments,
+        disabledText: 'No upload permission',
+        onOpen: () => openStudentBranch({ branchId: 'upload-documents', tabId: 'documents' }),
+      },
+    ],
+    promotion: [
+      {
+        id: 'promote-student',
+        title: 'Promote Student',
+        description: 'Choose next class and save.',
+        icon: <GraduationCap size={20} />,
+        disabled: !canPromoteStudents,
+        disabledText: 'View only',
+        onOpen: () => openStudentBranch({ branchId: 'promote-student', tabId: 'promotion' }),
+      },
+      {
+        id: 'transfer-status',
+        title: 'Transfer Status',
+        description: 'Review transfer state and notes.',
+        icon: <ArrowRight size={20} />,
+        onOpen: () => openStudentBranch({ branchId: 'transfer-status', tabId: 'promotion' }),
+      },
+    ],
+  };
+
+  const activeTask = studentTaskOptions.find((task) => task.id === activeStudentTask);
+  const activeBranches = studentBranchOptions[activeStudentTask] || [];
+  const activeBranch = activeBranches.find((branch) => branch.id === activeStudentBranch);
 
   const saveStudent = async (form) => {
     if (!canCreateAdmission) {
@@ -736,16 +870,11 @@ export default function StudentInformationManagement({ user, onLogout }) {
                     {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist records.</p>}
                     {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
                   </div>
-                  {activeStudentTask === 'admissions' && canCreateAdmission && (
-                    <button onClick={() => setShowModal(true)} className="h-10 px-5 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm flex items-center gap-2">
-                      <Plus size={16} /> New Admission
-                    </button>
-                  )}
                 </div>
 
-                <StudentStats loading={loading} stats={stats} />
-
                 {!activeStudentTask ? (
+                <>
+                  <StudentStats loading={loading} stats={stats} />
                   <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {studentTaskOptions.map((task) => (
                       <button
@@ -768,37 +897,67 @@ export default function StudentInformationManagement({ user, onLogout }) {
                             </span>
                           ))}
                         </div>
-                        <div className="mt-4 text-xs font-bold uppercase tracking-wide text-[#fb8d49]">{task.actionLabel}</div>
+                        <div className="mt-4 text-xs font-bold uppercase tracking-wide text-[#fb8d49]">Open</div>
                       </button>
                     ))}
                   </div>
+                </>
+                ) : !activeStudentBranch ? (
+                <>
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-5 rounded-lg bg-[#f5f5f6] p-4">
+                    <div>
+                      <div className="text-xs font-bold text-slate-500">Students / <span className="text-[#fb8d49]">{activeTask?.title}</span></div>
+                      <h2 className="text-lg font-bold text-slate-900 mt-1">Choose next step</h2>
+                    </div>
+                    <button
+                      onClick={goBackOneStudentStep}
+                      className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2"
+                    >
+                      <ArrowLeft size={15} /> Back
+                    </button>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {activeBranches.map((branch) => (
+                      <button
+                        key={branch.id}
+                        onClick={branch.onOpen}
+                        disabled={branch.disabled}
+                        className="group min-h-36 text-left rounded-lg border border-slate-100 bg-white p-5 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="h-11 w-11 rounded-lg bg-[#f5f5f6] text-[#34363d] flex items-center justify-center">
+                            {branch.icon}
+                          </div>
+                          <ArrowRight size={17} className="text-slate-400 group-hover:text-[#fb8d49] transition-colors" />
+                        </div>
+                        <h3 className="text-base font-bold text-slate-900 mt-4">{branch.title}</h3>
+                        <p className="text-sm text-slate-500 mt-2">{branch.disabled ? branch.disabledText : branch.description}</p>
+                      </button>
+                    ))}
+                  </div>
+                </>
                 ) : (
                 <>
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-5 rounded-lg bg-[#f5f5f6] p-4">
                   <div>
-                    <div className="text-xs font-bold text-slate-500">Students / Choose Task / <span className="text-[#fb8d49]">{tabs.find((tab) => tab.id === activeTab)?.label || 'Reports'}</span></div>
-                    <h2 className="text-lg font-bold text-slate-900 mt-1">{tabs.find((tab) => tab.id === activeTab)?.label || 'Student Task'}</h2>
+                    <div className="text-xs font-bold text-slate-500">Students / {activeTask?.title} / <span className="text-[#fb8d49]">{activeBranch?.title}</span></div>
+                    <h2 className="text-lg font-bold text-slate-900 mt-1">{activeBranch?.title || tabs.find((tab) => tab.id === activeTab)?.label}</h2>
                     <p className="text-sm text-slate-500 mt-1">
-                      {activeTab === 'admissions'
-                        ? 'Step 2: create a new admission or select an admission record to review.'
-                        : activeTab === 'profiles'
-                          ? 'Step 2: search for the student, then use the profile panel to view or edit details.'
-                          : activeTab === 'documents'
-                            ? 'Step 2: select a student first, then upload, open, verify, or reject documents.'
-                            : 'Step 2: select a student first, then update promotion and transfer details.'}
+                      {activeBranch?.description || 'Search, select, and continue.'}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {activeTab === 'admissions' && canCreateAdmission && (
+                    {activeStudentBranch === 'new-admission' && canCreateAdmission && (
                       <button onClick={() => setShowModal(true)} className="h-10 px-4 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm flex items-center gap-2">
-                        <Plus size={16} /> New Admission
+                        <Plus size={16} /> Open Form
                       </button>
                     )}
                     <button
-                      onClick={() => setActiveStudentTask('')}
-                      className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm"
+                      onClick={goBackOneStudentStep}
+                      className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2"
                     >
-                      Back to Student Tasks
+                      <ArrowLeft size={15} /> Back
                     </button>
                   </div>
                 </div>
@@ -814,6 +973,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
                         className="w-full h-11 rounded-lg bg-[#f0f0f2] border-0 pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-orange-100"
                       />
                     </div>
+                    {activeStudentTask === 'profiles' && (
                     <div className="flex items-center gap-2 mb-4">
                       {[
                         ['active', 'Active Records'],
@@ -832,6 +992,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
                         </button>
                       ))}
                     </div>
+                    )}
 
                     <StudentTable
                       canArchive={canArchiveStudents}
@@ -1008,7 +1169,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
                     admissions={admissions.filter((item) => item.academicYear === academicYear)}
                     documents={studentDocuments.filter((item) => item.academicYear === academicYear)}
                     promotions={promotions.filter((item) => item.academicYear === academicYear)}
-                    onBack={() => setActivePage('dashboard')}
+                    onBack={goBackOneStudentStep}
                   />
                 ) : activePage === 'faculty-staff' ? (
                   <FacultyStaffManagement currentUser={user} academicYear={academicYear} />
