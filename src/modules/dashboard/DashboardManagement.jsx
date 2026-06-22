@@ -1,4 +1,4 @@
-import { AlertCircle, CalendarDays, FileText, GraduationCap, Search, TrendingUp, Users, Wallet } from 'lucide-react';
+import { AlertCircle, CalendarDays, FileText, GraduationCap, TrendingUp, Users, Wallet } from 'lucide-react';
 import { demoStudents } from '../students/demoStudents';
 import { demoStaffMembers } from '../facultyStaff/demoFacultyStaff';
 import { demoFeeAssignments, demoFeeCollections } from '../fees/demoFees';
@@ -112,13 +112,6 @@ export default function DashboardManagement({ academicYear = '2026-2027', curren
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
           <p className="text-sm text-slate-500 mt-1">Today&apos;s college overview for {academicYear}.</p>
-        </div>
-        <div className="relative w-full xl:w-[420px]">
-          <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            placeholder="Search students, faculty, documents, receipts..."
-            className="w-full h-11 rounded-lg bg-[#f0f0f2] border-0 pl-10 pr-4 text-sm outline-none"
-          />
         </div>
       </div>
 
