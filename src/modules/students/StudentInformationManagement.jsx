@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   Download,
   Search,
-  UserRound,
   Users,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -173,7 +172,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
   const [students, setStudents] = useState(demoStudents);
   const [activePage, setActivePage] = useState('dashboard');
   const [search, setSearch] = useState('');
-  const [selectedId, setSelectedId] = useState(demoStudents[0].id);
+  const [selectedId, setSelectedId] = useState('');
   const [admissions, setAdmissions] = useState([]);
   const [studentDocuments, setStudentDocuments] = useState([]);
   const [promotions, setPromotions] = useState([]);
@@ -252,7 +251,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
         const data = await getStudentInformationData(academicYear);
         if (data.students.length || isFirebaseConfigured) {
           setStudents(data.students);
-          setSelectedId(data.students[0]?.id || '');
+          setSelectedId('');
         }
         setAdmissions(data.admissions);
         setStudentDocuments(data.documents);
@@ -534,7 +533,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
                 </div>
 
                 <div className="flex flex-col xl:flex-row gap-5">
-                  <div className="xl:w-[70%] min-w-0">
+                  <div className={`${selectedStudent ? 'xl:w-[70%]' : 'xl:w-full'} min-w-0 transition-all duration-300`}>
                     <div className="relative mb-4">
                       <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                       <input
@@ -578,9 +577,9 @@ export default function StudentInformationManagement({ user, onLogout }) {
                     />
                   </div>
 
+                  {selectedStudent && (
                   <aside className="xl:w-[30%]">
-                    {selectedStudent ? (
-                      <div className="erp-selected-detail">
+                      <div key={selectedStudent.id} className="erp-selected-detail">
                     <StudentProfileCard canEdit={canEditStudents} student={selectedStudent} onEdit={setEditingStudent} />
 
                     <div className="bg-white border border-slate-100 rounded-lg p-5 shadow-sm">
@@ -594,16 +593,8 @@ export default function StudentInformationManagement({ user, onLogout }) {
                       </div>
                     </div>
                       </div>
-                    ) : (
-                      <div className="bg-white border border-slate-100 rounded-lg p-6 shadow-sm text-sm text-slate-600 min-h-72 flex flex-col items-center justify-center text-center">
-                        <div className="h-14 w-14 rounded-lg bg-[#f5f5f6] text-[#fb8d49] flex items-center justify-center mb-4">
-                          <UserRound size={24} />
-                        </div>
-                        <h3 className="font-bold text-slate-900 mb-2">Student Information</h3>
-                        <p>{filteredStudents.length ? 'Click a student row to display his or her information.' : `No student records are available for academic year ${academicYear}.`}</p>
-                      </div>
-                    )}
                   </aside>
+                  )}
                 </div>
                 </>
                 </>
