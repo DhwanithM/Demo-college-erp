@@ -318,7 +318,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
   const recordBelongsToYear = (record) => record.academicYear === academicYear;
   const yearStudents = useMemo(() => students.filter((student) => student.academicYear === academicYear), [academicYear, students]);
 
-  const selectedStudent = yearStudents.find((student) => student.id === selectedId) || yearStudents[0] || null;
+  const selectedStudent = selectedId ? yearStudents.find((student) => student.id === selectedId) || null : null;
   const suggestedPromotionClass = getNextClassName(selectedStudent?.className || '');
   const selectedAdmissions = admissions.filter((record) => relationMatches(record, selectedStudent) && recordBelongsToYear(record));
   const selectedDocuments = studentDocuments.filter((record) => relationMatches(record, selectedStudent) && recordBelongsToYear(record));
@@ -368,6 +368,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
   const openStudentBranch = ({ branchId, tabId = activeStudentTask, nextStatusFilter = 'active', openModal = false }) => {
     setActiveTab(tabId);
     setStatusFilter(nextStatusFilter);
+    setSelectedId('');
     setActiveStudentBranch(branchId);
     pushStudentFlow({ task: activeStudentTask, branch: branchId, tab: tabId, nextStatusFilter });
     if (openModal) setShowModal(true);
@@ -524,6 +525,20 @@ export default function StudentInformationManagement({ user, onLogout }) {
   const activeBranches = studentBranchOptions[activeStudentTask] || [];
   const activeBranch = activeBranches.find((branch) => branch.id === activeStudentBranch);
   const branchShouldShowActions = activeStudentTask === 'profiles';
+  const selectedDetailTitle = activeStudentTask === 'documents'
+    ? 'Document Details'
+    : activeStudentTask === 'promotion'
+      ? 'Promotion Details'
+      : activeStudentTask === 'profiles'
+        ? 'Profile Details'
+        : 'Admission Details';
+  const selectedDetailHint = activeStudentTask === 'documents'
+    ? 'Click a student name to view documents and upload options.'
+    : activeStudentTask === 'promotion'
+      ? 'Click a student name to view promotion and transfer controls.'
+      : activeStudentTask === 'profiles'
+        ? 'Click a student name to view profile actions.'
+        : 'Click a student name to review admission details.';
   const branchAccentText = activeStudentBranch === 'new-admission'
     ? 'Admission form'
     : activeStudentTask === 'documents'
@@ -1029,12 +1044,12 @@ export default function StudentInformationManagement({ user, onLogout }) {
 
                   <aside className="xl:w-[30%]">
                     {selectedStudent ? (
-                      <>
+                      <div className="erp-selected-detail">
                     <StudentProfileCard canEdit={branchShouldShowActions && canEditStudents} student={selectedStudent} onEdit={setEditingStudent} />
 
                     <div className="bg-white border border-slate-100 rounded-lg p-5 shadow-sm">
                       <h3 className="font-bold mb-4">
-                        {activeTab === 'documents' ? 'Document Repository' : activeTab === 'promotion' ? 'Promotion & Transfer' : 'Module Actions'}
+                        {activeTab === 'documents' ? 'Document Repository' : activeTab === 'promotion' ? 'Promotion & Transfer' : selectedDetailTitle}
                       </h3>
                       {activeTab === 'documents' && (
                         <div className="space-y-3">
@@ -1161,16 +1176,14 @@ export default function StudentInformationManagement({ user, onLogout }) {
                         </div>
                       )}
                     </div>
-                      </>
+                      </div>
                     ) : (
-                      <div className="bg-white border border-slate-100 rounded-lg p-5 shadow-sm text-sm text-slate-600">
-                        <h3 className="font-bold text-slate-900 mb-2">No Students Found</h3>
-                        <p>No student records are available for academic year {academicYear}.</p>
-                        {canCreateAdmission && (
-                          <button onClick={() => setShowModal(true)} className="mt-4 w-full h-10 rounded-full bg-[#fb9a5b] text-white font-semibold">
-                            New Admission
-                          </button>
-                        )}
+                      <div className="bg-white border border-slate-100 rounded-lg p-6 shadow-sm text-sm text-slate-600 min-h-72 flex flex-col items-center justify-center text-center">
+                        <div className="h-14 w-14 rounded-lg bg-[#f5f5f6] text-[#fb8d49] flex items-center justify-center mb-4">
+                          {activeBranch?.icon || <UserRound size={24} />}
+                        </div>
+                        <h3 className="font-bold text-slate-900 mb-2">{selectedDetailTitle}</h3>
+                        <p>{filteredStudents.length ? selectedDetailHint : `No student records are available for academic year ${academicYear}.`}</p>
                       </div>
                     )}
                   </aside>
