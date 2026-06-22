@@ -232,7 +232,7 @@ export default function DashboardManagement({ academicYear = '2026-2027', curren
           </div>
           <div className="grid md:grid-cols-[180px_1fr] gap-6 items-center">
             <div className="relative h-44 w-44 mx-auto rounded-full" style={{ background: `conic-gradient(${pieGradient})` }}>
-              <div className="absolute inset-8 rounded-full bg-white flex flex-col items-center justify-center">
+              <div className="erp-dashboard-donut-hole absolute inset-8 rounded-full flex flex-col items-center justify-center">
                 <span className="text-3xl font-extrabold text-slate-900">78%</span>
                 <span className="text-xs text-slate-500">Collected</span>
               </div>
