@@ -509,7 +509,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
                     You do not have permission to open this module.
                   </div>
                 ) : activePage === 'dashboard' ? (
-                  <DashboardManagement academicYear={academicYear} onNavigate={setActivePage} />
+                  <DashboardManagement academicYear={academicYear} currentUser={user} onNavigate={setActivePage} />
                 ) : activePage === 'students' ? (
                 <>
                 <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-6 border-b border-slate-100">

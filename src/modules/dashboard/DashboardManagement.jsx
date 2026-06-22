@@ -1,11 +1,11 @@
-import { AlertCircle, Bell, CalendarDays, FileText, GraduationCap, Search, TrendingUp, Users, Wallet } from 'lucide-react';
+import { AlertCircle, CalendarDays, FileText, GraduationCap, Search, TrendingUp, Users, Wallet } from 'lucide-react';
 import { demoStudents } from '../students/demoStudents';
 import { demoStaffMembers } from '../facultyStaff/demoFacultyStaff';
-import { demoStudentAttendance, demoAttendanceNotifications } from '../attendance/demoAttendance';
 import { demoFeeAssignments, demoFeeCollections } from '../fees/demoFees';
 import { demoManagedDocuments } from '../documents/demoDocuments';
 import { demoExamSchedules } from '../exams/demoExams';
 import { formatCurrency } from '../fees/feeUtils';
+import { canAccess, defaultRoles } from '../userRoles/rolePermissions';
 
 function DashboardCard({ icon, label, value, helper, onClick }) {
   return (
@@ -25,13 +25,20 @@ function DashboardCard({ icon, label, value, helper, onClick }) {
   );
 }
 
-export default function DashboardManagement({ academicYear = '2026-2027', onNavigate }) {
+export default function DashboardManagement({ academicYear = '2026-2027', currentUser, onNavigate }) {
+  const currentRoleId = currentUser?.roleId || 'admin';
+  const canViewStudents = canAccess(defaultRoles, currentRoleId, 'students.view');
+  const canCreateStudents = canAccess(defaultRoles, currentRoleId, 'students.create');
+  const canViewStaff = canAccess(defaultRoles, currentRoleId, 'staff.view');
+  const canViewFees = canAccess(defaultRoles, currentRoleId, 'fees.view');
+  const canCollectFees = canAccess(defaultRoles, currentRoleId, 'fees.collect');
+  const canViewDocuments = canAccess(defaultRoles, currentRoleId, 'documents.view');
+  const canUploadDocuments = canAccess(defaultRoles, currentRoleId, 'documents.upload');
+  const canVerifyDocuments = canAccess(defaultRoles, currentRoleId, 'documents.verify');
+  const canViewExams = canAccess(defaultRoles, currentRoleId, 'exams.view');
+  const canViewFinancialReports = canAccess(defaultRoles, currentRoleId, 'financialReports.view');
   const activeStudents = demoStudents.filter((student) => student.status !== 'Archived');
   const facultyCount = demoStaffMembers.filter((member) => member.staffType === 'Faculty' && member.status !== 'Archived').length;
-  const presentAttendance = demoStudentAttendance.filter((record) => record.status === 'Present').length;
-  const attendancePercent = demoStudentAttendance.length
-    ? Math.round((presentAttendance / demoStudentAttendance.length) * 100)
-    : 0;
   const collectedAmount = demoFeeCollections.reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const dueCount = demoFeeAssignments.filter((item) => Number(item.dueAmount || 0) > 0).length;
   const pendingDocuments = demoManagedDocuments.filter((item) => item.verificationStatus === 'Pending Review');
@@ -39,12 +46,37 @@ export default function DashboardManagement({ academicYear = '2026-2027', onNavi
   const collectionMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
   const collectionValues = [18, 24, 16, 28, 22, 40];
 
+  const dashboardCards = [
+    canViewStudents && { icon: <Users size={22} />, label: 'Students', value: activeStudents.length, helper: 'Active records', page: 'students' },
+    canViewStaff && { icon: <GraduationCap size={22} />, label: 'Faculty', value: facultyCount, helper: 'Teaching staff', page: 'faculty-staff' },
+    canViewFees && { icon: <Wallet size={22} />, label: 'Collection', value: formatCurrency(collectedAmount), helper: `${dueCount} due students`, page: 'fees' },
+    canViewDocuments && { icon: <FileText size={22} />, label: 'Documents', value: pendingDocuments.length, helper: 'Pending review', page: 'document-management' },
+    canViewExams && { icon: <TrendingUp size={22} />, label: 'Exams', value: upcomingExams.length, helper: 'Upcoming exams', page: 'examination-results' },
+  ].filter(Boolean);
+
   const quickActions = [
-    { label: 'Add student', helper: 'Open admissions', icon: <GraduationCap size={18} />, page: 'students' },
-    { label: 'Mark attendance', helper: 'Students or faculty', icon: <Bell size={18} />, page: 'attendance' },
-    { label: 'Collect payment', helper: 'Search dues', icon: <Wallet size={18} />, page: 'fees' },
-    { label: 'Upload document', helper: 'Repository', icon: <FileText size={18} />, page: 'document-management' },
-  ];
+    canCreateStudents && { label: 'Add student', helper: 'Open admissions', icon: <GraduationCap size={18} />, page: 'students' },
+    canCollectFees && { label: 'Collect payment', helper: 'Search dues', icon: <Wallet size={18} />, page: 'fees' },
+    canUploadDocuments && { label: 'Upload document', helper: 'Repository', icon: <FileText size={18} />, page: 'document-management' },
+  ].filter(Boolean);
+
+  const pendingWork = [
+    canViewDocuments && canVerifyDocuments && {
+      label: `${pendingDocuments.length} documents need review`,
+      helper: 'Open verification queue',
+      page: 'document-management',
+    },
+    canViewExams && {
+      label: `${upcomingExams.length} upcoming exams`,
+      helper: 'View exam schedule',
+      page: 'examination-results',
+    },
+    canViewFees && dueCount > 0 && {
+      label: `${dueCount} students have pending dues`,
+      helper: 'Open payment due list',
+      page: 'fees',
+    },
+  ].filter(Boolean);
 
   return (
     <div className="erp-dashboard">
@@ -62,15 +94,14 @@ export default function DashboardManagement({ academicYear = '2026-2027', onNavi
         </div>
       </div>
 
-      <div className="grid sm:grid-cols-2 xl:grid-cols-5 gap-4 py-5">
-        <DashboardCard icon={<Users size={22} />} label="Students" value={activeStudents.length} helper="Active records" onClick={() => onNavigate?.('students')} />
-        <DashboardCard icon={<GraduationCap size={22} />} label="Faculty" value={facultyCount} helper="Teaching staff" onClick={() => onNavigate?.('faculty-staff')} />
-        <DashboardCard icon={<Bell size={22} />} label="Attendance" value={`${attendancePercent}%`} helper="Marked today" onClick={() => onNavigate?.('attendance')} />
-        <DashboardCard icon={<Wallet size={22} />} label="Collection" value={formatCurrency(collectedAmount)} helper={`${dueCount} due students`} onClick={() => onNavigate?.('fees')} />
-        <DashboardCard icon={<FileText size={22} />} label="Documents" value={pendingDocuments.length} helper="Pending review" onClick={() => onNavigate?.('document-management')} />
+      <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 py-5">
+        {dashboardCards.map((card) => (
+          <DashboardCard key={card.label} {...card} onClick={() => onNavigate?.(card.page)} />
+        ))}
       </div>
 
       <div className="grid xl:grid-cols-[1.5fr_.9fr] gap-5">
+        {canViewFinancialReports && (
         <section className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between gap-3 mb-5">
             <div>
@@ -89,6 +120,7 @@ export default function DashboardManagement({ academicYear = '2026-2027', onNavi
             ))}
           </div>
         </section>
+        )}
 
         <section className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between gap-3 mb-5">
@@ -96,36 +128,23 @@ export default function DashboardManagement({ academicYear = '2026-2027', onNavi
             <AlertCircle size={18} className="text-[#fb8d49]" />
           </div>
           <div className="space-y-3">
-            <button onClick={() => onNavigate?.('document-management')} className="w-full rounded-lg bg-[#f5f5f6] p-4 text-left">
-              <span className="block font-bold text-sm text-slate-900">{pendingDocuments.length} documents need review</span>
-              <span className="block text-xs text-slate-500 mt-1">Open verification queue</span>
-            </button>
-            <button onClick={() => onNavigate?.('attendance')} className="w-full rounded-lg bg-[#f5f5f6] p-4 text-left">
-              <span className="block font-bold text-sm text-slate-900">{demoAttendanceNotifications.length} parent notifications queued</span>
-              <span className="block text-xs text-slate-500 mt-1">Review absent student alerts</span>
-            </button>
-            <button onClick={() => onNavigate?.('examination-results')} className="w-full rounded-lg bg-[#f5f5f6] p-4 text-left">
-              <span className="block font-bold text-sm text-slate-900">{upcomingExams.length} upcoming exams</span>
-              <span className="block text-xs text-slate-500 mt-1">View exam schedule</span>
-            </button>
+            {pendingWork.map((item) => (
+              <button key={item.label} onClick={() => onNavigate?.(item.page)} className="w-full rounded-lg bg-[#f5f5f6] p-4 text-left">
+                <span className="block font-bold text-sm text-slate-900">{item.label}</span>
+                <span className="block text-xs text-slate-500 mt-1">{item.helper}</span>
+              </button>
+            ))}
+            {!pendingWork.length && (
+              <div className="rounded-lg bg-[#f5f5f6] p-4 text-sm text-slate-500">
+                No pending items available for your role.
+              </div>
+            )}
           </div>
         </section>
       </div>
 
-      <div className="grid xl:grid-cols-[.9fr_1.1fr] gap-5 mt-5">
-        <section className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm">
-          <h2 className="font-bold text-slate-900 mb-4">Attendance Snapshot</h2>
-          <div className="flex items-center gap-6">
-            <div className="h-32 w-32 rounded-full border-[14px] border-[#fb9a5b] flex items-center justify-center">
-              <span className="text-2xl font-extrabold">{attendancePercent}%</span>
-            </div>
-            <div className="space-y-3 text-sm">
-              <div className="rounded-lg bg-[#f5f5f6] px-4 py-3">Students present: {presentAttendance}</div>
-              <div className="rounded-lg bg-[#f5f5f6] px-4 py-3">Records marked: {demoStudentAttendance.length}</div>
-            </div>
-          </div>
-        </section>
-
+      {!!quickActions.length && (
+      <div className="grid gap-5 mt-5">
         <section className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between gap-3 mb-4">
             <h2 className="font-bold text-slate-900">Quick Actions</h2>
@@ -144,7 +163,9 @@ export default function DashboardManagement({ academicYear = '2026-2027', onNavi
           </div>
         </section>
       </div>
+      )}
 
+      {canViewExams && (
       <div className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm mt-5">
         <div className="flex items-center justify-between gap-3 mb-4">
           <h2 className="font-bold text-slate-900">Upcoming Exams</h2>
@@ -160,6 +181,7 @@ export default function DashboardManagement({ academicYear = '2026-2027', onNavi
           ))}
         </div>
       </div>
+      )}
     </div>
   );
 }
