@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Building2, CalendarCheck, Plus, Search, UserRound, Users } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Building2, CalendarCheck, Plus, Search, UserRound, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
   archiveStaffMember,
@@ -26,7 +26,7 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
   const [departments, setDepartments] = useState(demoDepartments);
   const [leaveRecords, setLeaveRecords] = useState(demoLeaveRecords);
   const [attendanceRecords, setAttendanceRecords] = useState(demoAttendanceRecords);
-  const [selectedId, setSelectedId] = useState(demoStaffMembers[0].id);
+  const [selectedId, setSelectedId] = useState('');
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('active');
@@ -35,6 +35,8 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
   const [showStaffModal, setShowStaffModal] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
   const [leaveStaff, setLeaveStaff] = useState(null);
+  const [activeStaffTask, setActiveStaffTask] = useState('');
+  const [activeStaffBranch, setActiveStaffBranch] = useState('');
 
   useEffect(() => {
     const loadFacultyStaff = async () => {
@@ -42,7 +44,7 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
         const data = await getFacultyStaffData(academicYear);
         if (data.staff.length) {
           setStaffMembers(data.staff);
-          setSelectedId(data.staff[0].id);
+          setSelectedId('');
         }
         if (data.departments.length) setDepartments(data.departments);
         setLeaveRecords(data.leaveRecords);
@@ -57,7 +59,7 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
     loadFacultyStaff();
   }, [academicYear]);
 
-  const selectedStaff = staffMembers.find((member) => member.id === selectedId) || staffMembers[0];
+  const selectedStaff = selectedId ? staffMembers.find((member) => member.id === selectedId) || null : null;
   const selectedLeaves = leaveRecords.filter((record) => relationMatchesStaff(record, selectedStaff));
   const selectedAttendance = attendanceRecords.filter((record) => relationMatchesStaff(record, selectedStaff));
 
@@ -87,6 +89,89 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
   const canArchiveStaff = canAccess(defaultRoles, currentRoleId, 'staff.archive');
   const canManageLeave = canAccess(defaultRoles, currentRoleId, 'staff.leave');
   const canMarkAttendance = canAccess(defaultRoles, currentRoleId, 'staff.attendance');
+
+  useEffect(() => {
+    const currentState = window.history.state || {};
+    window.history.replaceState({
+      ...currentState,
+      staffFlow: currentState.staffFlow || { task: '', branch: '' },
+    }, '');
+    const handleHistoryBack = (event) => {
+      const flow = event.state?.staffFlow;
+      setShowStaffModal(false);
+      setEditingStaff(null);
+      setLeaveStaff(null);
+      setActiveStaffTask(flow?.task || '');
+      setActiveStaffBranch(flow?.branch || '');
+      setSelectedId('');
+      setSearch('');
+    };
+    window.addEventListener('popstate', handleHistoryBack);
+    return () => window.removeEventListener('popstate', handleHistoryBack);
+  }, []);
+
+  const openStaffTask = (taskId) => {
+    setActiveStaffTask(taskId);
+    setActiveStaffBranch('');
+    setSelectedId('');
+    setSearch('');
+    window.history.pushState({ ...(window.history.state || {}), staffFlow: { task: taskId, branch: '' } }, '');
+  };
+
+  const openStaffBranch = (branch) => {
+    setActiveStaffBranch(branch.id);
+    setSelectedId('');
+    setSearch('');
+    if (branch.typeFilter) setTypeFilter(branch.typeFilter);
+    if (branch.statusFilter) setStatusFilter(branch.statusFilter);
+    window.history.pushState({ ...(window.history.state || {}), staffFlow: { task: activeStaffTask, branch: branch.id } }, '');
+    if (branch.openStaff) setShowStaffModal(true);
+    if (branch.syncDepartments) seedDepartments();
+  };
+
+  const goBackOneStaffStep = () => {
+    if (window.history.state?.staffFlow) {
+      window.history.back();
+      return;
+    }
+    if (activeStaffBranch) {
+      setActiveStaffBranch('');
+      setSelectedId('');
+      return;
+    }
+    setActiveStaffTask('');
+  };
+
+  const staffTaskOptions = [
+    { id: 'records', title: 'Staff Records', description: 'Create, edit, archive, and restore records.', icon: <Users size={22} />, meta: [`${staffMembers.length} records`, canCreateStaff ? 'Create enabled' : 'View only'] },
+    { id: 'leave', title: 'Leave', description: 'Request, approve, or reject staff leave.', icon: <CalendarCheck size={22} />, meta: [`${leaveRecords.length} records`, canManageLeave ? 'Manage enabled' : 'View only'] },
+    { id: 'attendance', title: 'Attendance', description: 'Mark staff attendance.', icon: <UserRound size={22} />, meta: [`${attendanceRecords.length} records`, canMarkAttendance ? 'Mark enabled' : 'View only'] },
+    { id: 'departments', title: 'Departments', description: 'Review and sync department data.', icon: <Building2 size={22} />, meta: [`${departments.length} departments`, 'Setup'] },
+  ];
+
+  const staffBranchOptions = {
+    records: [
+      { id: 'new-record', title: 'New Record', description: 'Open staff record form.', icon: <Plus size={20} />, disabled: !canCreateStaff, openStaff: true },
+      { id: 'active-records', title: 'Active Records', description: 'Select a staff member to view or edit.', icon: <Users size={20} />, statusFilter: 'active', typeFilter: 'All' },
+      { id: 'archived-records', title: 'Archived Records', description: 'Select a record to restore.', icon: <Users size={20} />, statusFilter: 'archived', typeFilter: 'All' },
+    ],
+    leave: [
+      { id: 'leave-request', title: 'Leave Request', description: 'Select staff member, then create leave.', icon: <CalendarCheck size={20} />, statusFilter: 'active' },
+      { id: 'leave-review', title: 'Leave Review', description: 'Select staff member to approve or reject leave.', icon: <CalendarCheck size={20} />, statusFilter: 'active' },
+    ],
+    attendance: [
+      { id: 'mark-attendance', title: 'Mark Attendance', description: 'Select staff member, then mark attendance.', icon: <UserRound size={20} />, statusFilter: 'active' },
+    ],
+    departments: [
+      { id: 'department-list', title: 'Department List', description: 'Review departments.', icon: <Building2 size={20} /> },
+      { id: 'sync-departments', title: 'Sync Departments', description: 'Sync default departments.', icon: <Building2 size={20} />, syncDepartments: true },
+    ],
+  };
+
+  const activeTask = staffTaskOptions.find((task) => task.id === activeStaffTask);
+  const activeBranches = staffBranchOptions[activeStaffTask] || [];
+  const activeBranch = activeBranches.find((branch) => branch.id === activeStaffBranch);
+  const branchAccentText = activeStaffTask === 'leave' ? 'Leave work' : activeStaffTask === 'attendance' ? 'Attendance work' : activeStaffTask === 'departments' ? 'Department setup' : 'Record work';
 
   const saveStaff = async (form) => {
     if (!canCreateStaff) {
@@ -300,20 +385,10 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
           {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist records.</p>}
           {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={seedDepartments} className="h-10 px-5 rounded-lg bg-[#33373e] text-white font-semibold text-sm">
-            Sync Departments
-          </button>
-          <button
-            onClick={() => setShowStaffModal(true)}
-            disabled={!canCreateStaff}
-            className="h-10 px-5 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm flex items-center gap-2 disabled:bg-slate-300 disabled:cursor-not-allowed"
-          >
-            <Plus size={16} /> New Record
-          </button>
-        </div>
       </div>
 
+      {!activeStaffTask ? (
+      <>
       <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 py-5">
         {stats.map(({ label, value, icon }) => (
           <div key={label} className="bg-[#f5f5f6] rounded-lg p-4 flex items-center gap-4">
@@ -326,8 +401,81 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
         ))}
       </div>
 
+      <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+        {staffTaskOptions.map((task) => (
+          <button key={task.id} onClick={() => openStaffTask(task.id)} className="group min-h-40 text-left rounded-lg border border-slate-100 bg-white p-5 shadow-sm hover:-translate-y-1 transition-all">
+            <div className="flex items-start justify-between gap-4">
+              <div className="h-12 w-12 rounded-lg bg-[#f5f5f6] text-[#34363d] flex items-center justify-center">{task.icon}</div>
+              <ArrowRight size={18} className="text-slate-400 group-hover:text-[#fb8d49]" />
+            </div>
+            <h2 className="text-lg font-bold text-slate-900 mt-5">{task.title}</h2>
+            <p className="text-sm text-slate-500 mt-2">{task.description}</p>
+            <div className="flex flex-wrap gap-2 mt-4">
+              {task.meta.map((item) => <span key={item} className="rounded-full bg-[#f5f5f6] px-3 py-1 text-xs font-semibold text-slate-600">{item}</span>)}
+            </div>
+          </button>
+        ))}
+      </div>
+      </>
+      ) : !activeStaffBranch ? (
+      <>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 my-5 rounded-lg bg-[#f5f5f6] p-4">
+        <div>
+          <div className="text-xs font-bold text-slate-500">Faculty & Staff / <span className="text-[#fb8d49]">{activeTask?.title}</span></div>
+          <h2 className="text-lg font-bold text-slate-900 mt-1">Choose next step</h2>
+        </div>
+        <button onClick={goBackOneStaffStep} className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2">
+          <ArrowLeft size={15} /> Back
+        </button>
+      </div>
+      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {activeBranches.map((branch) => (
+          <button key={branch.id} onClick={() => openStaffBranch(branch)} disabled={branch.disabled} className="group min-h-36 text-left rounded-lg border border-slate-100 bg-white p-5 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed">
+            <div className="flex items-start justify-between gap-4">
+              <div className="h-11 w-11 rounded-lg bg-[#f5f5f6] text-[#34363d] flex items-center justify-center">{branch.icon}</div>
+              <ArrowRight size={17} className="text-slate-400 group-hover:text-[#fb8d49]" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900 mt-4">{branch.title}</h3>
+            <p className="text-sm text-slate-500 mt-2">{branch.disabled ? 'Not available right now.' : branch.description}</p>
+          </button>
+        ))}
+      </div>
+      </>
+      ) : (
+      <>
+      <div className="erp-branch-focus flex flex-col lg:flex-row lg:items-center justify-between gap-4 my-5 rounded-lg bg-[#f5f5f6] p-5 border border-slate-100">
+        <div className="flex items-center gap-4 min-w-0">
+          <div className="erp-branch-icon h-16 w-16 rounded-lg bg-white text-[#fb8d49] flex items-center justify-center shrink-0">{activeBranch?.icon}</div>
+          <div className="min-w-0">
+            <div className="text-xs font-bold text-slate-500">Faculty & Staff / {activeTask?.title}</div>
+            <h2 className="text-2xl font-extrabold text-slate-900 mt-1">{activeBranch?.title}</h2>
+            <p className="text-sm text-slate-500 mt-1">{activeBranch?.description}</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <span className="h-10 px-4 rounded-full bg-white border border-slate-200 text-slate-700 font-bold text-xs flex items-center">{branchAccentText}</span>
+          {activeStaffBranch === 'new-record' && canCreateStaff && (
+            <button onClick={() => setShowStaffModal(true)} className="h-10 px-4 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm flex items-center gap-2"><Plus size={16} /> Open Form</button>
+          )}
+          <button onClick={goBackOneStaffStep} className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2">
+            <ArrowLeft size={15} /> Back
+          </button>
+        </div>
+      </div>
+
+      {activeStaffTask === 'departments' ? (
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {departments.map((department) => (
+            <div key={department.id || department.name} className="bg-white border border-slate-100 rounded-lg p-5 shadow-sm">
+              <h3 className="font-bold text-slate-900">{department.name}</h3>
+              <p className="text-sm text-slate-500 mt-2">Head: {department.headName || 'Not assigned'}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
       <div className="flex flex-col xl:flex-row gap-5">
         <div className="xl:w-[68%] min-w-0">
+          {activeStaffTask === 'records' && (
           <div className="flex flex-wrap items-center gap-2 mb-5">
             {['All', 'Faculty', 'Staff'].map((type) => (
               <button
@@ -339,6 +487,7 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
               </button>
             ))}
           </div>
+          )}
           <div className="flex items-center gap-2 mb-4">
             {[
               ['active', 'Active Records'],
@@ -368,19 +517,47 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
             onLeave={setLeaveStaff}
             onArchive={archiveStaff}
             onRestore={restoreStaff}
+            showActions={false}
           />
         </div>
 
-        <StaffProfilePanel
-          staffMember={selectedStaff}
-          leaveRecords={selectedLeaves}
-          attendanceRecords={selectedAttendance}
-          canManageLeave={canManageLeave}
-          canMarkAttendance={canMarkAttendance}
-          onAttendance={markAttendance}
-          onLeaveDecision={decideLeave}
-        />
+        {selectedStaff ? (
+          <div className="erp-selected-detail xl:w-[32%]">
+            <StaffProfilePanel
+              staffMember={selectedStaff}
+              leaveRecords={selectedLeaves}
+              attendanceRecords={selectedAttendance}
+              canManageLeave={canManageLeave}
+              canMarkAttendance={canMarkAttendance}
+              onAttendance={markAttendance}
+              onLeaveDecision={decideLeave}
+              className="w-full"
+            />
+            <div className="grid grid-cols-2 gap-2">
+              {activeStaffTask === 'records' && (
+                <>
+                  <button onClick={() => setEditingStaff(selectedStaff)} disabled={!canEditStaff} className="h-10 rounded-lg bg-[#33373e] text-white text-sm font-semibold disabled:bg-slate-300">Edit</button>
+                  <button onClick={() => selectedStaff.status === 'Archived' ? restoreStaff(selectedStaff) : archiveStaff(selectedStaff)} disabled={!canArchiveStaff} className="h-10 rounded-lg bg-[#33373e] text-white text-sm font-semibold disabled:bg-slate-300">{selectedStaff.status === 'Archived' ? 'Restore' : 'Archive'}</button>
+                </>
+              )}
+              {activeStaffTask === 'leave' && (
+                <button onClick={() => setLeaveStaff(selectedStaff)} disabled={!canManageLeave} className="col-span-2 h-10 rounded-full bg-[#fb9a5b] text-white text-sm font-semibold disabled:bg-slate-300">Create Leave Request</button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <aside className="xl:w-[32%]">
+            <div className="bg-white border border-slate-100 rounded-lg p-6 shadow-sm text-sm text-slate-600 min-h-72 flex flex-col items-center justify-center text-center">
+              <div className="h-14 w-14 rounded-lg bg-[#f5f5f6] text-[#fb8d49] flex items-center justify-center mb-4">{activeBranch?.icon}</div>
+              <h3 className="font-bold text-slate-900 mb-2">Staff Details</h3>
+              <p>{filteredStaff.length ? 'Click a staff row to view details and available actions.' : 'No matching staff records found.'}</p>
+            </div>
+          </aside>
+        )}
       </div>
+      )}
+      </>
+      )}
 
       {showStaffModal && <StaffModal departments={departments} onClose={() => setShowStaffModal(false)} onSave={saveStaff} />}
       {editingStaff && <StaffModal mode="edit" initialStaff={editingStaff} departments={departments} onClose={() => setEditingStaff(null)} onSave={updateStaff} />}

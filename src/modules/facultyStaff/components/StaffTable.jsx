@@ -1,7 +1,7 @@
 import { Archive, ArchiveRestore, CalendarCheck, Edit3, UserRound } from 'lucide-react';
 import StatusBadge from '../../students/components/StatusBadge';
 
-export default function StaffTable({ staff, canArchive, canEdit, canManageLeave, onArchive, onEdit, onLeave, onRestore, onSelect, selectedId }) {
+export default function StaffTable({ staff, canArchive, canEdit, canManageLeave, onArchive, onEdit, onLeave, onRestore, onSelect, selectedId, showActions = true }) {
   const handleRowKeyDown = (event, memberId) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
@@ -18,7 +18,7 @@ export default function StaffTable({ staff, canArchive, canEdit, canManageLeave,
             <th className="px-5 py-3">Department</th>
             <th className="px-5 py-3">Contact</th>
             <th className="px-5 py-3">Status</th>
-            <th className="px-5 py-3 rounded-r-lg text-right">Action</th>
+            {showActions && <th className="px-5 py-3 rounded-r-lg text-right">Action</th>}
           </tr>
         </thead>
         <tbody>
@@ -50,7 +50,8 @@ export default function StaffTable({ staff, canArchive, canEdit, canManageLeave,
                 <div>{member.phone}</div>
                 <div className="text-xs text-slate-500">{member.email}</div>
               </td>
-              <td className="px-5 py-4"><StatusBadge value={member.status} /></td>
+              <td className={`px-5 py-4 ${showActions ? '' : 'rounded-r-lg'}`}><StatusBadge value={member.status} /></td>
+              {showActions && (
               <td className="px-5 py-4 rounded-r-lg">
                 <div className="flex justify-end gap-2">
                   <button disabled={!canEdit} onClick={(event) => { event.stopPropagation(); onEdit(member); }} className="h-9 w-9 rounded-full border border-slate-200 flex items-center justify-center disabled:opacity-40" title="Edit record">
@@ -71,11 +72,12 @@ export default function StaffTable({ staff, canArchive, canEdit, canManageLeave,
                   )}
                 </div>
               </td>
+              )}
             </tr>
           ))}
           {!staff.length && (
             <tr>
-              <td colSpan="5" className="bg-white text-center text-sm text-slate-500 px-5 py-10 shadow-[0_0_0_1px_rgba(226,232,240,0.9)] rounded-lg">
+              <td colSpan={showActions ? 5 : 4} className="bg-white text-center text-sm text-slate-500 px-5 py-10 shadow-[0_0_0_1px_rgba(226,232,240,0.9)] rounded-lg">
                 No faculty or staff records found.
               </td>
             </tr>

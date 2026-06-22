@@ -5,6 +5,7 @@ export default function StaffProfilePanel({
   attendanceRecords,
   canManageLeave,
   canMarkAttendance,
+  className = 'xl:w-[32%]',
   leaveRecords,
   onAttendance,
   onLeaveDecision,
@@ -14,7 +15,7 @@ export default function StaffProfilePanel({
   const relatedAttendance = attendanceRecords.slice(0, 4);
 
   return (
-    <aside className="xl:w-[32%]">
+    <aside className={className}>
       <div className="bg-[#f0f0f2] rounded-lg p-4 mb-5">
         <div className="bg-white rounded-lg p-5">
           <div className="flex items-center justify-between mb-5">
