@@ -351,6 +351,55 @@ html{color-scheme:dark}::selection{background:rgba(0,255,136,.18);color:#eafff5}
   background:#ecf0ff!important;
 }
 
+.erp-branch-focus {
+  position:relative;
+  overflow:hidden;
+  background:linear-gradient(135deg,rgba(0,255,136,.095),rgba(255,255,255,.028) 52%,rgba(59,130,246,.075))!important;
+  box-shadow:inset 0 0 0 1px rgba(0,255,136,.14),0 18px 46px rgba(0,0,0,.16)!important;
+  animation:branchFocusIn .45s cubic-bezier(.22,1,.36,1) both;
+}
+
+.erp-branch-focus:before {
+  content:"";
+  position:absolute;
+  inset:0;
+  background:radial-gradient(circle at 18% 50%,rgba(0,255,136,.18),transparent 34%);
+  pointer-events:none;
+}
+
+.erp-branch-focus > * {
+  position:relative;
+  z-index:1;
+}
+
+.erp-branch-icon {
+  box-shadow:0 0 0 1px rgba(0,255,136,.18),0 0 34px rgba(0,255,136,.12)!important;
+}
+
+.erp-branch-icon svg {
+  width:30px;
+  height:30px;
+}
+
+.erp-shell.light-mode .erp-branch-focus {
+  background:linear-gradient(135deg,#f1f4ff,#ffffff 58%,#eef7ff)!important;
+  box-shadow:inset 0 0 0 1px rgba(101,118,216,.16),0 18px 36px rgba(66,78,112,.10)!important;
+}
+
+.erp-shell.light-mode .erp-branch-focus:before {
+  background:radial-gradient(circle at 18% 50%,rgba(101,118,216,.16),transparent 34%);
+}
+
+.erp-shell.light-mode .erp-branch-icon {
+  color:#6576d8!important;
+  box-shadow:0 0 0 1px rgba(101,118,216,.18),0 14px 28px rgba(101,118,216,.12)!important;
+}
+
+@keyframes branchFocusIn {
+  from{opacity:0;transform:translateY(12px) scale(.985)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+
 .erp-shell.light-mode .erp-modal-overlay {
   background:rgba(30,37,51,.28)!important;
   backdrop-filter:blur(10px)!important;

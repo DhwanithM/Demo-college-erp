@@ -4,6 +4,7 @@ import StatusBadge from './StatusBadge';
 export default function StudentTable({
   canArchive = true,
   canEdit = true,
+  showActions = true,
   students,
   statusFilter,
   onArchive,
@@ -29,7 +30,7 @@ export default function StudentTable({
             <th className="px-5 py-3">Admission / ID</th>
             <th className="px-5 py-3">Class</th>
             <th className="px-5 py-3">Status</th>
-            <th className="px-5 py-3 rounded-r-lg text-right">Action</th>
+            {showActions && <th className="px-5 py-3 rounded-r-lg text-right">Action</th>}
           </tr>
         </thead>
         <tbody>
@@ -61,7 +62,8 @@ export default function StudentTable({
                 <div>{student.className} - {student.section}</div>
                 <div className="text-xs text-slate-500">{student.program}</div>
               </td>
-              <td className="px-5 py-4"><StatusBadge value={student.status} /></td>
+              <td className={`px-5 py-4 ${showActions ? '' : 'rounded-r-lg'}`}><StatusBadge value={student.status} /></td>
+              {showActions && (
               <td className="px-5 py-4 rounded-r-lg">
                 <div className="flex justify-end gap-2">
                   <button onClick={(event) => { event.stopPropagation(); onSelect(student.id); }} className="h-9 w-9 rounded-full border border-slate-200 flex items-center justify-center">
@@ -103,11 +105,12 @@ export default function StudentTable({
                   )}
                 </div>
               </td>
+              )}
             </tr>
           ))}
           {!students.length && (
             <tr>
-              <td colSpan="5" className="bg-white text-center text-sm text-slate-500 px-5 py-10 shadow-[0_0_0_1px_rgba(226,232,240,0.9)] rounded-lg">
+              <td colSpan={showActions ? 5 : 4} className="bg-white text-center text-sm text-slate-500 px-5 py-10 shadow-[0_0_0_1px_rgba(226,232,240,0.9)] rounded-lg">
                 No {statusFilter === 'archived' ? 'archived' : 'active'} student records found.
               </td>
             </tr>

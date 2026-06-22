@@ -523,6 +523,16 @@ export default function StudentInformationManagement({ user, onLogout }) {
   const activeTask = studentTaskOptions.find((task) => task.id === activeStudentTask);
   const activeBranches = studentBranchOptions[activeStudentTask] || [];
   const activeBranch = activeBranches.find((branch) => branch.id === activeStudentBranch);
+  const branchShouldShowActions = activeStudentTask === 'profiles';
+  const branchAccentText = activeStudentBranch === 'new-admission'
+    ? 'Admission form'
+    : activeStudentTask === 'documents'
+      ? 'Document work'
+      : activeStudentTask === 'promotion'
+        ? 'Promotion work'
+        : activeStudentTask === 'profiles'
+          ? 'Profile tools'
+          : 'Review mode';
 
   const saveStudent = async (form) => {
     if (!canCreateAdmission) {
@@ -939,15 +949,23 @@ export default function StudentInformationManagement({ user, onLogout }) {
                 </>
                 ) : (
                 <>
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-5 rounded-lg bg-[#f5f5f6] p-4">
-                  <div>
-                    <div className="text-xs font-bold text-slate-500">Students / {activeTask?.title} / <span className="text-[#fb8d49]">{activeBranch?.title}</span></div>
-                    <h2 className="text-lg font-bold text-slate-900 mt-1">{activeBranch?.title || tabs.find((tab) => tab.id === activeTab)?.label}</h2>
-                    <p className="text-sm text-slate-500 mt-1">
-                      {activeBranch?.description || 'Search, select, and continue.'}
-                    </p>
+                <div className="erp-branch-focus flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5 rounded-lg bg-[#f5f5f6] p-5 border border-slate-100">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="erp-branch-icon h-16 w-16 rounded-lg bg-white text-[#fb8d49] flex items-center justify-center shrink-0">
+                      {activeBranch?.icon || activeTask?.icon}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-slate-500">Students / {activeTask?.title}</div>
+                      <h2 className="text-2xl font-extrabold text-slate-900 mt-1">{activeBranch?.title || tabs.find((tab) => tab.id === activeTab)?.label}</h2>
+                      <p className="text-sm text-slate-500 mt-1">
+                        {activeBranch?.description || 'Search, select, and continue.'}
+                      </p>
+                    </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
+                    <span className="h-10 px-4 rounded-full bg-white border border-slate-200 text-slate-700 font-bold text-xs flex items-center">
+                      {branchAccentText}
+                    </span>
                     {activeStudentBranch === 'new-admission' && canCreateAdmission && (
                       <button onClick={() => setShowModal(true)} className="h-10 px-4 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm flex items-center gap-2">
                         <Plus size={16} /> Open Form
@@ -997,6 +1015,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
                     <StudentTable
                       canArchive={canArchiveStudents}
                       canEdit={canEditStudents}
+                      showActions={branchShouldShowActions}
                       students={filteredStudents}
                       statusFilter={statusFilter}
                       selectedId={selectedId}
@@ -1011,7 +1030,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
                   <aside className="xl:w-[30%]">
                     {selectedStudent ? (
                       <>
-                    <StudentProfileCard canEdit={canEditStudents} student={selectedStudent} onEdit={setEditingStudent} />
+                    <StudentProfileCard canEdit={branchShouldShowActions && canEditStudents} student={selectedStudent} onEdit={setEditingStudent} />
 
                     <div className="bg-white border border-slate-100 rounded-lg p-5 shadow-sm">
                       <h3 className="font-bold mb-4">
@@ -1139,9 +1158,6 @@ export default function StudentInformationManagement({ user, onLogout }) {
                             Admission status: {latestAdmission?.status || selectedStudent.status}. Created on {selectedStudent.createdAtText || latestAdmission?.submittedAtText || 'today'}.
                           </div>
                           <div className="rounded-lg bg-[#f5f5f6] p-3">Profile management keeps guardian, class, contact, and academic details together.</div>
-                          {canCreateAdmission && (
-                            <button onClick={() => setShowModal(true)} className="w-full h-10 rounded-full bg-[#fb9a5b] text-white font-semibold">Create Another Admission</button>
-                          )}
                         </div>
                       )}
                     </div>
