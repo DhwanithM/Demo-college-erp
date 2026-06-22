@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Building2, CalendarDays, Hash, Save, Settings } from 'lucide-react';
+import { ArrowLeft, BookOpen, Building2, CalendarDays, Hash, Save, Settings, Shield, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getSettingsData, saveSystemSetting } from '../../firebase/db';
 import { isFirebaseConfigured } from '../../firebase/config';
 import { canAccess, defaultRoles } from '../userRoles/rolePermissions';
 import { demoAcademicYearSettings, demoIdFormatSettings, demoInstituteSettings, demoModuleDefaultSettings } from './demoSettings';
 import { buildNextId, formatDisplayDate, summarizeSettings, validateAcademicYearSettings, validateInstituteSettings } from './settingsUtils';
+import AcademicsManagement from '../academics/AcademicsManagement';
+import UserRoleManagement from '../userRoles/UserRoleManagement';
 
 export default function SettingsManagement({ currentUser }) {
   const [institute, setInstitute] = useState(demoInstituteSettings);
@@ -14,6 +16,7 @@ export default function SettingsManagement({ currentUser }) {
   const [moduleDefaults, setModuleDefaults] = useState(demoModuleDefaultSettings);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [activeSection, setActiveSection] = useState('');
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -35,7 +38,55 @@ export default function SettingsManagement({ currentUser }) {
 
   const currentRoleId = currentUser?.roleId || 'admin';
   const canManage = canAccess(defaultRoles, currentRoleId, 'settings.manage');
+  const canManageUsers = canAccess(defaultRoles, currentRoleId, 'users.view');
+  const canViewAcademics = canAccess(defaultRoles, currentRoleId, 'academics.view');
   const summary = summarizeSettings(institute, academicYear, idFormats, moduleDefaults);
+  const setupSections = [
+    {
+      id: 'institute',
+      title: 'Institute Setup',
+      description: 'College profile, contact, and address.',
+      icon: <Building2 size={24} />,
+      meta: summary.instituteConfigured ? 'Ready' : 'Pending',
+    },
+    {
+      id: 'academic-year',
+      title: 'Academic Year',
+      description: 'Active year, start date, and end date.',
+      icon: <CalendarDays size={24} />,
+      meta: summary.academicYear,
+    },
+    {
+      id: 'academic-setup',
+      title: 'Academic Setup',
+      description: 'Programs, subjects, batches, and academic calendar setup.',
+      icon: <BookOpen size={24} />,
+      meta: canViewAcademics ? 'Open' : 'No access',
+      disabled: !canViewAcademics,
+    },
+    {
+      id: 'people-setup',
+      title: 'People Setup',
+      description: 'Users, roles, permissions, and admin access.',
+      icon: <Users size={24} />,
+      meta: canManageUsers ? 'Admin' : 'No access',
+      disabled: !canManageUsers,
+    },
+    {
+      id: 'id-formats',
+      title: 'ID & Receipt Formats',
+      description: 'Student, admission, employee, and receipt numbering.',
+      icon: <Hash size={24} />,
+      meta: summary.idFormats,
+    },
+    {
+      id: 'module-defaults',
+      title: 'Module Defaults',
+      description: 'Turn default ERP behaviors on or off.',
+      icon: <Settings size={24} />,
+      meta: `${summary.enabledDefaults} on`,
+    },
+  ];
 
   const saveSettings = async () => {
     if (!canManage) {
@@ -75,11 +126,54 @@ export default function SettingsManagement({ currentUser }) {
           {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist settings.</p>}
           {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
         </div>
-        <button onClick={saveSettings} disabled={!canManage} className="h-10 px-5 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm flex items-center gap-2 disabled:bg-slate-300">
-          <Save size={16} /> Save Settings
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {activeSection && (
+            <button onClick={() => setActiveSection('')} className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2">
+              <ArrowLeft size={15} /> Back
+            </button>
+          )}
+          {!['academic-setup', 'people-setup'].includes(activeSection) && (
+            <button onClick={saveSettings} disabled={!canManage} className="h-10 px-5 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm flex items-center gap-2 disabled:bg-slate-300">
+              <Save size={16} /> Save Settings
+            </button>
+          )}
+        </div>
       </div>
 
+      {!activeSection && (
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4 py-5">
+          {setupSections.map((section) => (
+            <button
+              key={section.id}
+              onClick={() => !section.disabled && setActiveSection(section.id)}
+              disabled={section.disabled}
+              className="min-h-40 rounded-lg bg-white border border-slate-100 p-5 text-left shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <span className="h-12 w-12 rounded-lg bg-[#f5f5f6] text-[#fb8d49] flex items-center justify-center">{section.icon}</span>
+                <span className="rounded-full bg-[#f5f5f6] px-3 py-1 text-xs font-bold text-slate-600">{section.meta}</span>
+              </div>
+              <h2 className="font-bold text-lg text-slate-900 mt-5">{section.title}</h2>
+              <p className="text-sm text-slate-500 mt-2 leading-6">{section.description}</p>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {activeSection === 'academic-setup' && (
+        <div className="pt-5">
+          <AcademicsManagement currentUser={currentUser} academicYear={academicYear.name || '2026-2027'} />
+        </div>
+      )}
+
+      {activeSection === 'people-setup' && (
+        <div className="pt-5">
+          <UserRoleManagement currentUser={currentUser} />
+        </div>
+      )}
+
+      {['institute', 'academic-year', 'id-formats', 'module-defaults'].includes(activeSection) && (
+      <>
       <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 py-5">
         {[
           ['Institute', summary.instituteConfigured ? 'Ready' : 'Pending', <Building2 size={22} />],
@@ -95,6 +189,7 @@ export default function SettingsManagement({ currentUser }) {
       </div>
 
       <div className="grid xl:grid-cols-2 gap-5">
+        {activeSection === 'institute' && (
         <section className="bg-white border border-slate-100 rounded-lg p-5">
           <h3 className="font-bold mb-4">Institute Profile</h3>
           <div className="grid sm:grid-cols-2 gap-3">
@@ -104,6 +199,8 @@ export default function SettingsManagement({ currentUser }) {
             <label className="sm:col-span-2"><span className="block text-xs font-semibold text-slate-500 mb-1.5">Address</span><input value={institute.address || ''} onChange={(event) => setInstitute((prev) => ({ ...prev, address: event.target.value }))} className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm" /></label>
           </div>
         </section>
+        )}
+        {activeSection === 'academic-year' && (
         <section className="bg-white border border-slate-100 rounded-lg p-5">
           <h3 className="font-bold mb-4">Academic Year</h3>
           <div className="grid sm:grid-cols-2 gap-3">
@@ -113,6 +210,8 @@ export default function SettingsManagement({ currentUser }) {
             <label><span className="block text-xs font-semibold text-slate-500 mb-1.5">Ends On</span><input type="date" value={academicYear.endsOn || ''} onChange={(event) => setAcademicYear((prev) => ({ ...prev, endsOn: event.target.value }))} className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm" /></label>
           </div>
         </section>
+        )}
+        {activeSection === 'id-formats' && (
         <section className="bg-white border border-slate-100 rounded-lg p-5">
           <h3 className="font-bold mb-4">ID Formats</h3>
           <div className="grid sm:grid-cols-2 gap-3">
@@ -121,6 +220,8 @@ export default function SettingsManagement({ currentUser }) {
             ))}
           </div>
         </section>
+        )}
+        {activeSection === 'module-defaults' && (
         <section className="bg-white border border-slate-100 rounded-lg p-5">
           <h3 className="font-bold mb-4">Module Defaults</h3>
           <div className="space-y-2">
@@ -132,7 +233,10 @@ export default function SettingsManagement({ currentUser }) {
             ))}
           </div>
         </section>
+        )}
       </div>
+      </>
+      )}
     </div>
   );
 }
