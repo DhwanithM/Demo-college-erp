@@ -325,6 +325,10 @@ export default function StudentInformationManagement({ user, onLogout }) {
       description: 'Start a new admission or review recently created admission records.',
       icon: <Plus size={22} />,
       actionLabel: canCreateAdmission ? 'New or review admission' : 'Review admissions',
+      meta: [
+        `${admissions.filter((item) => item.academicYear === academicYear).length || yearStudents.length} records`,
+        canCreateAdmission ? 'Can add new' : 'View only',
+      ],
       onOpen: () => {
         setActiveTab('admissions');
         setActiveStudentTask('admissions');
@@ -336,6 +340,10 @@ export default function StudentInformationManagement({ user, onLogout }) {
       description: 'Find a student, check their details, edit profile data, or download the record.',
       icon: <UserRound size={22} />,
       actionLabel: 'Search and manage profiles',
+      meta: [
+        `${yearStudents.filter((student) => student.status !== 'Archived').length} active`,
+        `${yearStudents.filter((student) => student.status === 'Archived').length} archived`,
+      ],
       onOpen: () => {
         setActiveTab('profiles');
         setActiveStudentTask('profiles');
@@ -347,6 +355,10 @@ export default function StudentInformationManagement({ user, onLogout }) {
       description: 'Open the document repository for a selected student and verify or upload files.',
       icon: <FileText size={22} />,
       actionLabel: 'Manage documents',
+      meta: [
+        `${studentDocuments.filter((item) => item.academicYear === academicYear).length || yearStudents.reduce((sum, student) => sum + (student.documents?.length || 0), 0)} stored`,
+        canManageStudentDocuments ? 'Upload enabled' : 'View only',
+      ],
       onOpen: () => {
         setActiveTab('documents');
         setActiveStudentTask('documents');
@@ -358,6 +370,10 @@ export default function StudentInformationManagement({ user, onLogout }) {
       description: 'Review promotion status, update next class, and keep transfer notes together.',
       icon: <GraduationCap size={22} />,
       actionLabel: 'Open promotion flow',
+      meta: [
+        `${promotions.filter((item) => item.academicYear === academicYear).length} promotions`,
+        canPromoteStudents ? 'Update enabled' : 'View only',
+      ],
       onOpen: () => {
         setActiveTab('promotion');
         setActiveStudentTask('promotion');
@@ -369,6 +385,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
       description: 'View, print, or download academic-year student summaries.',
       icon: <Eye size={22} />,
       actionLabel: 'View reports',
+      meta: [`${yearStudents.length} students`, academicYear],
       onOpen: () => setActivePage('reports'),
     },
   ];
@@ -744,6 +761,13 @@ export default function StudentInformationManagement({ user, onLogout }) {
                         </div>
                         <h2 className="text-lg font-bold text-slate-900 mt-5">{task.title}</h2>
                         <p className="text-sm text-slate-500 mt-2 leading-6">{task.description}</p>
+                        <div className="flex flex-wrap gap-2 mt-4">
+                          {task.meta.map((item) => (
+                            <span key={item} className="rounded-full bg-[#f5f5f6] px-3 py-1 text-xs font-semibold text-slate-600">
+                              {item}
+                            </span>
+                          ))}
+                        </div>
                         <div className="mt-4 text-xs font-bold uppercase tracking-wide text-[#fb8d49]">{task.actionLabel}</div>
                       </button>
                     ))}
