@@ -719,19 +719,11 @@ export default function StudentInformationManagement({ user, onLogout }) {
                     {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist records.</p>}
                     {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
                   </div>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => setActivePage('reports')}
-                      className="h-10 px-5 rounded-lg bg-[#33373e] text-white font-semibold text-sm flex items-center gap-2"
-                    >
-                      <Eye size={16} /> View Report
+                  {activeStudentTask === 'admissions' && canCreateAdmission && (
+                    <button onClick={() => setShowModal(true)} className="h-10 px-5 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm flex items-center gap-2">
+                      <Plus size={16} /> New Admission
                     </button>
-                    {canCreateAdmission && (
-                      <button onClick={() => setShowModal(true)} className="h-10 px-5 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm flex items-center gap-2">
-                        <Plus size={16} /> New Admission
-                      </button>
-                    )}
-                  </div>
+                  )}
                 </div>
 
                 <StudentStats loading={loading} stats={stats} />
@@ -762,36 +754,33 @@ export default function StudentInformationManagement({ user, onLogout }) {
                   <div>
                     <div className="text-xs font-bold text-slate-500">Students / Choose Task / <span className="text-[#fb8d49]">{tabs.find((tab) => tab.id === activeTab)?.label || 'Reports'}</span></div>
                     <h2 className="text-lg font-bold text-slate-900 mt-1">{tabs.find((tab) => tab.id === activeTab)?.label || 'Student Task'}</h2>
+                    <p className="text-sm text-slate-500 mt-1">
+                      {activeTab === 'admissions'
+                        ? 'Step 2: create a new admission or select an admission record to review.'
+                        : activeTab === 'profiles'
+                          ? 'Step 2: search for the student, then use the profile panel to view or edit details.'
+                          : activeTab === 'documents'
+                            ? 'Step 2: select a student first, then upload, open, verify, or reject documents.'
+                            : 'Step 2: select a student first, then update promotion and transfer details.'}
+                    </p>
                   </div>
-                  <button
-                    onClick={() => setActiveStudentTask('')}
-                    className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm"
-                  >
-                    Back to Student Tasks
-                  </button>
+                  <div className="flex flex-wrap gap-2">
+                    {activeTab === 'admissions' && canCreateAdmission && (
+                      <button onClick={() => setShowModal(true)} className="h-10 px-4 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm flex items-center gap-2">
+                        <Plus size={16} /> New Admission
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setActiveStudentTask('')}
+                      className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm"
+                    >
+                      Back to Student Tasks
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex flex-col xl:flex-row gap-5">
                   <div className="xl:w-[70%] min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 mb-5">
-                      {tabs.map(({ id, label, icon }) => (
-                        <button
-                          key={id}
-                          onClick={() => {
-                            setActiveTab(id);
-                            setActiveStudentTask(id);
-                          }}
-                          className={`h-10 px-4 rounded-md border text-sm flex items-center gap-2 ${
-                            activeTab === id
-                              ? 'bg-[#33373e] text-white border-[#33373e]'
-                              : 'bg-white text-slate-600 border-slate-200'
-                          }`}
-                        >
-                          {icon} {label}
-                        </button>
-                      ))}
-                    </div>
-
                     <div className="relative mb-4">
                       <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                       <input
