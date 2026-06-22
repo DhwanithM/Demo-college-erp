@@ -816,3 +816,90 @@ html{color-scheme:dark}::selection{background:rgba(0,255,136,.18);color:#eafff5}
 .erp-shell.light-mode .erp-header button:first-child:hover {
   background:#545cc7!important;
 }
+
+/* Light sidebar aesthetic pass inspired by compact school dashboards */
+.erp-shell.light-mode .erp-sidebar {
+  background:#626bd8!important;
+  border-right:0!important;
+  box-shadow:18px 0 44px rgba(79,70,229,.18)!important;
+}
+
+.erp-shell.light-mode .erp-sidebar > div:first-child {
+  border-bottom:1px solid rgba(255,255,255,.16)!important;
+  padding:24px 22px 22px!important;
+}
+
+.erp-shell.light-mode .erp-sidebar > div:first-child > div {
+  background:rgba(255,255,255,.16)!important;
+  border:1px solid rgba(255,255,255,.25)!important;
+  border-radius:14px!important;
+  padding:12px!important;
+  box-shadow:none!important;
+}
+
+.erp-shell.light-mode .erp-sidebar > div:first-child > div > div:first-child {
+  background:#ffffff!important;
+  border-color:rgba(255,255,255,.85)!important;
+  color:#626bd8!important;
+  box-shadow:0 12px 26px rgba(31,41,120,.18)!important;
+}
+
+.erp-shell.light-mode .erp-sidebar .text-slate-900,
+.erp-shell.light-mode .erp-sidebar .text-slate-500 {
+  color:#ffffff!important;
+}
+
+.erp-shell.light-mode .erp-sidebar nav {
+  padding-inline:22px!important;
+}
+
+.erp-shell.light-mode .erp-sidebar nav button {
+  height:58px!important;
+  margin-bottom:10px!important;
+  color:#536079!important;
+  background:transparent!important;
+}
+
+.erp-shell.light-mode .erp-sidebar nav button > span {
+  min-height:52px!important;
+  width:100%!important;
+  border-radius:11px!important;
+  padding:0 16px!important;
+  background:#ffffff!important;
+  border:1px solid rgba(255,255,255,.78)!important;
+  box-shadow:0 10px 24px rgba(31,41,120,.10)!important;
+}
+
+.erp-shell.light-mode .erp-sidebar nav button:hover > span {
+  transform:translateX(3px);
+  box-shadow:0 14px 30px rgba(31,41,120,.14)!important;
+}
+
+.erp-shell.light-mode .erp-sidebar nav button > span[class*="bg-"] {
+  background:#ffffff!important;
+  color:#626bd8!important;
+  border-color:#ffffff!important;
+  box-shadow:inset 4px 0 0 #4f58cf,0 16px 34px rgba(31,41,120,.20)!important;
+}
+
+.erp-shell.light-mode .erp-sidebar nav button > span[class*="bg-"] svg,
+.erp-shell.light-mode .erp-sidebar nav button > span[class*="bg-"] .erp-sidebar-icon {
+  color:#626bd8!important;
+  stroke:#626bd8!important;
+}
+
+.erp-shell.light-mode .erp-sidebar.is-collapsed nav {
+  padding-inline:14px!important;
+}
+
+.erp-shell.light-mode .erp-sidebar.is-collapsed nav button > span {
+  width:56px!important;
+  padding:0!important;
+}
+
+.erp-shell.light-mode .erp-sidebar .erp-theme-toggle,
+.erp-shell.light-mode .erp-sidebar nav:last-child button > span {
+  background:#ffffff!important;
+  color:#536079!important;
+  border-color:rgba(255,255,255,.78)!important;
+}
