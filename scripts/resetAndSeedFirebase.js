@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { cert, initializeApp } from 'firebase-admin/app';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
+import { demoDepartments, demoStaffMembers } from '../src/modules/facultyStaff/demoFacultyStaff.js';
 import { admissionCourses, admissionStudents } from '../src/modules/students/admissionSeedData.js';
 
 function readJson(path) {
@@ -33,7 +34,7 @@ const schemas = {
   studentTransfers: ['studentRecordId', 'studentId', 'transferType', 'reason', 'academicYear', 'status', 'requestedAtText'],
   users: ['uid', 'name', 'email', 'roleId', 'displayId', 'collegeIds', 'status', 'linkedStudentRecordIds', 'linkedStudentIds', 'createdAtText'],
   roles: ['id', 'name', 'description', 'locked', 'permissions'],
-  staffMembers: ['employeeId', 'name', 'staffType', 'department', 'designation', 'phone', 'email', 'qualification', 'status'],
+  staffMembers: ['employeeId', 'name', 'staffType', 'department', 'designation', 'phone', 'email', 'qualification', 'institution', 'city', 'dateOfBirth', 'specialization', 'joiningDate', 'appointmentType', 'address', 'previousExperience', 'publications', 'researchProjects', 'qualificationDetails', 'documentFileName', 'documentStatus', 'status', 'createdAtText'],
   departments: ['name', 'headName', 'status'],
   staffLeaveRecords: ['staffRecordId', 'employeeId', 'leaveType', 'fromDate', 'toDate', 'reason', 'status'],
   staffAttendanceRecords: ['staffRecordId', 'employeeId', 'academicYear', 'dateText', 'status', 'markedAtText'],
@@ -163,6 +164,24 @@ function buildPdfAdmissionSeed() {
   return { admissionBatches, students, studentAdmissions, studentDocuments };
 }
 
+function buildFacultySeed() {
+  const departments = Object.fromEntries(demoDepartments.map((department) => [
+    department.id.replace('demo-', 'seed-'),
+    {
+      name: department.name,
+      headName: department.headName,
+      status: department.status,
+    },
+  ]));
+
+  const staffMembers = Object.fromEntries(demoStaffMembers.map((staffMember) => {
+    const { id, ...data } = staffMember;
+    return [id.replace('demo-staff-', 'seed-staff-'), data];
+  }));
+
+  return { departments, staffMembers };
+}
+
 const seed = {
   colleges: {
     'main-campus': { id: 'main-campus', name: 'COLLEGE NAME', code: 'COL-097', location: 'Main Campus', status: 'Active', createdAtText: '19 Jun 2026' },
@@ -282,6 +301,7 @@ const seed = {
 };
 
 const pdfAdmissionSeed = buildPdfAdmissionSeed();
+const facultySeed = buildFacultySeed();
 const clientReadySeed = Object.fromEntries(Object.keys(schemas).map((collectionName) => [collectionName, {}]));
 
 Object.assign(clientReadySeed, {
@@ -309,8 +329,8 @@ Object.assign(clientReadySeed, {
       linkedStudentIds: [],
     },
   },
-  departments: {},
-  staffMembers: {},
+  departments: facultySeed.departments,
+  staffMembers: facultySeed.staffMembers,
   systemSettings: {
     institute: {
       id: 'institute',

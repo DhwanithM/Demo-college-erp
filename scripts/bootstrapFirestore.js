@@ -108,7 +108,7 @@ const collections = {
   },
   staffMembers: {
     purpose: 'Faculty and staff master records',
-    fields: ['employeeId', 'name', 'staffType', 'department', 'designation', 'phone', 'email', 'qualification', 'status', 'createdAtText', 'updatedAtText', 'archivedAtText', 'restoredAtText'],
+    fields: ['employeeId', 'name', 'staffType', 'department', 'designation', 'phone', 'email', 'qualification', 'institution', 'city', 'dateOfBirth', 'specialization', 'joiningDate', 'appointmentType', 'address', 'previousExperience', 'publications', 'researchProjects', 'qualificationDetails', 'documentFileName', 'documentStatus', 'status', 'createdAtText', 'updatedAtText', 'archivedAtText', 'restoredAtText'],
   },
   departments: {
     purpose: 'Department master data and allocation support',

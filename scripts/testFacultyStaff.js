@@ -5,6 +5,7 @@ import {
   validateLeaveForm,
   validateStaffForm,
 } from '../src/modules/facultyStaff/facultyStaffUtils.js';
+import { demoStaffMembers } from '../src/modules/facultyStaff/demoFacultyStaff.js';
 
 const staff = { id: 'staff-doc-id', employeeId: 'EMP-1001' };
 
@@ -50,5 +51,35 @@ assert.equal(
   }),
   ''
 );
+
+const requiredProfileFields = [
+  'employeeId',
+  'name',
+  'staffType',
+  'department',
+  'designation',
+  'qualification',
+  'institution',
+  'city',
+  'specialization',
+  'joiningDate',
+  'appointmentType',
+  'address',
+  'previousExperience',
+  'publications',
+  'researchProjects',
+  'qualificationDetails',
+  'documentFileName',
+  'documentStatus',
+  'status',
+];
+
+assert.equal(demoStaffMembers.length, 8);
+demoStaffMembers.forEach((member) => {
+  requiredProfileFields.forEach((field) => {
+    assert.ok(Object.hasOwn(member, field), `${member.name} is missing ${field}`);
+  });
+  assert.ok(Array.isArray(member.qualificationDetails), `${member.name} qualificationDetails must be an array`);
+});
 
 console.log('Faculty staff tests passed.');

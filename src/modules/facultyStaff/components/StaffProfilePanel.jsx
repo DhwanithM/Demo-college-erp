@@ -1,6 +1,15 @@
 import { CalendarCheck, CheckCircle, UserRound, XCircle } from 'lucide-react';
 import StatusBadge from '../../students/components/StatusBadge';
 
+function DetailItem({ label, value, full = false }) {
+  return (
+    <div className={full ? 'col-span-2' : ''}>
+      <div className="text-xs text-slate-500">{label}</div>
+      <div className="font-semibold break-words">{value || 'Not recorded'}</div>
+    </div>
+  );
+}
+
 export default function StaffProfilePanel({
   attendanceRecords,
   canManageLeave,
@@ -33,18 +42,9 @@ export default function StaffProfilePanel({
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <div className="text-xs text-slate-500">Employee ID</div>
-              <div className="font-semibold">{staffMember.employeeId}</div>
-            </div>
-            <div>
-              <div className="text-xs text-slate-500">Type</div>
-              <div className="font-semibold">{staffMember.staffType}</div>
-            </div>
-            <div className="col-span-2">
-              <div className="text-xs text-slate-500">Qualification</div>
-              <div className="font-semibold">{staffMember.qualification || 'Not recorded'}</div>
-            </div>
+            <DetailItem label="Employee ID" value={staffMember.employeeId} />
+            <DetailItem label="Type" value={staffMember.staffType} />
+            <DetailItem label="Qualification" value={staffMember.qualification} full />
           </div>
           <div className="grid grid-cols-2 gap-2 mt-5">
             {['Present', 'Absent'].map((status) => (
@@ -58,6 +58,45 @@ export default function StaffProfilePanel({
               </button>
             ))}
           </div>
+        </div>
+      </div>
+
+      <div className="bg-white border border-slate-100 rounded-lg p-5 shadow-sm mb-5">
+        <h3 className="font-bold mb-4">Extracted Information</h3>
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <DetailItem label="Institution" value={staffMember.institution} full />
+          <DetailItem label="Specialization" value={staffMember.specialization} />
+          <DetailItem label="City" value={staffMember.city} />
+          <DetailItem label="Email" value={staffMember.email} full />
+          <DetailItem label="Phone" value={staffMember.phone} />
+          <DetailItem label="Date of Birth" value={staffMember.dateOfBirth} />
+          <DetailItem label="Joining Date" value={staffMember.joiningDate} />
+          <DetailItem label="Appointment" value={staffMember.appointmentType} />
+          <DetailItem label="Address" value={staffMember.address} full />
+          <DetailItem label="Previous Experience" value={staffMember.previousExperience} full />
+          <DetailItem label="Publications" value={staffMember.publications} />
+          <DetailItem label="Research Projects" value={staffMember.researchProjects} />
+        </div>
+      </div>
+
+      <div className="bg-white border border-slate-100 rounded-lg p-5 shadow-sm mb-5">
+        <h3 className="font-bold mb-4">Qualifications</h3>
+        {staffMember.qualificationDetails?.length ? (
+          <ul className="space-y-2 text-sm text-slate-700">
+            {staffMember.qualificationDetails.map((qualification) => (
+              <li key={qualification} className="rounded-lg bg-[#f5f5f6] px-3 py-2">{qualification}</li>
+            ))}
+          </ul>
+        ) : (
+          <div className="rounded-lg bg-[#f5f5f6] p-3 text-sm text-slate-500">No qualification details recorded.</div>
+        )}
+      </div>
+
+      <div className="bg-white border border-slate-100 rounded-lg p-5 shadow-sm mb-5">
+        <h3 className="font-bold mb-4">Documents</h3>
+        <div className="rounded-lg bg-[#f5f5f6] p-3 text-sm">
+          <div className="font-semibold text-slate-900">{staffMember.documentFileName || 'No source document linked'}</div>
+          <div className="text-xs text-slate-500 mt-1">{staffMember.documentStatus || 'Upload pending'}</div>
         </div>
       </div>
 
