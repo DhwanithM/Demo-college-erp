@@ -1,11 +1,82 @@
+import { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, CalendarDays, FileText, GraduationCap, TrendingUp, Users, Wallet } from 'lucide-react';
 import { demoStudents } from '../students/demoStudents';
 import { demoStaffMembers } from '../facultyStaff/demoFacultyStaff';
-import { demoFeeAssignments, demoFeeCollections } from '../fees/demoFees';
+import { demoFeeAdjustments, demoFeeAssignments, demoFeeCollections } from '../fees/demoFees';
 import { demoManagedDocuments } from '../documents/demoDocuments';
 import { demoExamSchedules } from '../exams/demoExams';
-import { formatCurrency } from '../fees/feeUtils';
+import { getDashboardData } from '../../firebase/db';
+import { isFirebaseConfigured } from '../../firebase/config';
+import { formatCurrency, summarizeFees } from '../fees/feeUtils';
 import { canAccess, defaultRoles } from '../userRoles/rolePermissions';
+
+const fallbackDashboardData = {
+  students: demoStudents,
+  studentAdmissions: [],
+  staff: demoStaffMembers,
+  feeAssignments: demoFeeAssignments,
+  feeCollections: demoFeeCollections,
+  feeAdjustments: demoFeeAdjustments,
+  managedDocuments: demoManagedDocuments,
+  examSchedules: demoExamSchedules,
+};
+
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function parseDashboardDate(value) {
+  if (!value) return null;
+  const parsed = new Date(String(value).includes('T') ? value : `${value}T00:00:00`);
+  if (!Number.isNaN(parsed.getTime())) return parsed;
+
+  const textDate = new Date(value);
+  return Number.isNaN(textDate.getTime()) ? null : textDate;
+}
+
+function buildCollectionTrend(collections = []) {
+  const datedCollections = collections
+    .map((item) => ({ ...item, date: parseDashboardDate(item.paymentDate || item.createdAtText) }))
+    .filter((item) => item.date);
+  const referenceDate = datedCollections.reduce((latest, item) => (
+    !latest || item.date > latest ? item.date : latest
+  ), null) || new Date();
+  const months = [];
+
+  for (let offset = 5; offset >= 0; offset -= 1) {
+    const date = new Date(referenceDate.getFullYear(), referenceDate.getMonth() - offset, 1);
+    months.push({
+      key: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
+      label: MONTH_LABELS[date.getMonth()],
+      value: 0,
+    });
+  }
+
+  datedCollections.forEach((item) => {
+    const key = `${item.date.getFullYear()}-${String(item.date.getMonth() + 1).padStart(2, '0')}`;
+    const month = months.find((entry) => entry.key === key);
+    if (month) month.value += Number(item.amount || 0);
+  });
+
+  return months;
+}
+
+function buildAdmissionStages(students = [], admissions = []) {
+  const activeStudents = students.filter((student) => student.status !== 'Archived');
+  const reviewCount = activeStudents.filter((student) => /review|pending/i.test(student.status || '')).length;
+  const admittedCount = activeStudents.filter((student) => /active|approved|admitted/i.test(student.status || '')).length;
+  const archivedCount = students.filter((student) => student.status === 'Archived').length;
+  const applicationCount = Math.max(admissions.length, students.length);
+
+  return [
+    { label: 'Applications', value: applicationCount, color: '#2563eb' },
+    { label: 'In Review', value: reviewCount, color: '#f59e0b' },
+    { label: 'Admitted', value: admittedCount, color: '#22c55e' },
+    { label: 'Archived', value: archivedCount, color: '#8b5cf6' },
+  ];
+}
+
+function formatChartCurrency(value) {
+  return `Rs ${Number(value || 0).toLocaleString('en-IN')}`;
+}
 
 function DashboardCard({ color = '#38bdf8', icon, label, value, helper, onClick }) {
   return (
@@ -27,6 +98,41 @@ function DashboardCard({ color = '#38bdf8', icon, label, value, helper, onClick 
 }
 
 export default function DashboardManagement({ academicYear = '2026-2027', currentUser, onNavigate }) {
+  const [dashboardData, setDashboardData] = useState(isFirebaseConfigured ? null : fallbackDashboardData);
+  const [loading, setLoading] = useState(isFirebaseConfigured);
+  const [loadError, setLoadError] = useState('');
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadDashboard = async () => {
+      if (!isFirebaseConfigured) {
+        setDashboardData(fallbackDashboardData);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const data = await getDashboardData(academicYear);
+        if (!mounted) return;
+        setDashboardData(data);
+        setLoadError('');
+      } catch (error) {
+        console.warn('Using demo dashboard data because Firestore is not reachable.', error);
+        if (!mounted) return;
+        setDashboardData(fallbackDashboardData);
+        setLoadError('Unable to load live dashboard data. Showing demo/local records.');
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    loadDashboard();
+    return () => {
+      mounted = false;
+    };
+  }, [academicYear]);
+
   const currentRoleId = currentUser?.roleId || 'admin';
   const canViewStudents = canAccess(defaultRoles, currentRoleId, 'students.view');
   const canCreateStudents = canAccess(defaultRoles, currentRoleId, 'students.create');
@@ -38,34 +144,57 @@ export default function DashboardManagement({ academicYear = '2026-2027', curren
   const canVerifyDocuments = canAccess(defaultRoles, currentRoleId, 'documents.verify');
   const canViewExams = canAccess(defaultRoles, currentRoleId, 'exams.view');
   const canViewFinancialReports = canAccess(defaultRoles, currentRoleId, 'financialReports.view');
-  const activeStudents = demoStudents.filter((student) => student.status !== 'Archived');
-  const facultyCount = demoStaffMembers.filter((member) => member.staffType === 'Faculty' && member.status !== 'Archived').length;
-  const collectedAmount = demoFeeCollections.reduce((sum, item) => sum + Number(item.amount || 0), 0);
-  const dueCount = demoFeeAssignments.filter((item) => Number(item.dueAmount || 0) > 0).length;
-  const pendingDocuments = demoManagedDocuments.filter((item) => item.verificationStatus === 'Pending Review');
-  const upcomingExams = demoExamSchedules.filter((item) => item.status !== 'Archived');
-  const collectionMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-  const collectionValues = [14, 11, 8, 11.3, 10.6, 14.8, 13.2, 15.9, 17.8];
-  const trendPoints = collectionValues.map((value, index) => {
-    const x = 16 + (index / (collectionValues.length - 1)) * 328;
-    const y = 126 - (value / 20) * 96;
-    return [x, y, value];
+  const {
+    students = [],
+    studentAdmissions = [],
+    staff = [],
+    feeAssignments = [],
+    feeCollections = [],
+    feeAdjustments = [],
+    managedDocuments = [],
+    examSchedules = [],
+  } = dashboardData || fallbackDashboardData;
+  const activeStudents = students.filter((student) => student.status !== 'Archived');
+  const facultyCount = staff.filter((member) => member.staffType === 'Faculty' && member.status !== 'Archived').length;
+  const feeSummary = useMemo(
+    () => summarizeFees(feeAssignments, feeCollections, feeAdjustments),
+    [feeAssignments, feeCollections, feeAdjustments]
+  );
+  const pendingDocuments = managedDocuments.filter((item) => item.verificationStatus === 'Pending Review');
+  const upcomingExams = examSchedules
+    .filter((item) => item.status !== 'Archived')
+    .sort((first, second) => String(first.examDate || '').localeCompare(String(second.examDate || '')));
+  const collectionTrend = useMemo(() => buildCollectionTrend(feeCollections), [feeCollections]);
+  const maxTrendValue = Math.max(...collectionTrend.map((item) => item.value), 1);
+  const trendPoints = collectionTrend.map((item, index) => {
+    const x = 16 + (index / Math.max(collectionTrend.length - 1, 1)) * 328;
+    const y = 126 - (item.value / maxTrendValue) * 96;
+    return [x, y, item.value];
   });
   const trendPath = trendPoints.map(([x, y], index) => `${index ? 'L' : 'M'} ${x} ${y}`).join(' ');
   const trendArea = `${trendPath} L ${trendPoints.at(-1)[0]} 138 L ${trendPoints[0][0]} 138 Z`;
-  const highlightPoint = trendPoints[3];
-  const admissionStages = [
-    { label: 'Enquiries', value: 1324, color: '#2563eb' },
-    { label: 'Applications', value: 842, color: '#22c55e' },
-    { label: 'Shortlisted', value: 428, color: '#f59e0b' },
-    { label: 'Admitted', value: 238, color: '#8b5cf6' },
-  ];
+  const highlightIndex = trendPoints.reduce((bestIndex, point, index) => (
+    point[2] > trendPoints[bestIndex][2] ? index : bestIndex
+  ), 0);
+  const highlightPoint = trendPoints[highlightIndex];
+  const tooltipX = Math.min(highlightPoint[0] + 12, 232);
+  const tooltipY = Math.max(highlightPoint[1] - 34, 8);
+  const admissionStages = useMemo(
+    () => buildAdmissionStages(students, studentAdmissions),
+    [students, studentAdmissions]
+  );
+  const admittedRate = admissionStages[0].value
+    ? Math.round((admissionStages[2].value / admissionStages[0].value) * 100)
+    : 0;
   const paymentSplit = [
-    { label: 'Collected', value: collectedAmount, color: '#22c55e' },
-    { label: 'Pending', value: demoFeeAssignments.reduce((sum, item) => sum + Number(item.dueAmount || 0), 0), color: '#f59e0b' },
-    { label: 'Adjusted', value: demoFeeAssignments.reduce((sum, item) => sum + Number(item.adjustmentAmount || 0), 0), color: '#ef4444' },
+    { label: 'Collected', value: feeSummary.totalCollected, color: '#22c55e' },
+    { label: 'Pending', value: feeSummary.totalOutstanding, color: '#f59e0b' },
+    { label: 'Adjusted', value: feeSummary.totalAdjusted, color: '#ef4444' },
   ];
   const splitTotal = Math.max(paymentSplit.reduce((sum, item) => sum + item.value, 0), 1);
+  const collectionRate = feeSummary.totalAssigned
+    ? Math.round((feeSummary.totalCollected / feeSummary.totalAssigned) * 100)
+    : 0;
   let pieCursor = 0;
   const pieGradient = paymentSplit.map((item) => {
     const start = pieCursor;
@@ -77,7 +206,7 @@ export default function DashboardManagement({ academicYear = '2026-2027', curren
   const dashboardCards = [
     canViewStudents && { color: '#2563eb', icon: <Users size={22} />, label: 'Students', value: activeStudents.length, helper: 'Active records', page: 'students' },
     canViewStaff && { color: '#22c55e', icon: <GraduationCap size={22} />, label: 'Faculty', value: facultyCount, helper: 'Teaching staff', page: 'faculty-staff' },
-    canViewFees && { color: '#f59e0b', icon: <Wallet size={22} />, label: 'Collection', value: formatCurrency(collectedAmount), helper: `${dueCount} due students`, page: 'fees' },
+    canViewFees && { color: '#f59e0b', icon: <Wallet size={22} />, label: 'Collection', value: formatCurrency(feeSummary.totalCollected), helper: `${feeSummary.dueStudents} due students`, page: 'fees' },
     canViewDocuments && { color: '#8b5cf6', icon: <FileText size={22} />, label: 'Documents', value: pendingDocuments.length, helper: 'Pending review', page: 'document-management' },
     canViewExams && { color: '#ef4444', icon: <TrendingUp size={22} />, label: 'Exams', value: upcomingExams.length, helper: 'Upcoming exams', page: 'examination-results' },
   ].filter(Boolean);
@@ -99,8 +228,8 @@ export default function DashboardManagement({ academicYear = '2026-2027', curren
       helper: 'View exam schedule',
       page: 'examination-results',
     },
-    canViewFees && dueCount > 0 && {
-      label: `${dueCount} students have pending dues`,
+    canViewFees && feeSummary.dueStudents > 0 && {
+      label: `${feeSummary.dueStudents} students have pending dues`,
       helper: 'Open payment due list',
       page: 'fees',
     },
@@ -112,6 +241,8 @@ export default function DashboardManagement({ academicYear = '2026-2027', curren
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
           <p className="text-sm text-slate-500 mt-1">Today&apos;s college overview for {academicYear}.</p>
+          {loading && <p className="text-xs text-slate-500 mt-2">Loading live dashboard data...</p>}
+          {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
         </div>
       </div>
 
@@ -129,7 +260,7 @@ export default function DashboardManagement({ academicYear = '2026-2027', curren
               <h2 className="font-bold text-slate-900">Payment Trend</h2>
               <p className="text-xs text-slate-500 mt-1">Smooth monthly collection movement.</p>
             </div>
-            <span className="rounded-full bg-[#f5f5f6] px-3 py-1 text-xs font-semibold text-slate-600">2026</span>
+            <span className="rounded-full bg-[#f5f5f6] px-3 py-1 text-xs font-semibold text-slate-600">{academicYear}</span>
           </div>
           <div className="relative">
             <svg viewBox="0 0 360 160" className="w-full h-64">
@@ -143,16 +274,16 @@ export default function DashboardManagement({ academicYear = '2026-2027', curren
               <path d={trendPath} fill="none" stroke="#f97316" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
               <line x1={highlightPoint[0]} x2={highlightPoint[0]} y1="12" y2="142" stroke="rgba(148,163,184,.55)" strokeWidth="2" strokeDasharray="6 6" />
               <circle cx={highlightPoint[0]} cy={highlightPoint[1]} r="6" fill="#f97316" stroke="#ffffff" strokeWidth="3" />
-              <g transform={`translate(${highlightPoint[0] + 12} ${highlightPoint[1] - 34})`}>
-                <rect x="0" y="0" width="78" height="32" rx="10" fill="white" opacity="0.96" />
-                <text x="10" y="21" fill="#111827" fontSize="14" fontWeight="700">11.3 L</text>
+              <g transform={`translate(${tooltipX} ${tooltipY})`}>
+                <rect x="0" y="0" width="112" height="32" rx="10" fill="white" opacity="0.96" />
+                <text x="10" y="21" fill="#111827" fontSize="14" fontWeight="700">{formatChartCurrency(highlightPoint[2])}</text>
               </g>
               {trendPoints.map(([x], index) => (
                 <line key={index} x1={x} x2={x} y1="145" y2="150" stroke="rgba(148,163,184,.5)" strokeWidth="2" />
               ))}
             </svg>
             <div className="grid grid-cols-6 gap-2 text-[11px] text-slate-500 px-4 -mt-4">
-              {collectionMonths.map((month) => <span key={month}>{month}</span>)}
+              {collectionTrend.map((month) => <span key={month.key}>{month.label}</span>)}
             </div>
           </div>
         </section>
@@ -180,13 +311,14 @@ export default function DashboardManagement({ academicYear = '2026-2027', curren
       </div>
 
       <div className="grid xl:grid-cols-[1fr_1fr] gap-5 mt-5">
+        {canViewStudents && (
         <section className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between gap-3 mb-5">
             <div>
               <h2 className="font-bold text-slate-900">Admissions Pipeline</h2>
-              <p className="text-xs text-slate-500 mt-1">Colorful stage view for quick scanning.</p>
+              <p className="text-xs text-slate-500 mt-1">Derived from student admission and status records.</p>
             </div>
-            <span className="rounded-full bg-[#f5f5f6] px-3 py-1 text-xs font-bold text-emerald-500">28.3%</span>
+            <span className="rounded-full bg-[#f5f5f6] px-3 py-1 text-xs font-bold text-emerald-500">{admittedRate}%</span>
           </div>
           <div className="grid md:grid-cols-[1fr_.85fr] gap-5 items-center">
             <div className="space-y-1">
@@ -213,6 +345,7 @@ export default function DashboardManagement({ academicYear = '2026-2027', curren
             </div>
           </div>
         </section>
+        )}
 
         {canViewFees && (
         <section className="rounded-lg border border-slate-100 bg-white p-5 shadow-sm">
@@ -221,12 +354,12 @@ export default function DashboardManagement({ academicYear = '2026-2027', curren
               <h2 className="font-bold text-slate-900">Fee Collection</h2>
               <p className="text-xs text-slate-500 mt-1">Collected, pending, and adjusted split.</p>
             </div>
-            <span className="rounded-full bg-[#f5f5f6] px-3 py-1 text-xs font-semibold text-slate-600">This month</span>
+            <span className="rounded-full bg-[#f5f5f6] px-3 py-1 text-xs font-semibold text-slate-600">{academicYear}</span>
           </div>
           <div className="grid md:grid-cols-[180px_1fr] gap-6 items-center">
             <div className="relative h-44 w-44 mx-auto rounded-full" style={{ background: `conic-gradient(${pieGradient})` }}>
               <div className="erp-dashboard-donut-hole absolute inset-8 rounded-full flex flex-col items-center justify-center">
-                <span className="text-3xl font-extrabold text-slate-900">78%</span>
+                <span className="text-3xl font-extrabold text-slate-900">{collectionRate}%</span>
                 <span className="text-xs text-slate-500">Collected</span>
               </div>
             </div>

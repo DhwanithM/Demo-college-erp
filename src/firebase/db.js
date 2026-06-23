@@ -253,6 +253,40 @@ export async function getFacultyStaffData(academicYear = '') {
   return { staff, departments, leaveRecords: filterByAcademicYear(leaveRecords, academicYear), attendanceRecords: filterByAcademicYear(attendanceRecords, academicYear) };
 }
 
+export async function getDashboardData(academicYear = '') {
+  const yearConstraints = academicYearWhere(academicYear);
+  const [
+    students,
+    studentAdmissions,
+    staff,
+    feeAssignments,
+    feeCollections,
+    feeAdjustments,
+    managedDocuments,
+    examSchedules,
+  ] = await Promise.all([
+    listCollection('students', yearConstraints),
+    listCollection('studentAdmissions', yearConstraints),
+    listCollection('staffMembers'),
+    listCollection('feeAssignments', yearConstraints),
+    listCollection('feeCollections', yearConstraints),
+    listCollection('feeAdjustments', yearConstraints),
+    listCollection('managedDocuments', yearConstraints),
+    listCollection('examSchedules', yearConstraints),
+  ]);
+
+  return {
+    students: filterByAcademicYear(students, academicYear),
+    studentAdmissions: filterByAcademicYear(studentAdmissions, academicYear),
+    staff,
+    feeAssignments: filterByAcademicYear(feeAssignments, academicYear),
+    feeCollections: filterByAcademicYear(feeCollections, academicYear),
+    feeAdjustments: filterByAcademicYear(feeAdjustments, academicYear),
+    managedDocuments: filterByAcademicYear(managedDocuments, academicYear),
+    examSchedules: filterByAcademicYear(examSchedules, academicYear),
+  };
+}
+
 export async function createStaffMember(data) {
   return createCollectionDocument('staffMembers', data);
 }
