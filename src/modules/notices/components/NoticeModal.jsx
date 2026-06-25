@@ -12,7 +12,7 @@ export default function NoticeModal({ initialNotice = null, mode = 'create', onC
     body: initialNotice?.body || '',
     publishDate: initialNotice?.publishDate || new Date().toISOString().slice(0, 10),
     expiryDate: initialNotice?.expiryDate || '',
-    status: initialNotice?.status || 'Published',
+    status: initialNotice?.status || 'Draft',
   });
 
   const submit = (event) => {
@@ -55,12 +55,6 @@ export default function NoticeModal({ initialNotice = null, mode = 'create', onC
             <span className="block text-xs font-semibold text-slate-500 mb-1.5">Priority</span>
             <select value={form.priority} onChange={(event) => setForm((prev) => ({ ...prev, priority: event.target.value }))} className="w-full h-11 rounded-lg border border-slate-200 px-3 text-sm">
               {noticePriorities.map((item) => <option key={item}>{item}</option>)}
-            </select>
-          </label>
-          <label>
-            <span className="block text-xs font-semibold text-slate-500 mb-1.5">Publication Status</span>
-            <select value={form.status} onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value }))} className="w-full h-11 rounded-lg border border-slate-200 px-3 text-sm">
-              {['Published', 'Draft'].map((item) => <option key={item}>{item}</option>)}
             </select>
           </label>
           <label>

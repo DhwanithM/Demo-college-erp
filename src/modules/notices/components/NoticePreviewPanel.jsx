@@ -1,7 +1,7 @@
 import StatusBadge from '../../students/components/StatusBadge';
 import { getNoticeDisplayStatus } from '../noticeUtils';
 
-export default function NoticePreviewPanel({ notice }) {
+export default function NoticePreviewPanel({ canPublish = false, notice, onPublish }) {
   return (
     <aside className="xl:w-[32%]">
       <div className="bg-white border border-slate-100 rounded-lg p-5 sticky top-4">
@@ -25,6 +25,14 @@ export default function NoticePreviewPanel({ notice }) {
               <div className="rounded-lg bg-[#f5f5f6] p-3">Publish<br /><b>{notice.publishDate}</b></div>
               <div className="rounded-lg bg-[#f5f5f6] p-3">Expiry<br /><b>{notice.expiryDate || '-'}</b></div>
             </div>
+            <button
+              type="button"
+              onClick={() => onPublish?.(notice)}
+              disabled={!canPublish || notice.status !== 'Draft'}
+              className="w-full h-10 rounded-lg bg-[#33373e] text-white font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Publish
+            </button>
           </div>
         ) : (
           <div className="rounded-lg bg-[#f5f5f6] p-4 text-sm text-slate-500">Choose a notice, circular, or event announcement to preview it.</div>

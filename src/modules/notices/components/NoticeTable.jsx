@@ -1,8 +1,8 @@
-import { Edit3, Eye, Archive } from 'lucide-react';
+import { Archive, Edit3, Eye, Send } from 'lucide-react';
 import StatusBadge from '../../students/components/StatusBadge';
 import { getNoticeDisplayStatus } from '../noticeUtils';
 
-export default function NoticeTable({ notices, canEdit, onEdit, onPreview, onArchive }) {
+export default function NoticeTable({ notices, canEdit, onEdit, onPreview, onArchive, onPublish }) {
   return (
     <div className="overflow-hidden border border-slate-100 rounded-lg bg-white">
       <div className="overflow-x-auto">
@@ -32,6 +32,7 @@ export default function NoticeTable({ notices, canEdit, onEdit, onPreview, onArc
                   <div className="flex justify-end gap-2">
                     <button onClick={() => onPreview(item)} className="h-8 w-8 rounded-md bg-white border border-slate-200 inline-flex items-center justify-center"><Eye size={14} /></button>
                     <button onClick={() => onEdit(item)} disabled={!canEdit} className="h-8 w-8 rounded-md bg-white border border-slate-200 inline-flex items-center justify-center disabled:text-slate-300"><Edit3 size={14} /></button>
+                    <button onClick={() => onPublish(item)} disabled={!canEdit || item.status !== 'Draft'} className="h-8 w-8 rounded-md bg-white border border-slate-200 inline-flex items-center justify-center disabled:text-slate-300" title="Publish"><Send size={14} /></button>
                     <button onClick={() => onArchive(item)} disabled={!canEdit || item.status === 'Archived'} className="h-8 w-8 rounded-md bg-white border border-slate-200 inline-flex items-center justify-center disabled:text-slate-300"><Archive size={14} /></button>
                   </div>
                 </td>

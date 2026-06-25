@@ -116,6 +116,28 @@ export default function NoticeBoardManagement({ currentUser, academicYear = '202
     }
   };
 
+  const publishNotice = async (notice) => {
+    if (!canEdit) {
+      toast.error('You do not have permission to publish announcements.');
+      return;
+    }
+    if (notice.status !== 'Draft') {
+      toast.error('Only draft announcements can be published.');
+      return;
+    }
+    const updates = { status: 'Published', publishedAtText: formatDisplayDate() };
+    try {
+      await updateNoticeItem(notice.id, updates);
+      setNotices((prev) => prev.map((item) => item.id === notice.id ? { ...item, ...updates } : item));
+      setSelectedId(notice.id);
+      toast.success('Announcement published');
+    } catch {
+      setNotices((prev) => prev.map((item) => item.id === notice.id ? { ...item, ...updates } : item));
+      setSelectedId(notice.id);
+      toast.success('Announcement published locally');
+    }
+  };
+
   const selectForPreview = (notice) => setSelectedId(notice.id);
   const updateFilter = (key, value) => setFilters((prev) => ({ ...prev, [key]: value }));
 
@@ -154,9 +176,9 @@ export default function NoticeBoardManagement({ currentUser, academicYear = '202
               {['Draft', 'Published', 'Scheduled', 'Expired', 'Archived'].map((item) => <option key={item}>{item}</option>)}
             </select>
           </div>
-          <NoticeTable notices={visibleNotices} canEdit={canEdit} onEdit={setEditingNotice} onPreview={selectForPreview} onArchive={archiveNotice} />
+          <NoticeTable notices={visibleNotices} canEdit={canEdit} onEdit={setEditingNotice} onPreview={selectForPreview} onArchive={archiveNotice} onPublish={publishNotice} />
         </div>
-        <NoticePreviewPanel notice={selectedNotice} />
+        <NoticePreviewPanel canPublish={canEdit} notice={selectedNotice} onPublish={publishNotice} />
       </div>
 
       {showModal && <NoticeModal onClose={() => setShowModal(false)} onSave={saveNotice} />}
