@@ -128,7 +128,8 @@ export default function ExaminationResultManagement({ currentUser, academicYear 
   };
 
   const goBackOneExamStep = () => {
-    if (window.history.state?.examFlow) {
+    const flow = window.history.state?.examFlow;
+    if (flow?.branch || flow?.task) {
       window.history.back();
       return;
     }

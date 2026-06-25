@@ -118,12 +118,14 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
 
   const selectStaff = (staffId) => {
     setSelectedId(staffId);
+    window.history.replaceState({ ...(window.history.state || {}), facultyFlow: { selectedId: '' } }, '');
     window.history.pushState({ ...(window.history.state || {}), facultyFlow: { selectedId: staffId } }, '');
   };
 
   const goBackOneFacultyStep = () => {
     if (window.history.state?.facultyFlow?.selectedId) {
-      window.history.back();
+      setSelectedId('');
+      window.history.replaceState({ ...(window.history.state || {}), facultyFlow: { selectedId: '' } }, '');
       return;
     }
     setSelectedId('');

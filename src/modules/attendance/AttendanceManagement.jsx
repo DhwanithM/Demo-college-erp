@@ -149,7 +149,8 @@ export default function AttendanceManagement({ currentUser, academicYear = '2026
   };
 
   const goBackOneAttendanceStep = () => {
-    if (window.history.state?.attendanceFlow) {
+    const flow = window.history.state?.attendanceFlow;
+    if (flow?.branch || flow?.task) {
       window.history.back();
       return;
     }

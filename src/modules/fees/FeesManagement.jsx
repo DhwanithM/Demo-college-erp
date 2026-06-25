@@ -138,7 +138,8 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
   };
 
   const goBackOneFeeStep = () => {
-    if (window.history.state?.feeFlow) {
+    const flow = window.history.state?.feeFlow;
+    if (flow?.branch || flow?.task) {
       window.history.back();
       return;
     }
