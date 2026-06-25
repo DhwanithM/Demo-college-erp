@@ -1217,6 +1217,38 @@ html{color-scheme:dark}::selection{background:rgba(0,255,136,.18);color:#eafff5}
   box-shadow:0 12px 22px rgba(15,23,42,.16)!important;
 }
 
+.erp-shell.light-mode .erp-sidebar-nav .erp-sidebar-item > span,
+.erp-shell.light-mode .erp-sidebar-nav .erp-sidebar-item > span:not([class*="bg-"]),
+.erp-shell.light-mode .erp-sidebar-nav .erp-sidebar-item > span[class*="bg-"] {
+  width:auto!important;
+  min-width:0!important;
+  min-height:auto!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+
+.erp-shell.light-mode .erp-sidebar-nav .erp-sidebar-item > .erp-sidebar-item-icon {
+  width:26px!important;
+  min-width:26px!important;
+  height:auto!important;
+  color:currentColor!important;
+}
+
+.erp-shell.light-mode .erp-sidebar-nav .erp-sidebar-item > .erp-sidebar-item-label {
+  width:auto!important;
+  flex:1 1 auto!important;
+  color:currentColor!important;
+}
+
+.erp-shell.light-mode .erp-sidebar.is-collapsed .erp-sidebar-nav .erp-sidebar-item > .erp-sidebar-item-icon {
+  width:26px!important;
+  min-width:26px!important;
+}
+
 .erp-shell.light-mode .erp-sidebar-theme-switch {
   background:#ffffff!important;
 }
