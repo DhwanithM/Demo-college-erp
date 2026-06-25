@@ -159,9 +159,21 @@ export default function App() {
     <div className="app-background">
       <ParticleBackground />
       <Routes>
-      <Route path="/" element={<Navigate to={user ? '/students' : '/login'} replace />} />
-      <Route path="/login" element={user ? <Navigate to="/students" replace /> : <AuthPage />} />
-      <Route path="/register" element={<Navigate to={user ? '/students' : '/login'} replace />} />
+      <Route path="/" element={<Navigate to={user ? '/dashboard' : '/login'} replace />} />
+      <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
+      <Route path="/register" element={<Navigate to={user ? '/dashboard' : '/login'} replace />} />
+      <Route
+        path="/dashboard"
+        element={user ? (
+          !hasActiveProfile ? (
+            <AccessPending user={user} onLogout={logout} />
+          ) : needsCollegeSelection ? (
+            <CollegeSelection colleges={colleges} onSelect={selectCollege} />
+          ) : (
+            <StudentInformationManagement user={{ ...user, selectedCollege }} onLogout={logout} />
+          )
+        ) : <Navigate to="/login" replace />}
+      />
       <Route
         path="/students"
         element={user ? (
@@ -174,7 +186,19 @@ export default function App() {
           )
         ) : <Navigate to="/login" replace />}
       />
-      <Route path="*" element={<Navigate to={user ? '/students' : '/login'} replace />} />
+      <Route
+        path="/modules/:moduleSlug"
+        element={user ? (
+          !hasActiveProfile ? (
+            <AccessPending user={user} onLogout={logout} />
+          ) : needsCollegeSelection ? (
+            <CollegeSelection colleges={colleges} onSelect={selectCollege} />
+          ) : (
+            <StudentInformationManagement user={{ ...user, selectedCollege }} onLogout={logout} />
+          )
+        ) : <Navigate to="/login" replace />}
+      />
+      <Route path="*" element={<Navigate to={user ? '/dashboard' : '/login'} replace />} />
       </Routes>
     </div>
   );

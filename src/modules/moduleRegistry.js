@@ -163,3 +163,7 @@ export function getModuleById(id) {
   return moduleRegistry.find((module) => module.id === id) || null;
 }
 
+export function getModuleByPath(path) {
+  return moduleRegistry.find((module) => module.path === path) || null;
+}
+

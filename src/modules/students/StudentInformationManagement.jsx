@@ -1,4 +1,5 @@
-import { Component, useEffect, useMemo, useState } from 'react';
+import { Component, useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   Download,
@@ -17,7 +18,7 @@ import {
   updateStudent,
 } from '../../firebase/db';
 import { isFirebaseConfigured } from '../../firebase/config';
-import { getEnabledModules, getModuleById } from '../moduleRegistry';
+import { getEnabledModules, getModuleById, getModuleByPath } from '../moduleRegistry';
 import { admissionCourses, admissionStudents } from './admissionSeedData';
 import DashboardManagement from '../dashboard/DashboardManagement';
 import DemoModulePage from './components/DemoModulePage';
@@ -80,6 +81,10 @@ class ModuleErrorBoundary extends Component {
     }
     return this.props.children;
   }
+}
+
+function getPageFromPath(pathname) {
+  return getModuleByPath(pathname)?.id || 'dashboard';
 }
 
 function StudentReportView({ academicYear, admissions, documents, promotions, students, onBack }) {
@@ -206,11 +211,12 @@ function StudentReportView({ academicYear, admissions, documents, promotions, st
 }
 
 export default function StudentInformationManagement({ user, onLogout }) {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [themeMode, setThemeMode] = useState(() => localStorage.getItem('erpThemeMode') || 'dark');
   const [students, setStudents] = useState(isFirebaseConfigured ? [] : admissionStudents);
   const [courses, setCourses] = useState(isFirebaseConfigured ? [] : admissionCourses);
   const [selectedCourseCode, setSelectedCourseCode] = useState('all');
-  const [activePage, setActivePage] = useState('dashboard');
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState('');
   const [admissions, setAdmissions] = useState([]);
@@ -225,6 +231,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
   const [institute, setInstitute] = useState(isFirebaseConfigured ? {} : demoInstituteSettings);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const currentRoleId = user?.roleId || 'admin';
+  const activePage = getPageFromPath(location.pathname);
   const activeModule = getModuleById(activePage);
   const canViewStudents = canAccess(defaultRoles, currentRoleId, 'students.view');
   const canCreateAdmission = canAccess(defaultRoles, currentRoleId, 'students.create');
@@ -235,6 +242,12 @@ export default function StudentInformationManagement({ user, onLogout }) {
   const canOpenActiveModule = activePage === 'reports'
     ? canViewStudents
     : !activeModule?.permission || canAccess(defaultRoles, currentRoleId, activeModule.permission);
+  const navigateToModule = useCallback((moduleId, options = {}) => {
+    const nextModule = getModuleById(moduleId);
+    setSelectedId('');
+    setSearch('');
+    navigate(nextModule?.path || '/dashboard', options);
+  }, [navigate]);
 
   useEffect(() => {
     localStorage.setItem('erpThemeMode', themeMode);
@@ -242,9 +255,12 @@ export default function StudentInformationManagement({ user, onLogout }) {
 
   useEffect(() => {
     const currentState = window.history.state || {};
+    const currentPage = getPageFromPath(location.pathname);
     window.history.replaceState({
       ...currentState,
-      studentFlow: currentState.studentFlow || { page: 'dashboard', task: '', branch: '' },
+      studentFlow: currentState.studentFlow?.page === currentPage
+        ? currentState.studentFlow
+        : { page: currentPage, task: '', branch: '' },
     }, '');
 
     const handleHistoryBack = (event) => {
@@ -252,17 +268,16 @@ export default function StudentInformationManagement({ user, onLogout }) {
       setEditingStudent(null);
       const flow = event.state?.studentFlow;
       if (!flow) {
-        setActivePage('dashboard');
+        setSelectedId('');
         return;
       }
-      setActivePage(flow.page || 'dashboard');
       setSelectedId(flow.selectedId || '');
       if (flow.statusFilter) setStatusFilter(flow.statusFilter);
     };
 
     window.addEventListener('popstate', handleHistoryBack);
     return () => window.removeEventListener('popstate', handleHistoryBack);
-  }, []);
+  }, [location.pathname]);
 
   useEffect(() => {
     const isActivePageAllowed = activePage === 'reports'
@@ -270,9 +285,9 @@ export default function StudentInformationManagement({ user, onLogout }) {
       : accessibleModules.some((module) => module.id === activePage);
     if (!isActivePageAllowed) {
       const nextPage = accessibleModules[0]?.id || 'dashboard';
-      queueMicrotask(() => setActivePage(nextPage));
+      queueMicrotask(() => navigateToModule(nextPage, { replace: true }));
     }
-  }, [accessibleModules, activePage, canViewStudents]);
+  }, [accessibleModules, activePage, canViewStudents, navigateToModule]);
 
   useEffect(() => {
     const loadShellSettings = async () => {
@@ -362,7 +377,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
       return;
     }
     setSelectedId('');
-    setActivePage('students');
+    navigateToModule('students');
   };
 
   const saveStudent = async (form) => {
@@ -575,7 +590,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
             collapsed={sidebarCollapsed}
             currentUser={user}
             institute={institute}
-            onNavigate={setActivePage}
+            onNavigate={navigateToModule}
             onThemeToggle={() => setThemeMode((prev) => (prev === 'dark' ? 'light' : 'dark'))}
             onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
             themeMode={themeMode}
@@ -604,7 +619,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
                     You do not have permission to open this module.
                   </div>
                 ) : activePage === 'dashboard' ? (
-                  <DashboardManagement academicYear={academicYear} currentUser={user} onNavigate={setActivePage} />
+                  <DashboardManagement academicYear={academicYear} currentUser={user} onNavigate={navigateToModule} />
                 ) : activePage === 'students' ? (
                 selectedStudent ? (
                   <StudentDetailPage
@@ -722,7 +737,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
                 ) : activePage === 'settings' ? (
                   <SettingsManagement currentUser={user} />
                 ) : (
-                  <DemoModulePage page={activePage} onOpenStudents={() => setActivePage('students')} />
+                  <DemoModulePage page={activePage} onOpenStudents={() => navigateToModule('students')} />
                 )}
                 </ModuleErrorBoundary>
               </section>

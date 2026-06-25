@@ -50,7 +50,7 @@ export default function AuthPage() {
       }
 
       toast.success('Signed in');
-      navigate('/students');
+      navigate('/dashboard');
     } catch (error) {
       toast.error(getAuthErrorMessage(error));
     } finally {
