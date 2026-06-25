@@ -1,14 +1,14 @@
 export const demoInstituteSettings = {
   id: 'institute',
-  name: 'Maurya Nursing College',
-  instituteId: 'COL-097',
-  code: 'COL-097',
-  email: 'admin@college.edu',
-  phone: '+91 98765 00000',
-  address: 'Main Campus Road',
-  city: 'Bengaluru',
-  status: 'Active',
-  updatedAtText: '19 Jun 2026',
+  name: '-',
+  instituteId: '-',
+  code: '-',
+  email: '-',
+  phone: '-',
+  address: '-',
+  city: '-',
+  status: '-',
+  updatedAtText: '-',
 };
 
 export const demoAcademicYearSettings = {

@@ -12,9 +12,9 @@ import { demoInstituteSettings } from './modules/settings/demoSettings';
 function buildCollegeFromInstitute(institute = demoInstituteSettings) {
   return {
     id: 'main-campus',
-    name: institute.name || 'College',
-    code: institute.instituteId || institute.code || 'COL-097',
-    location: institute.city || institute.address || 'Main Campus',
+    name: institute.name || '-',
+    code: institute.instituteId || institute.code || '-',
+    location: institute.city || institute.address || '-',
   };
 }
 
