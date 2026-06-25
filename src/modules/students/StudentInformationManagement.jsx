@@ -121,10 +121,15 @@ function StudentReportView({ academicYear, admissions, documents, promotions, st
   return (
     <div>
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-6 border-b border-slate-100">
-        <div>
-          <div className="text-sm font-bold text-slate-500 mb-2">Academics / <span className="text-[#f39a5f]">Student Report</span></div>
-          <h1 className="text-2xl font-bold text-slate-900">Student Report</h1>
-          <p className="text-sm text-slate-500 mt-1">Academic year {academicYear}: admissions, profiles, documents, and promotions.</p>
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2">
+            <ArrowLeft size={15} /> Back
+          </button>
+          <div>
+            <div className="text-sm font-bold text-slate-500 mb-2">Academics / <span className="text-[#f39a5f]">Student Report</span></div>
+            <h1 className="text-2xl font-bold text-slate-900">Student Report</h1>
+            <p className="text-sm text-slate-500 mt-1">Academic year {academicYear}: admissions, profiles, documents, and promotions.</p>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <button onClick={downloadReport} className="h-10 px-5 rounded-lg bg-[#33373e] text-white font-semibold text-sm flex items-center gap-2">
@@ -132,9 +137,6 @@ function StudentReportView({ academicYear, admissions, documents, promotions, st
           </button>
           <button onClick={() => window.print()} className="h-10 px-5 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm">
             Print
-          </button>
-          <button onClick={onBack} className="h-10 px-5 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm">
-            Back to Students
           </button>
         </div>
       </div>
@@ -254,6 +256,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
         return;
       }
       setActivePage(flow.page || 'dashboard');
+      setSelectedId(flow.selectedId || '');
       if (flow.statusFilter) setStatusFilter(flow.statusFilter);
     };
 
@@ -340,6 +343,27 @@ export default function StudentInformationManagement({ user, onLogout }) {
         .some((value) => value.toLowerCase().includes(term))
     );
   }, [courseStudents, search, statusFilter]);
+
+  const selectStudent = (studentId) => {
+    setSelectedId(studentId);
+    window.history.replaceState({
+      ...(window.history.state || {}),
+      studentFlow: { page: activePage, selectedId: '', statusFilter },
+    }, '');
+    window.history.pushState({
+      ...(window.history.state || {}),
+      studentFlow: { page: activePage, selectedId: studentId, statusFilter },
+    }, '');
+  };
+
+  const goBackOneStudentStep = () => {
+    if (window.history.state?.studentFlow?.selectedId || window.history.state?.studentFlow?.page === 'reports') {
+      window.history.back();
+      return;
+    }
+    setSelectedId('');
+    setActivePage('students');
+  };
 
   const saveStudent = async (form) => {
     if (!canCreateAdmission) {
@@ -586,7 +610,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
                   <StudentDetailPage
                     latestAdmission={latestAdmission}
                     student={selectedStudent}
-                    onBack={() => setSelectedId('')}
+                    onBack={goBackOneStudentStep}
                   />
                 ) : (
                 <>
@@ -651,7 +675,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
                       students={filteredStudents}
                       statusFilter={statusFilter}
                       selectedId={selectedId}
-                      onSelect={setSelectedId}
+                      onSelect={selectStudent}
                       onEdit={setEditingStudent}
                       onDownload={(student) => toast.success(`${student.name} record downloaded`)}
                       onArchive={archiveSelectedStudent}
@@ -669,7 +693,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
                     admissions={admissions.filter((item) => item.academicYear === academicYear)}
                     documents={studentDocuments.filter((item) => item.academicYear === academicYear)}
                     promotions={promotions.filter((item) => item.academicYear === academicYear)}
-                    onBack={() => setActivePage('students')}
+                    onBack={goBackOneStudentStep}
                   />
                 ) : activePage === 'faculty-staff' ? (
                   <FacultyStaffManagement currentUser={user} academicYear={academicYear} />

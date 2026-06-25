@@ -438,13 +438,15 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
       ) : !activeFeeBranch ? (
       <>
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 my-5 rounded-lg bg-[#f5f5f6] p-4">
-        <div>
-          <div className="text-xs font-bold text-slate-500">Payment / <span className="text-[#fb8d49]">{activeTask?.title}</span></div>
-          <h2 className="text-lg font-bold text-slate-900 mt-1">Choose next step</h2>
+        <div className="flex items-center gap-3">
+          <button onClick={goBackOneFeeStep} className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2">
+            <ArrowLeft size={15} /> Back
+          </button>
+          <div>
+            <div className="text-xs font-bold text-slate-500">Payment / <span className="text-[#fb8d49]">{activeTask?.title}</span></div>
+            <h2 className="text-lg font-bold text-slate-900 mt-1">Choose next step</h2>
+          </div>
         </div>
-        <button onClick={goBackOneFeeStep} className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2">
-          <ArrowLeft size={15} /> Back
-        </button>
       </div>
       <div className="grid md:grid-cols-2 gap-4">
         {activeBranches.map((branch) => (
@@ -468,6 +470,9 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
       <>
       <div className="erp-branch-focus flex flex-col lg:flex-row lg:items-center justify-between gap-4 my-5 rounded-lg bg-[#f5f5f6] p-5 border border-slate-100">
         <div className="flex items-center gap-4 min-w-0">
+          <button onClick={goBackOneFeeStep} className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2 shrink-0">
+            <ArrowLeft size={15} /> Back
+          </button>
           <div className="erp-branch-icon h-16 w-16 rounded-lg bg-white text-[#fb8d49] flex items-center justify-center shrink-0">{activeBranch?.icon}</div>
           <div className="min-w-0">
             <div className="text-xs font-bold text-slate-500">Payment / {activeTask?.title}</div>
@@ -480,9 +485,6 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
           {activeFeeBranch === 'create-structure' && canSetup && (
             <button onClick={() => setShowStructureModal(true)} className="h-10 px-4 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm flex items-center gap-2"><Plus size={16} /> Open Form</button>
           )}
-          <button onClick={goBackOneFeeStep} className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2">
-            <ArrowLeft size={15} /> Back
-          </button>
         </div>
       </div>
 

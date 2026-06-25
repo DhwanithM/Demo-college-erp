@@ -19,6 +19,21 @@ export default function SettingsManagement({ currentUser }) {
   const [activeSection, setActiveSection] = useState('');
 
   useEffect(() => {
+    const currentState = window.history.state || {};
+    window.history.replaceState({
+      ...currentState,
+      settingsFlow: { section: '' },
+    }, '');
+
+    const handleHistoryBack = (event) => {
+      setActiveSection(event.state?.settingsFlow?.section || '');
+    };
+
+    window.addEventListener('popstate', handleHistoryBack);
+    return () => window.removeEventListener('popstate', handleHistoryBack);
+  }, []);
+
+  useEffect(() => {
     const loadSettings = async () => {
       if (!isFirebaseConfigured) return;
       try {
@@ -116,6 +131,17 @@ export default function SettingsManagement({ currentUser }) {
   };
 
   const toggleDefault = (key) => setModuleDefaults((prev) => ({ ...prev, [key]: !prev[key] }));
+  const openSection = (sectionId) => {
+    setActiveSection(sectionId);
+    window.history.pushState({ ...(window.history.state || {}), settingsFlow: { section: sectionId } }, '');
+  };
+  const goBackOneSettingsStep = () => {
+    if (window.history.state?.settingsFlow?.section) {
+      window.history.back();
+      return;
+    }
+    setActiveSection('');
+  };
 
   return (
     <div>
@@ -128,11 +154,6 @@ export default function SettingsManagement({ currentUser }) {
           {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {activeSection && (
-            <button onClick={() => setActiveSection('')} className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2">
-              <ArrowLeft size={15} /> Back
-            </button>
-          )}
           {!['academic-setup', 'people-setup'].includes(activeSection) && (
             <button onClick={saveSettings} disabled={!canManage} className="h-10 px-5 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm flex items-center gap-2 disabled:bg-slate-300">
               <Save size={16} /> Save Settings
@@ -146,7 +167,7 @@ export default function SettingsManagement({ currentUser }) {
           {setupSections.map((section) => (
             <button
               key={section.id}
-              onClick={() => !section.disabled && setActiveSection(section.id)}
+              onClick={() => !section.disabled && openSection(section.id)}
               disabled={section.disabled}
               className="min-h-40 rounded-lg bg-white border border-slate-100 p-5 text-left shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
             >
@@ -163,18 +184,33 @@ export default function SettingsManagement({ currentUser }) {
 
       {activeSection === 'academic-setup' && (
         <div className="pt-5">
+          <div className="mb-5 flex items-center gap-3">
+            <button onClick={goBackOneSettingsStep} className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2">
+              <ArrowLeft size={15} /> Back
+            </button>
+          </div>
           <AcademicsManagement currentUser={currentUser} academicYear={academicYear.name || '2026-2027'} />
         </div>
       )}
 
       {activeSection === 'people-setup' && (
         <div className="pt-5">
+          <div className="mb-5 flex items-center gap-3">
+            <button onClick={goBackOneSettingsStep} className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2">
+              <ArrowLeft size={15} /> Back
+            </button>
+          </div>
           <UserRoleManagement currentUser={currentUser} />
         </div>
       )}
 
       {['institute', 'academic-year', 'id-formats', 'module-defaults'].includes(activeSection) && (
       <>
+      <div className="pt-5 flex items-center gap-3">
+        <button onClick={goBackOneSettingsStep} className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2">
+          <ArrowLeft size={15} /> Back
+        </button>
+      </div>
       <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 py-5">
         {[
           ['Institute', summary.instituteConfigured ? 'Ready' : 'Pending', <Building2 size={22} />],

@@ -77,6 +77,24 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
   const [leaveStaff, setLeaveStaff] = useState(null);
 
   useEffect(() => {
+    const currentState = window.history.state || {};
+    window.history.replaceState({
+      ...currentState,
+      facultyFlow: { selectedId: '' },
+    }, '');
+
+    const handleHistoryBack = (event) => {
+      setSelectedId(event.state?.facultyFlow?.selectedId || '');
+      setShowStaffModal(false);
+      setEditingStaff(null);
+      setLeaveStaff(null);
+    };
+
+    window.addEventListener('popstate', handleHistoryBack);
+    return () => window.removeEventListener('popstate', handleHistoryBack);
+  }, []);
+
+  useEffect(() => {
     const loadFacultyStaff = async () => {
       if (!isFirebaseConfigured) return;
       try {
@@ -97,6 +115,19 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
   const selectedStaff = selectedId ? staffMembers.find((member) => member.id === selectedId) || null : null;
   const selectedLeaves = leaveRecords.filter((record) => relationMatchesStaff(record, selectedStaff));
   const selectedAttendance = attendanceRecords.filter((record) => relationMatchesStaff(record, selectedStaff));
+
+  const selectStaff = (staffId) => {
+    setSelectedId(staffId);
+    window.history.pushState({ ...(window.history.state || {}), facultyFlow: { selectedId: staffId } }, '');
+  };
+
+  const goBackOneFacultyStep = () => {
+    if (window.history.state?.facultyFlow?.selectedId) {
+      window.history.back();
+      return;
+    }
+    setSelectedId('');
+  };
 
   const filteredStaff = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -319,7 +350,7 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
           canMarkAttendance={canMarkAttendance}
           leaveRecords={selectedLeaves}
           onAttendance={markAttendance}
-          onBack={() => setSelectedId('')}
+          onBack={goBackOneFacultyStep}
           onLeaveDecision={decideLeave}
           staffMember={selectedStaff}
         />
@@ -382,7 +413,7 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
             canArchive={canArchiveStaff}
             canEdit={canEditStaff}
             canManageLeave={canManageLeave}
-            onSelect={setSelectedId}
+            onSelect={selectStaff}
             onEdit={setEditingStaff}
             onLeave={setLeaveStaff}
             onArchive={archiveStaff}

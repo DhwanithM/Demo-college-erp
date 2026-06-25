@@ -1,4 +1,4 @@
-import { Plus, Users } from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { demoModuleContent } from '../demoModuleContent';
 import StatusBadge from './StatusBadge';
@@ -9,16 +9,18 @@ export default function DemoModulePage({ page, onOpenStudents }) {
   return (
     <div>
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-6 border-b border-slate-100">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">{current.title}</h1>
-          <p className="text-sm text-slate-500 mt-1">{current.subtitle}</p>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onOpenStudents}
+            className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2"
+          >
+            <ArrowLeft size={15} /> Back
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">{current.title}</h1>
+            <p className="text-sm text-slate-500 mt-1">{current.subtitle}</p>
+          </div>
         </div>
-        <button
-          onClick={onOpenStudents}
-          className="h-10 px-5 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm flex items-center gap-2"
-        >
-          <Users size={16} /> Back to Students
-        </button>
       </div>
 
       <div className="grid md:grid-cols-3 gap-4 py-5">
