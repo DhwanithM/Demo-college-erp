@@ -83,7 +83,7 @@ export default function TopHeader({
             {currentRole?.name || 'Admin'}
           </span>
         </div>
-        <div ref={profileMenuRef} className="relative">
+        <div ref={profileMenuRef} className="erp-profile-menu-wrap relative">
           <button
             onClick={() => setProfileOpen((open) => !open)}
             className="h-10 w-10 rounded-full bg-[#2e333b] text-emerald-300 flex items-center justify-center"
@@ -92,10 +92,10 @@ export default function TopHeader({
             <UserRound size={22} />
           </button>
           {profileOpen && (
-            <div className="absolute right-0 top-12 z-50 w-44 rounded-lg border border-slate-200 bg-white p-2 shadow-xl">
+            <div className="erp-profile-menu absolute right-0 top-12 w-44 rounded-lg border border-slate-200 bg-white p-2 shadow-xl">
               <button
                 onClick={onLogout}
-                className="w-full h-10 rounded-md px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 flex items-center gap-2"
+                className="erp-profile-logout w-full h-10 rounded-md px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 flex items-center gap-2"
               >
                 <LogOut size={16} /> Logout
               </button>
