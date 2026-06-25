@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, Download, Eye, Plus, Send } from 'lucide-react';
+import { Download, Plus, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createAcademicCalendarEvent, getAcademicsData, updateAcademicCalendarEvent } from '../../firebase/db';
 import { isFirebaseConfigured } from '../../firebase/config';
@@ -80,7 +80,6 @@ export default function CurriculumManagement({ currentUser, academicYear = '2026
   const [events, setEvents] = useState(isFirebaseConfigured ? [] : demoAcademicCalendarEvents);
   const [selectedEvent, setSelectedEvent] = useState(isFirebaseConfigured ? null : demoAcademicCalendarEvents[0] || null);
   const [showModal, setShowModal] = useState(false);
-  const [loading, setLoading] = useState(isFirebaseConfigured);
   const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
@@ -95,8 +94,6 @@ export default function CurriculumManagement({ currentUser, academicYear = '2026
       } catch (error) {
         console.warn('Using demo curriculum because Firestore is not reachable.', error);
         setLoadError('Unable to load Firestore curriculum records. Showing demo/local records.');
-      } finally {
-        setLoading(false);
       }
     };
     loadCurriculum();
@@ -104,8 +101,6 @@ export default function CurriculumManagement({ currentUser, academicYear = '2026
 
   const currentRoleId = currentUser?.roleId || 'admin';
   const canManage = canAccess(defaultRoles, currentRoleId, 'academics.manage');
-  const publishedCount = events.filter((item) => item.status === 'Published').length;
-  const upcomingCount = events.filter((item) => item.eventDate >= new Date().toISOString().slice(0, 10)).length;
 
   const sortedEvents = useMemo(() => [...events].sort((a, b) => String(a.eventDate).localeCompare(String(b.eventDate))), [events]);
 
@@ -201,22 +196,6 @@ export default function CurriculumManagement({ currentUser, academicYear = '2026
             <Download size={16} /> Download
           </button>
         </div>
-      </div>
-
-      <div className="grid sm:grid-cols-3 gap-4 py-5">
-        {[
-          ['Events', events.length, <CalendarDays size={22} />],
-          ['Published', publishedCount, <Send size={22} />],
-          ['Upcoming', upcomingCount, <Eye size={22} />],
-        ].map(([label, value, icon]) => (
-          <div key={label} className="bg-[#f5f5f6] rounded-lg p-4 flex items-center gap-4">
-            <div className="h-12 w-12 bg-white rounded-lg flex items-center justify-center text-[#34363d] shadow-sm">{icon}</div>
-            <div>
-              <div className="text-xs text-slate-500">{label}</div>
-              <div className="text-xl font-bold text-slate-900">{loading ? '...' : value}</div>
-            </div>
-          </div>
-        ))}
       </div>
 
       <div className="grid xl:grid-cols-[1fr_340px] gap-5">
