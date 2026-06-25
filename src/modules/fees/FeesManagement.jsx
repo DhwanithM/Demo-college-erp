@@ -39,7 +39,6 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
   const [collections, setCollections] = useState(isFirebaseConfigured ? [] : demoFeeCollections);
   const [adjustments, setAdjustments] = useState(isFirebaseConfigured ? [] : demoFeeAdjustments);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(isFirebaseConfigured);
   const [loadError, setLoadError] = useState('');
   const [showStructureModal, setShowStructureModal] = useState(false);
   const [editingStructure, setEditingStructure] = useState(null);
@@ -63,8 +62,6 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
       } catch (error) {
         console.warn('Using demo fee data because Firestore is not reachable.', error);
         setLoadError('Unable to load Firestore fee records. Showing demo/local records.');
-      } finally {
-        setLoading(false);
       }
     };
     loadFees();
@@ -121,12 +118,6 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
     );
   }, [activeFeeBranch, assignments, search]);
 
-  const stats = [
-    { label: 'Assigned Fees', value: formatCurrency(summary.totalAssigned), icon: <Wallet size={22} /> },
-    { label: 'Collected', value: formatCurrency(summary.totalCollected), icon: <Banknote size={22} /> },
-    { label: 'Outstanding', value: formatCurrency(summary.totalOutstanding), icon: <TrendingUp size={22} /> },
-    { label: 'Due Students', value: summary.dueStudents, icon: <FileText size={22} /> },
-  ];
   const payableAssignments = assignments.filter((item) => Number(item.dueAmount || 0) > 0);
   const selectedAssignment = selectedAssignmentId ? assignments.find((item) => item.id === selectedAssignmentId) || null : null;
 
@@ -426,18 +417,6 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
 
       {!activeFeeTask ? (
       <>
-      <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 py-5">
-        {stats.map(({ label, value, icon }) => (
-          <div key={label} className="bg-[#f5f5f6] rounded-lg p-4 flex items-center gap-4">
-            <div className="h-12 w-12 bg-white rounded-lg flex items-center justify-center text-[#34363d] shadow-sm">{icon}</div>
-            <div>
-              <div className="text-xs text-slate-500">{label}</div>
-              <div className="text-xl font-bold text-slate-900">{loading ? '...' : value}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-
       <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
         {feeTaskOptions.map((task) => (
           <button key={task.id} onClick={() => openFeeTask(task.id)} className="group min-h-40 text-left rounded-lg border border-slate-100 bg-white p-5 shadow-sm hover:-translate-y-1 transition-all">
