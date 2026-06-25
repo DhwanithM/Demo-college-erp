@@ -406,7 +406,7 @@ export default function ExaminationResultManagement({ currentUser, academicYear 
       <>
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 my-5 rounded-lg bg-[#f5f5f6] p-4">
         <div className="flex items-center gap-3">
-          <button onClick={goBackOneExamStep} className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2">
+          <button onClick={goBackOneExamStep} className="erp-back-button h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2">
             <ArrowLeft size={15} /> Back
           </button>
           <div>
@@ -437,7 +437,7 @@ export default function ExaminationResultManagement({ currentUser, academicYear 
       <>
       <div className="erp-branch-focus flex flex-col lg:flex-row lg:items-center justify-between gap-4 my-5 rounded-lg bg-[#f5f5f6] p-5 border border-slate-100">
         <div className="flex items-center gap-4 min-w-0">
-          <button onClick={goBackOneExamStep} className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2 shrink-0">
+          <button onClick={goBackOneExamStep} className="erp-back-button h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2 shrink-0">
             <ArrowLeft size={15} /> Back
           </button>
           <div className="erp-branch-icon h-16 w-16 rounded-lg bg-white text-[#fb8d49] flex items-center justify-center shrink-0">{activeBranch?.icon}</div>

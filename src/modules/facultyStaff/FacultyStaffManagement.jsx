@@ -36,7 +36,7 @@ function StaffDetailPage({
         <button
           type="button"
           onClick={onBack}
-          className="h-12 px-5 rounded-lg bg-[#fb8d49] text-white font-extrabold text-base flex items-center gap-2 self-start shadow-lg shadow-orange-200 hover:bg-[#e97934] focus:outline-none focus:ring-4 focus:ring-orange-200"
+          className="erp-back-button h-12 px-5 rounded-lg bg-[#fb8d49] text-white font-extrabold text-base flex items-center gap-2 self-start shadow-lg shadow-orange-200 hover:bg-[#e97934] focus:outline-none focus:ring-4 focus:ring-orange-200"
         >
           <ArrowLeft size={20} /> Back
         </button>

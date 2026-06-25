@@ -127,7 +127,7 @@ function StudentReportView({ academicYear, admissions, documents, promotions, st
     <div>
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-6 border-b border-slate-100">
         <div className="flex items-center gap-3">
-          <button onClick={onBack} className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2">
+          <button onClick={onBack} className="erp-back-button h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2">
             <ArrowLeft size={15} /> Back
           </button>
           <div>
@@ -790,7 +790,7 @@ function StudentDetailPage({ latestAdmission, onBack, student }) {
         <button
           type="button"
           onClick={onBack}
-          className="h-12 px-5 rounded-lg bg-[#fb8d49] text-white font-extrabold text-base flex items-center gap-2 self-start shadow-lg shadow-orange-200 hover:bg-[#e97934] focus:outline-none focus:ring-4 focus:ring-orange-200"
+          className="erp-back-button h-12 px-5 rounded-lg bg-[#fb8d49] text-white font-extrabold text-base flex items-center gap-2 self-start shadow-lg shadow-orange-200 hover:bg-[#e97934] focus:outline-none focus:ring-4 focus:ring-orange-200"
         >
           <ArrowLeft size={20} /> Back
         </button>

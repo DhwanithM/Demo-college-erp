@@ -12,7 +12,7 @@ export default function DemoModulePage({ page, onOpenStudents }) {
         <div className="flex items-center gap-3">
           <button
             onClick={onOpenStudents}
-            className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2"
+            className="erp-back-button h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2"
           >
             <ArrowLeft size={15} /> Back
           </button>

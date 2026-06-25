@@ -185,7 +185,7 @@ export default function SettingsManagement({ currentUser }) {
       {activeSection === 'academic-setup' && (
         <div className="pt-5">
           <div className="mb-5 flex items-center gap-3">
-            <button onClick={goBackOneSettingsStep} className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2">
+            <button onClick={goBackOneSettingsStep} className="erp-back-button h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2">
               <ArrowLeft size={15} /> Back
             </button>
           </div>
@@ -196,7 +196,7 @@ export default function SettingsManagement({ currentUser }) {
       {activeSection === 'people-setup' && (
         <div className="pt-5">
           <div className="mb-5 flex items-center gap-3">
-            <button onClick={goBackOneSettingsStep} className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2">
+            <button onClick={goBackOneSettingsStep} className="erp-back-button h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2">
               <ArrowLeft size={15} /> Back
             </button>
           </div>
@@ -207,7 +207,7 @@ export default function SettingsManagement({ currentUser }) {
       {['institute', 'academic-year', 'id-formats', 'module-defaults'].includes(activeSection) && (
       <>
       <div className="pt-5 flex items-center gap-3">
-        <button onClick={goBackOneSettingsStep} className="h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2">
+        <button onClick={goBackOneSettingsStep} className="erp-back-button h-10 px-4 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-2">
           <ArrowLeft size={15} /> Back
         </button>
       </div>
