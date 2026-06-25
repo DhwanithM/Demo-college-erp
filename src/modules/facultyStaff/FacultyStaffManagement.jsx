@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Plus, Search, Users } from 'lucide-react';
+import { ArrowLeft, Search, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
   archiveStaffMember,
@@ -71,7 +71,6 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('active');
-  const [loading, setLoading] = useState(isFirebaseConfigured);
   const [loadError, setLoadError] = useState('');
   const [showStaffModal, setShowStaffModal] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
@@ -90,8 +89,6 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
       } catch (error) {
         console.warn('Using demo faculty/staff because Firestore is not reachable.', error);
         setLoadError('Unable to load Firestore faculty/staff records. Showing demo/local records.');
-      } finally {
-        setLoading(false);
       }
     };
     loadFacultyStaff();
@@ -332,7 +329,6 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
         <div>
           <div className="text-sm font-bold text-slate-500 mb-2">Academics / <span className="text-[#f39a5f]">Faculty & Staff Management</span></div>
           <h1 className="text-2xl font-bold text-slate-900">Faculty & Staff Management</h1>
-          <p className="text-sm text-slate-500 mt-1">Browse faculty and staff records.</p>
           {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist records.</p>}
           {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
         </div>
@@ -346,14 +342,6 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
             <h2 className="text-2xl font-extrabold text-slate-900 mt-1">All Faculty & Staff</h2>
             <p className="text-sm text-slate-500 mt-1">Browse active and archived records.</p>
           </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <span className="h-10 px-4 rounded-full bg-white border border-slate-200 text-slate-700 font-bold text-xs flex items-center">
-            {loading ? 'Loading...' : `${filteredStaff.length} records`}
-          </span>
-          {canCreateStaff && (
-            <button onClick={() => setShowStaffModal(true)} className="h-10 px-4 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm flex items-center gap-2"><Plus size={16} /> New Record</button>
-          )}
         </div>
       </div>
 
