@@ -6,7 +6,7 @@ export default function AttendanceReports({ records, scope }) {
   const rows = Object.entries(grouped).map(([label, items]) => ({ label, ...summarizeAttendance(items) }));
 
   return (
-    <aside className="xl:w-[32%]">
+    <aside className="xl:w-[32%] erp-sticky-inspector">
       <div className="bg-white border border-slate-100 rounded-lg p-5 shadow-sm">
         <h3 className="font-bold mb-4">Attendance Reports</h3>
         <div className="space-y-3">

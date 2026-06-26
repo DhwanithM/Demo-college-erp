@@ -2,7 +2,7 @@ import { formatCurrency } from '../../fees/feeUtils';
 
 export default function AnalyticsPanel({ analytics, snapshots }) {
   return (
-    <aside className="xl:w-[32%] space-y-4">
+    <aside className="xl:w-[32%] erp-sticky-inspector space-y-4">
       <div className="bg-white border border-slate-100 rounded-lg p-5">
         <h3 className="font-bold text-slate-900 mb-4">Class Analytics</h3>
         <div className="space-y-3">

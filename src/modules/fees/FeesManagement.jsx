@@ -653,7 +653,7 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
             showActions={false}
           />
         </div>
-        <aside className="xl:w-[32%]">
+        <aside className="xl:w-[32%] erp-sticky-inspector">
           {selectedAssignment ? (
             <div className="erp-selected-detail bg-white border border-slate-100 rounded-lg p-5 shadow-sm">
               <h3 className="font-bold text-slate-900">{selectedAssignment.studentName}</h3>

@@ -478,7 +478,7 @@ export default function ExaminationResultManagement({ currentUser, academicYear 
           </div>
           <ExamScheduleTable schedules={filteredSchedules} canEdit={canSchedule} showActions={false} selectedId={selectedScheduleId} onSelect={setSelectedScheduleId} onEdit={setEditingSchedule} />
         </div>
-        <aside className="xl:w-[32%]">
+        <aside className="xl:w-[32%] erp-sticky-inspector">
           {selectedSchedule ? (
             <div className="erp-selected-detail bg-white border border-slate-100 rounded-lg p-5 shadow-sm">
               <h3 className="font-bold text-slate-900">{selectedSchedule.examName}</h3>

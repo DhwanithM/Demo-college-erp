@@ -4,8 +4,8 @@ import { formatFileSize } from '../documentUtils';
 
 export default function DocumentPreviewPanel({ canArchive = false, canVerify = false, document, onArchive, onVerify }) {
   return (
-    <aside className="xl:w-[32%]">
-      <div className="bg-white border border-slate-100 rounded-lg p-5 sticky top-4">
+    <aside className="xl:w-[32%] erp-sticky-inspector">
+      <div className="bg-white border border-slate-100 rounded-lg p-5">
         <div className="flex items-start justify-between gap-3 mb-4">
           <div>
             <h3 className="font-bold text-slate-900">Document Details</h3>

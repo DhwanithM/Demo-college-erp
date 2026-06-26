@@ -225,7 +225,7 @@ export default function CurriculumManagement({ currentUser, academicYear = '2026
           {!sortedEvents.length && <div className="px-5 py-10 text-center text-sm text-slate-500">No curriculum events found.</div>}
         </div>
 
-        <aside className="bg-white border border-slate-100 rounded-lg p-5 shadow-sm">
+        <aside className="erp-sticky-inspector bg-white border border-slate-100 rounded-lg p-5 shadow-sm">
           <h3 className="font-bold text-slate-900 mb-4">Event Details</h3>
           {selectedEvent ? (
             <div className="space-y-3 text-sm">

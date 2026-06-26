@@ -421,7 +421,7 @@ export default function AttendanceManagement({ currentUser, academicYear = '2026
           />
         </div>
 
-        <aside className="xl:w-[32%]">
+        <aside className="xl:w-[32%] erp-sticky-inspector">
           {selectedEntity ? (
             <div className="erp-selected-detail bg-white border border-slate-100 rounded-lg p-5 shadow-sm">
               <h3 className="font-bold text-slate-900">{selectedEntity.name}</h3>

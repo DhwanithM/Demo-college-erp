@@ -52,6 +52,10 @@ html{color-scheme:dark}::selection{background:rgba(0,255,136,.18);color:#eafff5}
 .erp-back-button:active:not(:disabled){animation:backButtonPress .18s cubic-bezier(.22,1,.36,1) both}
 .erp-back-button:active:not(:disabled) svg{transform:translateX(-7px)}
 @keyframes backButtonPress{0%{transform:translateX(0) scale(1)}55%{transform:translateX(-4px) scale(.985)}100%{transform:translateX(-2px) scale(.995)}}
+.erp-sticky-inspector{position:sticky;top:16px;align-self:flex-start;max-height:calc(100vh - 120px);overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding-right:1px}
+.erp-sticky-inspector::-webkit-scrollbar{width:5px}
+.erp-sticky-inspector::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:999px}
+@media(max-width:1279px){.erp-sticky-inspector{position:static;max-height:none;overflow:visible;padding-right:0}}
 @media(prefers-reduced-motion:reduce){.erp-shell *,.auth-shell *{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}.app-background:before,.app-background:after{display:none}}
 
 /* Sidebar and dashboard visual polish */

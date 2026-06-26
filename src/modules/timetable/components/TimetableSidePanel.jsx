@@ -3,7 +3,7 @@ import StatusBadge from '../../students/components/StatusBadge';
 
 export default function TimetableSidePanel({ classrooms, facultyEntries, publications, selectedClass }) {
   return (
-    <aside className="xl:w-[32%]">
+    <aside className="xl:w-[32%] erp-sticky-inspector">
       <div className="bg-white border border-slate-100 rounded-lg p-5 shadow-sm mb-5">
         <h3 className="font-bold mb-4">Classroom Allocation</h3>
         <div className="space-y-3">

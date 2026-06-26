@@ -5,7 +5,7 @@ export default function RolePermissionEditor({ role, canEdit, saving, onChange }
   if (!role) return null;
 
   return (
-    <aside className="xl:w-[36%]">
+    <aside className="xl:w-[36%] erp-sticky-inspector">
       <div className="bg-white border border-slate-100 rounded-lg p-5 shadow-sm">
         <div className="flex items-start gap-3 mb-5">
           <div className="h-11 w-11 bg-[#33373e] text-white rounded-lg flex items-center justify-center">
