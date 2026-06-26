@@ -436,9 +436,7 @@ export default function ExaminationResultManagement({ currentUser, academicYear 
           </button>
           <div className="erp-branch-icon h-16 w-16 rounded-lg bg-white text-[#fb8d49] flex items-center justify-center shrink-0">{activeBranch?.icon}</div>
           <div className="min-w-0">
-            <div className="text-xs font-bold text-slate-500">Exams / {activeTask?.title}</div>
-            <h2 className="text-2xl font-extrabold text-slate-900 mt-1">{activeBranch?.title}</h2>
-            <p className="text-sm text-slate-500 mt-1">{activeBranch?.description}</p>
+            <h2 className="text-2xl font-extrabold text-slate-900">{activeBranch?.title}</h2>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">

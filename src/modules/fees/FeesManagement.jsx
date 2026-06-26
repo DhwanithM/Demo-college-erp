@@ -188,7 +188,7 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
     {
       id: 'collections',
       title: 'Fee Collections',
-      description: 'Record manual/offline student fee payments.',
+      description: 'Manual payments.',
       icon: <Banknote size={22} />,
       meta: [formatCurrency(summary.totalCollected), 'Manual entry'],
     },
@@ -217,7 +217,7 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
 
   const feeBranchOptions = {
     collections: [
-      { id: 'collect-fee', title: 'Fee Collections', description: 'Record and review manual/offline student fee payments.', icon: <Banknote size={20} />, disabled: !canCollect, openCollection: true },
+      { id: 'collect-fee', title: 'Fee Collections', description: '', icon: <Banknote size={20} />, disabled: !canCollect, openCollection: true },
     ],
     structures: [
       { id: 'create-structure', title: 'Create Structure', description: 'Open a new fee structure form.', icon: <Plus size={20} />, disabled: !canSetup, openStructure: true },
@@ -555,9 +555,7 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
           </button>
           <div className="erp-branch-icon h-16 w-16 rounded-lg bg-white text-[#fb8d49] flex items-center justify-center shrink-0">{activeBranch?.icon}</div>
           <div className="min-w-0">
-            <div className="text-xs font-bold text-slate-500">Payment / {activeTask?.title}</div>
-            <h2 className="text-2xl font-extrabold text-slate-900 mt-1">{activeBranch?.title}</h2>
-            <p className="text-sm text-slate-500 mt-1">{activeBranch?.description}</p>
+            <h2 className="text-2xl font-extrabold text-slate-900">{activeBranch?.title}</h2>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -587,7 +585,7 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
             <button
               onClick={() => { setCollectionAssignmentId(''); setShowCollectionModal(true); }}
               disabled={!canCollect}
-              className="h-10 px-5 rounded-lg bg-[#33373e] text-white font-semibold text-sm flex items-center justify-center gap-2 disabled:bg-slate-300"
+              className="h-11 px-5 rounded-lg bg-[#00e589] text-[#04110b] font-extrabold text-sm flex items-center justify-center gap-2 shadow-[0_0_24px_rgba(0,229,137,0.35)] hover:bg-[#3cffad] disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none"
             >
               <Plus size={16} /> Record Payment
             </button>
