@@ -132,14 +132,23 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
   };
 
   const openFeeTask = (taskId) => {
+    const directBranch = taskId === 'due-tracking'
+      ? 'due-list'
+      : taskId === 'collections'
+        ? 'collect-fee'
+        : '';
     setActiveFeeTask(taskId);
-    setActiveFeeBranch(taskId === 'due-tracking' ? 'due-list' : '');
+    setActiveFeeBranch(directBranch);
     setSelectedAssignmentId('');
     setSearch('');
     window.history.pushState({
       ...(window.history.state || {}),
-      feeFlow: { task: taskId, branch: taskId === 'due-tracking' ? 'due-list' : '' },
+      feeFlow: { task: taskId, branch: directBranch },
     }, '');
+    if (taskId === 'collections') {
+      setCollectionAssignmentId('');
+      setShowCollectionModal(true);
+    }
   };
 
   const openFeeBranch = (branch) => {
@@ -148,6 +157,10 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
     setSearch('');
     window.history.pushState({ ...(window.history.state || {}), feeFlow: { task: activeFeeTask, branch: branch.id } }, '');
     if (branch.openStructure) setShowStructureModal(true);
+    if (branch.openCollection) {
+      setCollectionAssignmentId('');
+      setShowCollectionModal(true);
+    }
   };
 
   const goBackOneFeeStep = () => {
@@ -167,10 +180,10 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
   const feeTaskOptions = [
     {
       id: 'collections',
-      title: 'Collections',
-      description: 'Collect payments and review due students.',
+      title: 'Fee Collections',
+      description: 'Record manual/offline student fee payments.',
       icon: <Banknote size={22} />,
-      meta: [`${payableAssignments.length} due`, formatCurrency(summary.totalOutstanding)],
+      meta: [formatCurrency(summary.totalCollected), 'Manual entry'],
     },
     {
       id: 'structures',
@@ -197,7 +210,7 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
 
   const feeBranchOptions = {
     collections: [
-      { id: 'collect-fee', title: 'Collect Payment', description: 'Select a student fee, then record payment.', icon: <Banknote size={20} />, disabled: !canCollect || !payableAssignments.length },
+      { id: 'collect-fee', title: 'Manual Fee Entry', description: 'Open a manual payment entry form.', icon: <Banknote size={20} />, disabled: !canCollect, openCollection: true },
       { id: 'due-list', title: 'Due List', description: 'View students with pending dues.', icon: <TrendingUp size={20} /> },
     ],
     structures: [
@@ -320,6 +333,36 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
       return;
     }
     const amount = Number(form.amount || 0);
+    if (form.entryMode === 'manual') {
+      const student = students.find((item) => item.id === form.studentRecordId);
+      const collection = {
+        assignmentId: '',
+        studentRecordId: student?.id || '',
+        studentId: student?.studentId || '',
+        studentName: student?.name || '',
+        amount,
+        academicYear,
+        paymentMode: form.paymentMode,
+        referenceNo: form.referenceNo.trim(),
+        paymentDate: form.paymentDate,
+        collectedBy: form.collectedBy,
+        status: 'Posted',
+        createdAtText: formatDisplayDate(),
+        entryMode: 'Manual',
+      };
+      try {
+        const id = await createFeeCollection(collection);
+        setCollections((prev) => [{ id: id || `local-fee-collection-${Date.now()}`, ...collection }, ...prev]);
+        toast.success('Manual fee collection posted');
+      } catch {
+        setCollections((prev) => [{ id: `local-fee-collection-${Date.now()}`, ...collection }, ...prev]);
+        toast.success('Manual fee collection posted locally');
+      } finally {
+        setShowCollectionModal(false);
+        setCollectionAssignmentId('');
+      }
+      return;
+    }
     const nextPaid = Number(assignment.paidAmount || 0) + amount;
     const nextDue = calculateDueAmount(assignment.totalAmount, nextPaid, assignment.adjustmentAmount);
     const assignmentUpdates = {
@@ -550,7 +593,7 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
                 <div className="rounded-lg bg-[#f5f5f6] p-3"><div className="text-xs text-slate-500">Due Date</div><b>{selectedAssignment.dueDate || '-'}</b></div>
               </div>
               {activeFeeBranch === 'collect-fee' && (
-                <button onClick={() => collectForAssignment(selectedAssignment.id)} disabled={!canCollect || selectedAssignment.dueAmount <= 0} className="mt-5 w-full h-10 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm disabled:bg-slate-300">Collect Payment</button>
+                <button onClick={() => collectForAssignment(selectedAssignment.id)} disabled={!canCollect || selectedAssignment.dueAmount <= 0} className="mt-5 w-full h-10 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm disabled:bg-slate-300">Post Against This Fee</button>
               )}
               {activeFeeBranch === 'approve-adjustment' && (
                 <button onClick={() => { setCollectionAssignmentId(selectedAssignment.id); setShowAdjustmentModal(true); }} disabled={!canAdjust || selectedAssignment.dueAmount <= 0} className="mt-5 w-full h-10 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm disabled:bg-slate-300">Approve Adjustment</button>
@@ -564,8 +607,17 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
           ) : (
             <div className="bg-white border border-slate-100 rounded-lg p-6 shadow-sm text-sm text-slate-600 min-h-72 flex flex-col items-center justify-center text-center">
               <div className="h-14 w-14 rounded-lg bg-[#f5f5f6] text-[#fb8d49] flex items-center justify-center mb-4">{activeBranch?.icon}</div>
-              <h3 className="font-bold text-slate-900 mb-2">Payment Details</h3>
-              <p>{visibleAssignments.length ? 'Click a student fee row to view details and available actions.' : 'No matching fee records found.'}</p>
+              <h3 className="font-bold text-slate-900 mb-2">{activeFeeBranch === 'collect-fee' ? 'Manual Fee Entry' : 'Payment Details'}</h3>
+              <p>
+                {activeFeeBranch === 'collect-fee'
+                  ? 'Use the manual entry form to record an offline fee collection.'
+                  : visibleAssignments.length ? 'Click a student fee row to view details and available actions.' : 'No matching fee records found.'}
+              </p>
+              {activeFeeBranch === 'collect-fee' && (
+                <button onClick={() => { setCollectionAssignmentId(''); setShowCollectionModal(true); }} disabled={!canCollect} className="mt-5 h-10 px-5 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm disabled:bg-slate-300">
+                  Manual Entry
+                </button>
+              )}
             </div>
           )}
         </aside>
@@ -576,7 +628,15 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
 
       {showStructureModal && <FeeStructureModal classOptions={classOptions} onClose={() => setShowStructureModal(false)} onSave={saveStructure} />}
       {editingStructure && <FeeStructureModal mode="edit" initialStructure={editingStructure} classOptions={classOptions} onClose={() => setEditingStructure(null)} onSave={saveStructure} />}
-      {showCollectionModal && <FeeCollectionModal assignments={payableAssignments} initialAssignmentId={collectionAssignmentId} onClose={() => setShowCollectionModal(false)} onSave={saveCollection} />}
+      {showCollectionModal && (
+        <FeeCollectionModal
+          assignments={payableAssignments}
+          initialAssignmentId={collectionAssignmentId}
+          onClose={() => setShowCollectionModal(false)}
+          onSave={saveCollection}
+          students={students}
+        />
+      )}
       {showAdjustmentModal && <FeeAdjustmentModal assignments={payableAssignments} initialAssignmentId={collectionAssignmentId} onClose={() => setShowAdjustmentModal(false)} onSave={saveAdjustment} />}
     </div>
   );

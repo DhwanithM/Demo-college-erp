@@ -80,11 +80,15 @@ export function validateFeeStructure(form) {
 }
 
 export function validateFeeCollection(form, assignment) {
-  if (!form.assignmentId) return 'Student fee assignment is required.';
+  if (form.entryMode === 'manual') {
+    if (!form.studentRecordId) return 'Student is required.';
+  } else if (!form.assignmentId) {
+    return 'Student fee assignment is required.';
+  }
   if (!form.paymentDate) return 'Payment date is required.';
   if (!form.paymentMode) return 'Payment mode is required.';
   if (Number(form.amount || 0) <= 0) return 'Collection amount must be greater than zero.';
-  if (assignment && Number(form.amount || 0) > Number(assignment.dueAmount || assignment.totalAmount || 0)) {
+  if (form.entryMode !== 'manual' && assignment && Number(form.amount || 0) > Number(assignment.dueAmount || assignment.totalAmount || 0)) {
     return 'Collection amount cannot exceed outstanding due.';
   }
   return '';
