@@ -16,12 +16,13 @@ import DocumentPreviewPanel from './components/DocumentPreviewPanel';
 import DocumentTable from './components/DocumentTable';
 import DocumentUploadModal from './components/DocumentUploadModal';
 
-export default function DocumentManagement({ currentUser, academicYear = '2026-2027' }) {
+export default function DocumentManagement({ currentUser, academicYear = '2026-2027', ownerFilter = null }) {
   const [students, setStudents] = useState(isFirebaseConfigured ? [] : demoDocumentStudents);
   const [staff, setStaff] = useState(isFirebaseConfigured ? [] : demoDocumentStaff);
   const [documents, setDocuments] = useState(isFirebaseConfigured ? [] : demoManagedDocuments);
   const [selectedId, setSelectedId] = useState('');
   const [filters, setFilters] = useState({ search: '', ownerType: '', category: '', status: '' });
+  const [clearedOwnerFilterKey, setClearedOwnerFilterKey] = useState('');
   const [loading, setLoading] = useState(isFirebaseConfigured);
   const [loadError, setLoadError] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -50,12 +51,51 @@ export default function DocumentManagement({ currentUser, academicYear = '2026-2
   const canUpload = canAccess(defaultRoles, currentRoleId, 'documents.upload');
   const canVerify = canAccess(defaultRoles, currentRoleId, 'documents.verify');
   const canArchive = canAccess(defaultRoles, currentRoleId, 'documents.archive');
-  const visibleDocuments = useMemo(() => filterDocuments(documents, filters), [documents, filters]);
-  const normalizedDocuments = visibleDocuments.map((item) => ({
+  const ownerFilterKey = ownerFilter
+    ? [ownerFilter.ownerType, ownerFilter.ownerRecordId, ownerFilter.ownerId].join('|')
+    : '';
+  const isOwnerFilterActive = Boolean(ownerFilter && clearedOwnerFilterKey !== ownerFilterKey);
+
+  const routedDocuments = useMemo(() => (ownerFilter?.documents || []).map((item, index) => ({
+    id: item.id || `routed-document-${index}`,
+    ownerType: ownerFilter.ownerType || item.ownerType || '',
+    ownerRecordId: ownerFilter.ownerRecordId || item.ownerRecordId || item.studentRecordId || item.staffRecordId || '',
+    ownerId: ownerFilter.ownerId || item.ownerId || item.studentId || item.employeeId || '',
+    ownerName: ownerFilter.ownerName || item.ownerName || '',
+    archiveTitle: item.archiveTitle || '',
+    documentType: item.documentType || item.type || 'Uploaded Document',
+    category: item.category || (ownerFilter.ownerType === 'Staff' ? 'HR' : 'Admission'),
+    tags: item.tags || '',
+    verificationStatus: item.verificationStatus || item.status || 'Pending Review',
+    uploadedAtText: item.uploadedAtText || item.createdAtText || item.submittedAtText || '-',
+    verifiedAtText: item.verifiedAtText || '',
+    fileName: item.fileName || item.documentFileName || '',
+    fileSize: item.fileSize || item.documentFileSize || 0,
+    fileType: item.fileType || item.documentFileType || 'application/octet-stream',
+    fileUrl: item.fileUrl || item.documentFileUrl || item.documentUrl || '',
+    storagePath: item.storagePath || '',
+  })), [ownerFilter]);
+  const allDocuments = useMemo(() => {
+    const existingIds = new Set(documents.map((item) => item.id));
+    return [...documents, ...routedDocuments.filter((item) => !existingIds.has(item.id))];
+  }, [documents, routedDocuments]);
+  const activeFilters = useMemo(() => ({
+    ...filters,
+    ...(isOwnerFilterActive ? {
+      ownerId: ownerFilter.ownerId || '',
+      ownerRecordId: ownerFilter.ownerRecordId || '',
+      ownerType: ownerFilter.ownerType || '',
+    } : {}),
+  }), [filters, isOwnerFilterActive, ownerFilter]);
+  const visibleDocuments = useMemo(() => filterDocuments(allDocuments, activeFilters), [activeFilters, allDocuments]);
+  const normalizedDocuments = useMemo(() => visibleDocuments.map((item) => ({
     ...item,
     ownerName: resolveOwnerName(item, students, staff),
-  }));
-  const selectedDocument = selectedId ? normalizedDocuments.find((item) => item.id === selectedId) || null : null;
+  })), [staff, students, visibleDocuments]);
+  const selectedDocumentId = normalizedDocuments.some((item) => item.id === selectedId)
+    ? selectedId
+    : (isOwnerFilterActive ? normalizedDocuments[0]?.id || '' : '');
+  const selectedDocument = selectedDocumentId ? normalizedDocuments.find((item) => item.id === selectedDocumentId) || null : null;
 
   const buildDocumentPayload = (form, fileData = {}) => {
     const ownerList = form.ownerType === 'Student' ? students : staff;
@@ -158,7 +198,20 @@ export default function DocumentManagement({ currentUser, academicYear = '2026-2
     }
   };
 
-  const updateFilter = (key, value) => setFilters((prev) => ({ ...prev, [key]: value }));
+  const updateFilter = (key, value) => {
+    if (key === 'ownerType' && ownerFilterKey) setClearedOwnerFilterKey(ownerFilterKey);
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value,
+      ...(key === 'ownerType' ? { ownerId: '', ownerRecordId: '' } : {}),
+    }));
+  };
+
+  const clearOwnerFilter = () => {
+    setClearedOwnerFilterKey(ownerFilterKey);
+    setFilters((prev) => ({ ...prev, ownerId: '', ownerRecordId: '', ownerType: '' }));
+    setSelectedId('');
+  };
 
   return (
     <div>
@@ -166,7 +219,11 @@ export default function DocumentManagement({ currentUser, academicYear = '2026-2
         <div>
           <div className="text-sm font-bold text-slate-500 mb-2">Administration / <span className="text-[#f39a5f]">Document Management</span></div>
           <h1 className="text-2xl font-bold text-slate-900">Document Management</h1>
-          <p className="text-sm text-slate-500 mt-1">Search documents first. Click one document to view metadata and verification actions.</p>
+          <p className="text-sm text-slate-500 mt-1">
+            {ownerFilter?.ownerName
+              ? `Viewing uploaded documents for ${ownerFilter.ownerName}.`
+              : 'Search documents first. Click one document to view metadata and verification actions.'}
+          </p>
           {loading && <p className="text-xs text-slate-500 mt-2">Loading live document records...</p>}
           {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist documents and upload files.</p>}
           {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
@@ -183,7 +240,7 @@ export default function DocumentManagement({ currentUser, academicYear = '2026-2
               <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input value={filters.search} onChange={(event) => updateFilter('search', event.target.value)} placeholder="Search..." className="w-full h-10 rounded-lg bg-[#f0f0f2] border-0 pl-10 pr-3 text-sm" />
             </div>
-            <select value={filters.ownerType} onChange={(event) => updateFilter('ownerType', event.target.value)} className="h-10 rounded-lg bg-[#f0f0f2] border-0 px-3 text-sm">
+            <select value={activeFilters.ownerType || ''} onChange={(event) => updateFilter('ownerType', event.target.value)} className="h-10 rounded-lg bg-[#f0f0f2] border-0 px-3 text-sm">
               <option value="">All Owners</option>
               {documentOwnerTypes.map((item) => <option key={item}>{item}</option>)}
             </select>
@@ -196,6 +253,21 @@ export default function DocumentManagement({ currentUser, academicYear = '2026-2
               {documentStatuses.map((item) => <option key={item}>{item}</option>)}
             </select>
           </div>
+          {isOwnerFilterActive && activeFilters.ownerRecordId && (
+            <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg bg-[#f5f5f6] border border-slate-100 p-3 text-sm">
+              <div>
+                <span className="font-semibold text-slate-900">{ownerFilter?.ownerName || 'Selected owner'}</span>
+                <span className="text-slate-500"> | {activeFilters.ownerType} {ownerFilter?.ownerId || ''}</span>
+              </div>
+              <button
+                type="button"
+                onClick={clearOwnerFilter}
+                className="h-8 px-3 rounded-md bg-white border border-slate-200 text-xs font-semibold text-slate-700"
+              >
+                Show all documents
+              </button>
+            </div>
+          )}
           <DocumentTable
             documents={normalizedDocuments}
             canVerify={canVerify}
@@ -204,7 +276,7 @@ export default function DocumentManagement({ currentUser, academicYear = '2026-2
             onPreview={(document) => setSelectedId(document.id)}
             onVerify={updateVerification}
             onSelect={setSelectedId}
-            selectedId={selectedId}
+            selectedId={selectedDocumentId}
             showActions={false}
           />
         </div>

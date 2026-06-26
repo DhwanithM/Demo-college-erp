@@ -28,10 +28,14 @@ export default function DocumentPreviewPanel({ canArchive = false, canVerify = f
             <div className="rounded-lg bg-[#f5f5f6] p-3 text-sm text-slate-600">
               Tags: {document.tags || '-'}
             </div>
-            {document.fileUrl && (
+            {document.fileUrl ? (
               <a href={document.fileUrl} target="_blank" rel="noreferrer" className="h-10 px-4 rounded-lg bg-[#33373e] text-white text-sm font-semibold inline-flex items-center justify-center">
                 Open Document
               </a>
+            ) : (
+              <div className="rounded-lg bg-[#f5f5f6] p-3 text-sm text-slate-500">
+                File preview link is not available for this document yet.
+              </div>
             )}
             <div className="grid sm:grid-cols-3 gap-2">
               <button onClick={() => onVerify?.(document, 'Verified')} disabled={!canVerify} className="h-10 rounded-lg bg-[#33373e] text-white text-sm font-semibold disabled:bg-slate-300">

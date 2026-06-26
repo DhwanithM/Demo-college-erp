@@ -22,12 +22,15 @@ import StaffTable from './components/StaffTable';
 
 function StaffDetailPage({
   attendanceRecords,
+  canEdit,
   canManageLeave,
   canMarkAttendance,
   leaveRecords,
   onAttendance,
   onBack,
+  onEdit,
   onLeaveDecision,
+  onOpenDocuments,
   staffMember,
 }) {
   return (
@@ -49,12 +52,15 @@ function StaffDetailPage({
 
       <StaffProfilePanel
         attendanceRecords={attendanceRecords}
+        canEdit={canEdit}
         canManageLeave={canManageLeave}
         canMarkAttendance={canMarkAttendance}
         className="w-full"
         leaveRecords={leaveRecords}
         onAttendance={onAttendance}
+        onEdit={onEdit}
         onLeaveDecision={onLeaveDecision}
+        onOpenDocuments={onOpenDocuments}
         showActions={false}
         staffMember={staffMember}
       />
@@ -62,7 +68,7 @@ function StaffDetailPage({
   );
 }
 
-export default function FacultyStaffManagement({ currentUser, academicYear = '2026-2027' }) {
+export default function FacultyStaffManagement({ currentUser, academicYear = '2026-2027', onOpenDocuments }) {
   const [staffMembers, setStaffMembers] = useState(isFirebaseConfigured ? [] : demoStaffMembers);
   const [departments, setDepartments] = useState(isFirebaseConfigured ? [] : demoDepartments);
   const [leaveRecords, setLeaveRecords] = useState(isFirebaseConfigured ? [] : demoLeaveRecords);
@@ -348,12 +354,21 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
       {selectedStaff ? (
         <StaffDetailPage
           attendanceRecords={selectedAttendance}
+          canEdit={canEditStaff}
           canManageLeave={canManageLeave}
           canMarkAttendance={canMarkAttendance}
           leaveRecords={selectedLeaves}
           onAttendance={markAttendance}
           onBack={goBackOneFacultyStep}
+          onEdit={() => setEditingStaff(selectedStaff)}
           onLeaveDecision={decideLeave}
+          onOpenDocuments={() => onOpenDocuments?.({
+            documents: staffMemberDocumentList(selectedStaff),
+            ownerId: selectedStaff.employeeId,
+            ownerName: selectedStaff.name,
+            ownerRecordId: selectedStaff.id,
+            ownerType: 'Staff',
+          })}
           staffMember={selectedStaff}
         />
       ) : (
@@ -432,4 +447,20 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
       {leaveStaff && <LeaveModal staffMember={leaveStaff} onClose={() => setLeaveStaff(null)} onSave={saveLeave} />}
     </div>
   );
+}
+
+function staffMemberDocumentList(staffMember) {
+  if (!staffMember?.documentFileName) return [];
+  return [{
+    category: 'HR',
+    documentType: 'Staff Source Document',
+    fileName: staffMember.documentFileName,
+    fileSize: staffMember.documentFileSize || 0,
+    fileType: staffMember.documentFileType || 'application/pdf',
+    fileUrl: staffMember.documentFileUrl || staffMember.documentUrl || '',
+    id: `${staffMember.id}-source-document`,
+    tags: 'staff, source',
+    uploadedAtText: staffMember.createdAtText || staffMember.joiningDate || '',
+    verificationStatus: staffMember.documentStatus || 'Pending Review',
+  }];
 }

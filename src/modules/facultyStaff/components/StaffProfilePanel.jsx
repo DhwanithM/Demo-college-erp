@@ -1,4 +1,4 @@
-import { CalendarCheck, CheckCircle, UserRound, XCircle } from 'lucide-react';
+import { CalendarCheck, CheckCircle, Edit3, FileText, UserRound, XCircle } from 'lucide-react';
 import StatusBadge from '../../students/components/StatusBadge';
 
 function DetailItem({ label, value, full = false }) {
@@ -12,12 +12,15 @@ function DetailItem({ label, value, full = false }) {
 
 export default function StaffProfilePanel({
   attendanceRecords,
+  canEdit = false,
   canManageLeave,
   canMarkAttendance,
   className = 'xl:w-[32%]',
   leaveRecords,
   onAttendance,
+  onEdit,
   onLeaveDecision,
+  onOpenDocuments,
   showActions = true,
   staffMember,
 }) {
@@ -30,7 +33,23 @@ export default function StaffProfilePanel({
         <div className="bg-white rounded-lg p-5">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-bold text-slate-900">Staff Profile</h2>
-            <StatusBadge value={staffMember.status} />
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              {canEdit && (
+                <button
+                  onClick={() => onEdit?.(staffMember)}
+                  className="h-9 px-4 rounded-full bg-[#33373e] text-white font-semibold text-xs flex items-center justify-center gap-2"
+                >
+                  <Edit3 size={14} /> Edit
+                </button>
+              )}
+              <button
+                onClick={() => onOpenDocuments?.(staffMember)}
+                className="h-9 px-4 rounded-full bg-[#f5f5f6] text-slate-700 border border-slate-200 font-semibold text-xs flex items-center justify-center gap-2"
+              >
+                <FileText size={14} /> Documents
+              </button>
+              <StatusBadge value={staffMember.status} />
+            </div>
           </div>
           <div className="flex items-center gap-4 mb-5">
             <div className="h-20 w-20 rounded-full bg-[#30343c] text-emerald-300 flex items-center justify-center">
@@ -97,10 +116,14 @@ export default function StaffProfilePanel({
 
       <div className="bg-white border border-slate-100 rounded-lg p-5 shadow-sm mb-5">
         <h3 className="font-bold mb-4">Documents</h3>
-        <div className="rounded-lg bg-[#f5f5f6] p-3 text-sm">
+        <button
+          type="button"
+          onClick={() => onOpenDocuments?.(staffMember)}
+          className="w-full rounded-lg bg-[#f5f5f6] p-3 text-sm text-left hover:bg-slate-100 transition-colors"
+        >
           <div className="font-semibold text-slate-900">{staffMember.documentFileName || 'No source document linked'}</div>
           <div className="text-xs text-slate-500 mt-1">{staffMember.documentStatus || 'Upload pending'}</div>
-        </div>
+        </button>
       </div>
 
       <div className="bg-white border border-slate-100 rounded-lg p-5 shadow-sm mb-5">

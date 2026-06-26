@@ -344,6 +344,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
 
   const selectedStudent = selectedId ? courseStudents.find((student) => student.id === selectedId) || null : null;
   const selectedAdmissions = admissions.filter((record) => relationMatches(record, selectedStudent) && recordBelongsToYear(record));
+  const selectedStudentDocuments = studentDocuments.filter((record) => relationMatches(record, selectedStudent) && recordBelongsToYear(record));
   const latestAdmission = latestRecord(selectedAdmissions);
 
   const filteredStudents = useMemo(() => {
@@ -379,6 +380,12 @@ export default function StudentInformationManagement({ user, onLogout }) {
     setSelectedId('');
     navigateToModule('students');
   };
+
+  const openOwnerDocuments = useCallback((owner) => {
+    navigateToModule('document-management', {
+      state: { documentOwner: owner },
+    });
+  }, [navigateToModule]);
 
   const saveStudent = async (form) => {
     if (!canCreateAdmission) {
@@ -623,9 +630,13 @@ export default function StudentInformationManagement({ user, onLogout }) {
                 ) : activePage === 'students' ? (
                 selectedStudent ? (
                   <StudentDetailPage
+                    canEdit={canEditStudents}
                     latestAdmission={latestAdmission}
+                    documents={selectedStudentDocuments}
+                    onEdit={setEditingStudent}
                     student={selectedStudent}
                     onBack={goBackOneStudentStep}
+                    onOpenDocuments={openOwnerDocuments}
                   />
                 ) : (
                 <>
@@ -711,7 +722,11 @@ export default function StudentInformationManagement({ user, onLogout }) {
                     onBack={goBackOneStudentStep}
                   />
                 ) : activePage === 'faculty-staff' ? (
-                  <FacultyStaffManagement currentUser={user} academicYear={academicYear} />
+                  <FacultyStaffManagement
+                    currentUser={user}
+                    academicYear={academicYear}
+                    onOpenDocuments={openOwnerDocuments}
+                  />
                 ) : activePage === 'academics' ? (
                   <AcademicsManagement currentUser={user} academicYear={academicYear} />
                 ) : activePage === 'calendar' ? (
@@ -729,7 +744,11 @@ export default function StudentInformationManagement({ user, onLogout }) {
                 ) : activePage === 'notice-board' ? (
                   <NoticeBoardManagement currentUser={user} academicYear={academicYear} />
                 ) : activePage === 'document-management' ? (
-                  <DocumentManagement currentUser={user} academicYear={academicYear} />
+                  <DocumentManagement
+                    currentUser={user}
+                    academicYear={academicYear}
+                    ownerFilter={location.state?.documentOwner}
+                  />
                 ) : activePage === 'parent-portal' ? (
                   <ParentPortal currentUser={user} academicYear={academicYear} />
                 ) : activePage === 'user-roles' ? (
@@ -783,7 +802,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
   );
 }
 
-function StudentDetailPage({ latestAdmission, onBack, student }) {
+function StudentDetailPage({ canEdit, documents = [], latestAdmission, onBack, onEdit, onOpenDocuments, student }) {
   return (
     <div>
       <div className="flex flex-col gap-4 pb-6 border-b border-slate-100 mb-5">
@@ -801,7 +820,19 @@ function StudentDetailPage({ latestAdmission, onBack, student }) {
         </div>
       </div>
 
-      <StudentProfileCard canEdit={false} showSummaryTabs={false} student={student} />
+      <StudentProfileCard
+        canEdit={canEdit}
+        onEdit={onEdit}
+        onOpenDocuments={() => onOpenDocuments?.({
+          ownerId: student.studentId,
+          ownerName: student.name,
+          ownerRecordId: student.id,
+          ownerType: 'Student',
+          documents,
+        })}
+        showSummaryTabs={false}
+        student={student}
+      />
 
       <div className="bg-white border border-slate-100 rounded-lg p-5 shadow-sm">
         <h3 className="font-bold mb-4">Student Timeline</h3>

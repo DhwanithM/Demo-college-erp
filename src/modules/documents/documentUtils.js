@@ -48,6 +48,8 @@ export function filterDocuments(documents = [], filters = {}) {
   const term = (filters.search || '').trim().toLowerCase();
   return documents.filter((item) => {
     const ownerMatches = !filters.ownerType || item.ownerType === filters.ownerType;
+    const ownerRecordMatches = !filters.ownerRecordId || item.ownerRecordId === filters.ownerRecordId;
+    const ownerIdMatches = !filters.ownerId || item.ownerId === filters.ownerId;
     const categoryMatches = !filters.category || item.category === filters.category;
     const statusMatches = !filters.status || item.verificationStatus === filters.status;
     const textMatches = !term || [
@@ -60,7 +62,7 @@ export function filterDocuments(documents = [], filters = {}) {
     ]
       .filter(Boolean)
       .some((value) => String(value).toLowerCase().includes(term));
-    return ownerMatches && categoryMatches && statusMatches && textMatches;
+    return ownerMatches && ownerRecordMatches && ownerIdMatches && categoryMatches && statusMatches && textMatches;
   });
 }
 
