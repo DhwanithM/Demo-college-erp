@@ -26,6 +26,7 @@ import {
   validateFeeStructure,
 } from './feeUtils';
 import FeeAdjustmentModal from './components/FeeAdjustmentModal';
+import FeeCollectionTable from './components/FeeCollectionTable';
 import FeeAssignmentTable from './components/FeeAssignmentTable';
 import FeeCollectionModal from './components/FeeCollectionModal';
 import FeeReportsPanel from './components/FeeReportsPanel';
@@ -117,6 +118,16 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
     );
   }, [activeFeeBranch, assignments, search]);
 
+  const visibleCollections = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return collections;
+    return collections.filter((collection) =>
+      [collection.studentName, collection.studentId, collection.classKey, collection.paymentMode, collection.referenceNo, collection.paymentDate]
+        .filter(Boolean)
+        .some((value) => value.toLowerCase().includes(term))
+    );
+  }, [collections, search]);
+
   const payableAssignments = assignments.filter((item) => Number(item.dueAmount || 0) > 0);
   const selectedAssignment = selectedAssignmentId ? assignments.find((item) => item.id === selectedAssignmentId) || null : null;
 
@@ -145,10 +156,6 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
       ...(window.history.state || {}),
       feeFlow: { task: taskId, branch: directBranch },
     }, '');
-    if (taskId === 'collections') {
-      setCollectionAssignmentId('');
-      setShowCollectionModal(true);
-    }
   };
 
   const openFeeBranch = (branch) => {
@@ -210,8 +217,7 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
 
   const feeBranchOptions = {
     collections: [
-      { id: 'collect-fee', title: 'Manual Fee Entry', description: 'Open a manual payment entry form.', icon: <Banknote size={20} />, disabled: !canCollect, openCollection: true },
-      { id: 'due-list', title: 'Due List', description: 'View students with pending dues.', icon: <TrendingUp size={20} /> },
+      { id: 'collect-fee', title: 'Fee Collections', description: 'Record and review manual/offline student fee payments.', icon: <Banknote size={20} />, disabled: !canCollect, openCollection: true },
     ],
     structures: [
       { id: 'create-structure', title: 'Create Structure', description: 'Open a new fee structure form.', icon: <Plus size={20} />, disabled: !canSetup, openStructure: true },
@@ -340,6 +346,7 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
         studentRecordId: student?.id || '',
         studentId: student?.studentId || '',
         studentName: student?.name || '',
+        classKey: getStudentClassKey(student),
         amount,
         academicYear,
         paymentMode: form.paymentMode,
@@ -376,6 +383,7 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
       studentRecordId: assignment.studentRecordId,
       studentId: assignment.studentId,
       studentName: assignment.studentName,
+      classKey: assignment.classKey,
       amount,
       academicYear: assignment.academicYear || academicYear,
       paymentMode: form.paymentMode,
@@ -559,7 +567,49 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
         </div>
       </div>
 
-      {['create-structure', 'manage-structures'].includes(activeFeeBranch) ? (
+      {activeFeeBranch === 'collect-fee' ? (
+        <div>
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-5">
+            <div className="grid sm:grid-cols-3 gap-6 rounded-lg bg-white border border-slate-100 p-5 flex-1">
+              <div>
+                <div className="text-xs font-bold text-slate-500 uppercase">Total Collected</div>
+                <div className="text-2xl font-extrabold text-emerald-600 mt-1">{formatCurrency(summary.totalCollected)}</div>
+              </div>
+              <div>
+                <div className="text-xs font-bold text-slate-500 uppercase">Total Payments</div>
+                <div className="text-2xl font-extrabold text-slate-900 mt-1">{collections.length}</div>
+              </div>
+              <div>
+                <div className="text-xs font-bold text-slate-500 uppercase">This Year</div>
+                <div className="text-2xl font-extrabold text-slate-900 mt-1">{collections.filter((item) => item.academicYear === academicYear).length}</div>
+              </div>
+            </div>
+            <button
+              onClick={() => { setCollectionAssignmentId(''); setShowCollectionModal(true); }}
+              disabled={!canCollect}
+              className="h-10 px-5 rounded-lg bg-[#33373e] text-white font-semibold text-sm flex items-center justify-center gap-2 disabled:bg-slate-300"
+            >
+              <Plus size={16} /> Record Payment
+            </button>
+          </div>
+          <div className="relative mb-4 max-w-xl">
+            <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search by student, payment mode, reference..."
+              className="w-full h-11 rounded-lg bg-[#f0f0f2] border-0 pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-orange-100"
+            />
+          </div>
+          <FeeCollectionTable
+            collections={visibleCollections}
+            onEdit={(collection) => {
+              setCollectionAssignmentId(collection.assignmentId || '');
+              setShowCollectionModal(true);
+            }}
+          />
+        </div>
+      ) : ['create-structure', 'manage-structures'].includes(activeFeeBranch) ? (
         <div className="max-w-3xl">
           <FeeStructurePanel structures={structures} canEdit={canSetup || canAssign} onEdit={setEditingStructure} onAssign={assignStructureToStudents} />
         </div>
