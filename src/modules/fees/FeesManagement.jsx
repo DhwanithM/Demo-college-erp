@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, Banknote, BarChart3, FileText, Plus, Search, Settings, TrendingUp, Wallet } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Banknote, FileText, MessageCircle, Plus, Search, Settings, TrendingUp, Wallet } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
   createFeeAdjustment,
@@ -101,7 +101,6 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
   const canAssign = canAccess(defaultRoles, currentRoleId, 'fees.assign');
   const canCollect = canAccess(defaultRoles, currentRoleId, 'fees.collect');
   const canAdjust = canAccess(defaultRoles, currentRoleId, 'fees.adjust');
-  const canReports = canAccess(defaultRoles, currentRoleId, 'fees.reports');
   const classOptions = getClassOptions(students);
   const summary = summarizeFees(assignments, collections, adjustments);
 
@@ -121,12 +120,26 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
   const payableAssignments = assignments.filter((item) => Number(item.dueAmount || 0) > 0);
   const selectedAssignment = selectedAssignmentId ? assignments.find((item) => item.id === selectedAssignmentId) || null : null;
 
+  const getAssignmentStudent = (assignment) => students.find((student) => (
+    student.id === assignment.studentRecordId || student.studentId === assignment.studentId
+  ));
+
+  const formatWhatsAppPhone = (phone = '') => {
+    const digits = String(phone).replace(/\D/g, '');
+    if (!digits) return '';
+    if (digits.length === 10) return `91${digits}`;
+    return digits;
+  };
+
   const openFeeTask = (taskId) => {
     setActiveFeeTask(taskId);
-    setActiveFeeBranch('');
+    setActiveFeeBranch(taskId === 'due-tracking' ? 'due-list' : '');
     setSelectedAssignmentId('');
     setSearch('');
-    window.history.pushState({ ...(window.history.state || {}), feeFlow: { task: taskId, branch: '' } }, '');
+    window.history.pushState({
+      ...(window.history.state || {}),
+      feeFlow: { task: taskId, branch: taskId === 'due-tracking' ? 'due-list' : '' },
+    }, '');
   };
 
   const openFeeBranch = (branch) => {
@@ -174,11 +187,11 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
       meta: [`${adjustments.length} approved`, canAdjust ? 'Adjust enabled' : 'View only'],
     },
     {
-      id: 'reports',
-      title: 'Reports',
-      description: 'View collection trends and recent activity.',
-      icon: <BarChart3 size={22} />,
-      meta: [formatCurrency(summary.totalCollected), canReports ? 'Reports enabled' : 'View only'],
+      id: 'due-tracking',
+      title: 'Due Fee Tracking',
+      description: 'Track pending fees and message parents on WhatsApp.',
+      icon: <MessageCircle size={22} />,
+      meta: [`${payableAssignments.length} due`, formatCurrency(summary.totalOutstanding)],
     },
   ];
 
@@ -195,8 +208,8 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
       { id: 'approve-adjustment', title: 'Approve Adjustment', description: 'Select a student fee, then approve adjustment.', icon: <Wallet size={20} />, disabled: !canAdjust || !payableAssignments.length },
       { id: 'adjustment-history', title: 'Adjustment History', description: 'Review recent waivers and corrections.', icon: <FileText size={20} /> },
     ],
-    reports: [
-      { id: 'overview-report', title: 'Overview Report', description: 'See fee graph, collections, and adjustments.', icon: <BarChart3 size={20} /> },
+    'due-tracking': [
+      { id: 'due-list', title: 'Due Fee Tracking', description: 'Click a due student to send a WhatsApp reminder to the parent.', icon: <MessageCircle size={20} /> },
     ],
   };
 
@@ -209,7 +222,9 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
       ? 'Structure setup'
       : activeFeeTask === 'adjustments'
         ? 'Adjustment work'
-        : 'Report view';
+        : activeFeeTask === 'due-tracking'
+          ? 'Parent reminders'
+          : 'Payment view';
 
   const saveStructure = async (form) => {
     if (!canSetup) {
@@ -404,6 +419,29 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
     setShowCollectionModal(true);
   };
 
+  const sendDueReminder = (assignmentId) => {
+    const assignment = assignments.find((item) => item.id === assignmentId);
+    if (!assignment) return;
+    const student = getAssignmentStudent(assignment);
+    const phone = formatWhatsAppPhone(student?.parentPhone || student?.guardianPhone || student?.phone);
+    if (!phone) {
+      toast.error('No parent WhatsApp number found for this student.');
+      setSelectedAssignmentId(assignmentId);
+      return;
+    }
+    const parentName = student?.guardianName || 'Parent';
+    const message = [
+      `Dear ${parentName},`,
+      `This is a fee reminder for ${assignment.studentName}.`,
+      `Outstanding due: ${formatCurrency(assignment.dueAmount)}.`,
+      `Due date: ${assignment.dueDate || 'Not specified'}.`,
+      'Please complete the payment at the earliest.',
+    ].join('\n');
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
+    toast.success(`WhatsApp reminder opened for ${assignment.studentName}`);
+    setSelectedAssignmentId(assignmentId);
+  };
+
   return (
     <div>
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-6 border-b border-slate-100">
@@ -489,9 +527,7 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
         </div>
       </div>
 
-      {activeFeeBranch === 'overview-report' ? (
-        canReports ? <FeeReportsPanel collections={collections} adjustments={adjustments} /> : null
-      ) : ['create-structure', 'manage-structures'].includes(activeFeeBranch) ? (
+      {['create-structure', 'manage-structures'].includes(activeFeeBranch) ? (
         <div className="max-w-3xl">
           <FeeStructurePanel structures={structures} canEdit={canSetup || canAssign} onEdit={setEditingStructure} onAssign={assignStructureToStudents} />
         </div>
@@ -504,7 +540,14 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
             <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search student name, ID, class, status..." className="w-full h-11 rounded-lg bg-[#f0f0f2] border-0 pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-orange-100" />
           </div>
-          <FeeAssignmentTable assignments={visibleAssignments} canCollect={canCollect} showActions={false} selectedId={selectedAssignmentId} onSelect={setSelectedAssignmentId} onCollect={collectForAssignment} />
+          <FeeAssignmentTable
+            assignments={visibleAssignments}
+            canCollect={canCollect}
+            onCollect={collectForAssignment}
+            onSelect={activeFeeBranch === 'due-list' ? sendDueReminder : setSelectedAssignmentId}
+            selectedId={selectedAssignmentId}
+            showActions={false}
+          />
         </div>
         <aside className="xl:w-[32%]">
           {selectedAssignment ? (
@@ -522,6 +565,11 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
               )}
               {activeFeeBranch === 'approve-adjustment' && (
                 <button onClick={() => { setCollectionAssignmentId(selectedAssignment.id); setShowAdjustmentModal(true); }} disabled={!canAdjust || selectedAssignment.dueAmount <= 0} className="mt-5 w-full h-10 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm disabled:bg-slate-300">Approve Adjustment</button>
+              )}
+              {activeFeeBranch === 'due-list' && (
+                <button onClick={() => sendDueReminder(selectedAssignment.id)} disabled={selectedAssignment.dueAmount <= 0} className="mt-5 w-full h-10 rounded-full bg-[#25d366] text-white font-semibold text-sm disabled:bg-slate-300 flex items-center justify-center gap-2">
+                  <MessageCircle size={16} /> Send WhatsApp Reminder
+                </button>
               )}
             </div>
           ) : (
