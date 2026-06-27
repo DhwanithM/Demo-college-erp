@@ -1416,3 +1416,260 @@ html{color-scheme:dark}::selection{background:rgba(0,255,136,.18);color:#eafff5}
 .erp-shell.light-mode .erp-sidebar.is-collapsed .erp-sidebar-menu-card > nav.erp-sidebar-nav > button.erp-sidebar-item > span.erp-sidebar-item-icon {
   flex:0 0 26px!important;
 }
+
+/* Authoritative light mode rebuild: same glass layout as dark mode, white/lavender palette. */
+.erp-shell.light-mode {
+  --erp-bg:#f7f5ff;
+  --erp-surface:#ffffff;
+  --erp-surface-2:#fbfaff;
+  --erp-surface-3:#f1edff;
+  --erp-border:rgba(124,101,194,.18);
+  --erp-text:#1f2433;
+  --erp-muted:#77718d;
+  --erp-accent:#7c5cff;
+  --erp-accent-hover:#6847ea;
+  background:#f7f5ff!important;
+  background-image:
+    linear-gradient(rgba(124,92,255,.06) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(124,92,255,.06) 1px,transparent 1px)!important;
+  background-size:52px 52px!important;
+  color:var(--erp-text)!important;
+}
+
+.erp-shell.light-mode > .flex > main {
+  background:linear-gradient(135deg,rgba(255,255,255,.9),rgba(243,239,255,.76))!important;
+}
+
+.erp-shell.light-mode .erp-workspace,
+.erp-shell.light-mode [class~="bg-white"],
+.erp-shell.light-mode [class*="bg-[#f5f5f6]"],
+.erp-shell.light-mode [class*="bg-[#f0f0f2]"],
+.erp-shell.light-mode .erp-demo-table,
+.erp-shell.light-mode .erp-demo-table > button,
+.erp-shell.light-mode .erp-demo-table > div {
+  background:linear-gradient(160deg,rgba(255,255,255,.92),rgba(250,248,255,.76) 55%,rgba(236,231,255,.64))!important;
+  border-color:var(--erp-border)!important;
+  color:var(--erp-text)!important;
+  backdrop-filter:blur(12px);
+}
+
+.erp-shell.light-mode .erp-workspace {
+  box-shadow:0 24px 70px rgba(91,70,150,.12)!important;
+}
+
+.erp-shell.light-mode .erp-header {
+  background:rgba(255,255,255,.86)!important;
+  border-color:var(--erp-border)!important;
+  box-shadow:0 16px 48px rgba(91,70,150,.10)!important;
+  backdrop-filter:blur(18px);
+}
+
+.erp-shell.light-mode .erp-sidebar {
+  background:linear-gradient(180deg,#ffffff 0%,#f5f2ff 54%,#eee9ff 100%)!important;
+  border-color:rgba(124,92,255,.16)!important;
+  box-shadow:22px 0 52px rgba(91,70,150,.10)!important;
+}
+
+.erp-shell.light-mode .erp-sidebar-brand-card,
+.erp-shell.light-mode .erp-sidebar-menu-card,
+.erp-shell.light-mode .erp-sidebar-theme-switch {
+  background:rgba(255,255,255,.76)!important;
+  border:1px solid rgba(124,92,255,.16)!important;
+  box-shadow:0 14px 32px rgba(91,70,150,.08)!important;
+  backdrop-filter:blur(14px);
+}
+
+.erp-shell.light-mode .erp-sidebar-logo,
+.erp-shell.light-mode .erp-sidebar-expand-logo {
+  background:rgba(124,92,255,.10)!important;
+  border-color:rgba(124,92,255,.24)!important;
+  color:var(--erp-accent)!important;
+  box-shadow:none!important;
+}
+
+.erp-shell.light-mode .erp-sidebar-brand-name,
+.erp-shell.light-mode h2,
+.erp-shell.light-mode h3,
+.erp-shell.light-mode [class*="text-slate-900"],
+.erp-shell.light-mode [class*="text-slate-800"],
+.erp-shell.light-mode [class*="text-slate-700"] {
+  color:var(--erp-text)!important;
+}
+
+.erp-shell.light-mode h1 {
+  background:linear-gradient(135deg,#6d5dfc 0%,#8f5bff 50%,#2563eb 100%)!important;
+  background-size:200% 200%!important;
+  -webkit-background-clip:text!important;
+  background-clip:text!important;
+  -webkit-text-fill-color:transparent!important;
+  color:var(--erp-accent)!important;
+  animation:gradientShift 8s ease infinite!important;
+}
+
+.erp-shell.light-mode [class*="text-slate-600"],
+.erp-shell.light-mode [class*="text-slate-500"],
+.erp-shell.light-mode [class*="text-slate-400"] {
+  color:var(--erp-muted)!important;
+}
+
+.erp-shell.light-mode [class*="text-[#f39a5f]"],
+.erp-shell.light-mode [class*="text-[#fb8d49]"],
+.erp-shell.light-mode [class*="text-orange-"],
+.erp-shell.light-mode .text-emerald-500 {
+  color:var(--erp-accent)!important;
+}
+
+.erp-shell.light-mode input,
+.erp-shell.light-mode select,
+.erp-shell.light-mode textarea {
+  background:rgba(255,255,255,.86)!important;
+  border:1px solid rgba(124,92,255,.18)!important;
+  color:var(--erp-text)!important;
+  box-shadow:0 0 0 1px rgba(124,92,255,.04)!important;
+}
+
+.erp-shell.light-mode input:focus,
+.erp-shell.light-mode select:focus,
+.erp-shell.light-mode textarea:focus {
+  border-color:rgba(124,92,255,.52)!important;
+  box-shadow:0 0 0 3px rgba(124,92,255,.12)!important;
+}
+
+.erp-shell.light-mode select option,
+.erp-shell.light-mode select optgroup {
+  background:#ffffff!important;
+  color:var(--erp-text)!important;
+}
+
+.erp-shell.light-mode select option:checked {
+  background:#e9e4ff!important;
+  color:#261b50!important;
+}
+
+.erp-shell.light-mode table thead,
+.erp-shell.light-mode table thead tr,
+.erp-shell.light-mode table thead th,
+.erp-shell.light-mode table [class*="bg-[#e7e7e9]"] {
+  background:linear-gradient(160deg,rgba(124,92,255,.12),rgba(255,255,255,.68))!important;
+  color:#6b6384!important;
+}
+
+.erp-shell.light-mode table tbody tr,
+.erp-shell.light-mode table tbody tr[class~="bg-white"],
+.erp-shell.light-mode table tbody td[class~="bg-white"] {
+  background:rgba(255,255,255,.72)!important;
+  color:var(--erp-text)!important;
+  box-shadow:0 0 0 1px rgba(124,92,255,.14)!important;
+}
+
+.erp-shell.light-mode table tbody tr:hover {
+  background:rgba(124,92,255,.08)!important;
+}
+
+.erp-shell.light-mode table tbody tr.erp-row-selected,
+.erp-shell.light-mode table tbody tr.erp-row-selected td {
+  background:rgba(124,92,255,.14)!important;
+}
+
+.erp-shell.light-mode button[class*="bg-[#333"],
+.erp-shell.light-mode button[class*="bg-[#343"],
+.erp-shell.light-mode button[class*="bg-[#fb"],
+.erp-shell.light-mode button[class*="bg-orange"],
+.erp-shell.light-mode button[class*="border-[#333"],
+.erp-shell.light-mode button[class*="border-[#343"],
+.erp-shell.light-mode button[class*="border-[#fb"],
+.erp-shell.light-mode button[class*="border-orange"],
+.erp-shell.light-mode button.rounded-full:not(.erp-theme-toggle):not(.erp-notification-button),
+.erp-shell.light-mode .erp-header button:first-child {
+  background:linear-gradient(to bottom left,#7c5cff 0%,#ffffff 52%,#ddd6ff 100%)!important;
+  border-color:rgba(124,92,255,.32)!important;
+  color:#21183f!important;
+  box-shadow:0 12px 30px rgba(124,92,255,.18)!important;
+}
+
+.erp-shell.light-mode button[class*="bg-[#333"]:hover:not(:disabled),
+.erp-shell.light-mode button[class*="bg-[#343"]:hover:not(:disabled),
+.erp-shell.light-mode button[class*="bg-[#fb"]:hover:not(:disabled),
+.erp-shell.light-mode button[class*="bg-orange"]:hover:not(:disabled),
+.erp-shell.light-mode button.rounded-full:not(.erp-theme-toggle):not(.erp-notification-button):hover:not(:disabled),
+.erp-shell.light-mode .erp-header button:first-child:hover:not(:disabled) {
+  background:linear-gradient(to bottom left,#6847ea 0%,#ffffff 52%,#cfc3ff 100%)!important;
+  border-color:rgba(104,71,234,.42)!important;
+  transform:translateY(-1px);
+}
+
+.erp-shell.light-mode button:not([class*="bg-[#fb"]):not([class*="bg-orange"]):not([class*="bg-[#333"]):not([class*="bg-[#343"]):not(:disabled) {
+  background:rgba(255,255,255,.72)!important;
+  color:#5f5876!important;
+}
+
+.erp-shell.light-mode button:hover:not(:disabled) {
+  border-color:rgba(124,92,255,.34)!important;
+}
+
+.erp-shell.light-mode button:disabled {
+  background:#e8e4f5!important;
+  color:#a099b5!important;
+  box-shadow:none!important;
+}
+
+.erp-shell.light-mode .erp-sidebar .erp-sidebar-menu-card > nav.erp-sidebar-nav > button.erp-sidebar-item {
+  color:#716b86!important;
+  background:transparent!important;
+  border-color:transparent!important;
+}
+
+.erp-shell.light-mode .erp-sidebar .erp-sidebar-menu-card > nav.erp-sidebar-nav > button.erp-sidebar-item:hover {
+  color:#2f2845!important;
+  background:rgba(124,92,255,.08)!important;
+}
+
+.erp-shell.light-mode .erp-sidebar .erp-sidebar-menu-card > nav.erp-sidebar-nav > button.erp-sidebar-item.is-active {
+  color:#2a204d!important;
+  background:linear-gradient(135deg,rgba(124,92,255,.18),rgba(255,255,255,.62))!important;
+  border-color:rgba(124,92,255,.28)!important;
+  box-shadow:0 14px 30px rgba(124,92,255,.14)!important;
+}
+
+.erp-shell.light-mode .erp-sidebar .erp-sidebar-menu-card > nav.erp-sidebar-nav > button.erp-sidebar-item > span.erp-sidebar-item-icon,
+.erp-shell.light-mode .erp-sidebar .erp-sidebar-menu-card > nav.erp-sidebar-nav > button.erp-sidebar-item > span.erp-sidebar-item-label,
+.erp-shell.light-mode .erp-sidebar .erp-sidebar-menu-card > nav.erp-sidebar-nav > button.erp-sidebar-item > span.erp-sidebar-item-badge {
+  background:transparent!important;
+  box-shadow:none!important;
+  color:currentColor!important;
+}
+
+.erp-shell.light-mode .erp-sidebar-collapse-button {
+  background:rgba(255,255,255,.84)!important;
+  border-color:rgba(124,92,255,.2)!important;
+  color:#4f4770!important;
+  box-shadow:0 12px 26px rgba(91,70,150,.12)!important;
+}
+
+.erp-shell.light-mode .erp-sidebar-theme-switch button {
+  background:rgba(124,92,255,.06)!important;
+  color:#716b86!important;
+}
+
+.erp-shell.light-mode .erp-sidebar-theme-switch button.is-active {
+  background:rgba(124,92,255,.16)!important;
+  color:var(--erp-accent)!important;
+}
+
+.erp-shell.light-mode .erp-dashboard-donut-hole {
+  background:rgba(255,255,255,.92)!important;
+  box-shadow:inset 0 0 0 1px rgba(124,92,255,.14),0 12px 28px rgba(91,70,150,.10)!important;
+}
+
+.erp-shell.light-mode .erp-modal-form,
+.erp-shell.light-mode div[class*="fixed"][class*="inset-0"][class*="z-50"] > form {
+  background:linear-gradient(160deg,#ffffff,#faf8ff)!important;
+  border-color:rgba(124,92,255,.2)!important;
+  box-shadow:0 28px 80px rgba(91,70,150,.20)!important;
+}
+
+.erp-shell.light-mode .erp-modal-overlay,
+.erp-shell.light-mode div[class*="fixed"][class*="inset-0"][class*="z-50"] {
+  background:rgba(31,36,51,.42)!important;
+  backdrop-filter:blur(8px);
+}

@@ -29,7 +29,7 @@ function buildTrendPoints(collections = []) {
     return map;
   }, {});
   const rows = Object.entries(grouped).sort(([a], [b]) => String(a).localeCompare(String(b))).slice(-6);
-  if (!rows.length) return [[0, 78], [48, 68], [96, 74], [144, 48], [192, 56], [240, 34]];
+  if (!rows.length) return [];
   const max = Math.max(...rows.map(([, value]) => value), 1);
   return rows.map(([, value], index) => {
     const x = rows.length === 1 ? 120 : (index / (rows.length - 1)) * 240;
@@ -67,7 +67,7 @@ export default function FeeVisualGraph({ assignments = [], collections = [], sum
   const maxClassDue = Math.max(...classDues.map(([, value]) => value), 1);
   const trendPoints = buildTrendPoints(collections);
   const trendPath = trendPoints.map(([x, y], index) => `${index ? 'L' : 'M'} ${x} ${y}`).join(' ');
-  const trendArea = `${trendPath} L ${trendPoints.at(-1)[0]} 96 L ${trendPoints[0][0]} 96 Z`;
+  const trendArea = trendPoints.length ? `${trendPath} L ${trendPoints.at(-1)[0]} 96 L ${trendPoints[0][0]} 96 Z` : '';
 
   return (
     <section className="mb-5 grid xl:grid-cols-[1.15fr_.85fr] gap-4">
@@ -136,11 +136,17 @@ export default function FeeVisualGraph({ assignments = [], collections = [], sum
             </div>
             <div className="text-sm font-bold text-emerald-500">{formatCurrency(summary.totalCollected)}</div>
           </div>
-          <svg viewBox="0 0 240 100" className="w-full h-28">
-            <path d={trendArea} fill="rgba(0,209,132,.16)" />
-            <path d={trendPath} fill="none" stroke="#00d184" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-            {trendPoints.map(([x, y]) => <circle key={`${x}-${y}`} cx={x} cy={y} r="3.5" fill="#00d184" />)}
-          </svg>
+          {trendPoints.length ? (
+            <svg viewBox="0 0 240 100" className="w-full h-28">
+              <path d={trendArea} fill="rgba(0,209,132,.16)" />
+              <path d={trendPath} fill="none" stroke="#00d184" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+              {trendPoints.map(([x, y]) => <circle key={`${x}-${y}`} cx={x} cy={y} r="3.5" fill="#00d184" />)}
+            </svg>
+          ) : (
+            <div className="h-28 rounded-lg bg-[#f5f5f6] flex items-center justify-center text-xs text-slate-500">
+              No payment collections yet.
+            </div>
+          )}
         </div>
 
         <div className="bg-white border border-slate-100 rounded-lg p-5">

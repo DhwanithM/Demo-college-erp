@@ -72,11 +72,22 @@ function buildCollectionTrend(collections = []) {
 }
 
 function buildAdmissionStages(students = [], admissions = []) {
+  const linkedKeys = new Set();
+  [...students, ...admissions].forEach((item) => {
+    const key = item.studentRecordId || item.studentId || item.id || item.admissionNo;
+    if (key) linkedKeys.add(key);
+  });
+
   const activeStudents = students.filter((student) => student.status !== 'Archived');
-  const reviewCount = activeStudents.filter((student) => /review|pending/i.test(student.status || '')).length;
-  const admittedCount = activeStudents.filter((student) => /active|approved|admitted/i.test(student.status || '')).length;
+  const reviewStatuses = /review|pending|submitted|draft/i;
+  const admittedStatuses = /active|approved|admitted/i;
+  const reviewCount = [
+    ...activeStudents.filter((student) => reviewStatuses.test(student.status || '')),
+    ...admissions.filter((admission) => reviewStatuses.test(admission.status || '')),
+  ].length;
+  const admittedCount = activeStudents.filter((student) => admittedStatuses.test(student.status || '')).length;
   const archivedCount = students.filter((student) => student.status === 'Archived').length;
-  const applicationCount = Math.max(admissions.length, students.length);
+  const applicationCount = linkedKeys.size;
 
   return [
     { label: 'Applications', value: applicationCount, color: '#2563eb' },
@@ -184,6 +195,7 @@ export default function DashboardManagement({ academicYear = '2026-2027', curren
     .filter((item) => item.status !== 'Archived')
     .sort((first, second) => String(first.examDate || '').localeCompare(String(second.examDate || '')));
   const collectionTrend = useMemo(() => buildCollectionTrend(courseFeeCollections), [courseFeeCollections]);
+  const hasCollectionTrend = collectionTrend.some((item) => item.value > 0);
   const maxTrendValue = Math.max(...collectionTrend.map((item) => item.value), 1);
   const trendPoints = collectionTrend.map((item, index) => {
     const x = 16 + (index / Math.max(collectionTrend.length - 1, 1)) * 328;
@@ -202,6 +214,8 @@ export default function DashboardManagement({ academicYear = '2026-2027', curren
     () => buildAdmissionStages(courseStudents, courseAdmissions),
     [courseAdmissions, courseStudents]
   );
+  const maxAdmissionStageValue = Math.max(...courseAdmissionStages.map((stage) => stage.value), 0);
+  const hasAdmissionPipeline = maxAdmissionStageValue > 0;
   const admittedRate = courseAdmissionStages[0].value
     ? Math.round((courseAdmissionStages[2].value / courseAdmissionStages[0].value) * 100)
     : 0;
@@ -276,6 +290,8 @@ export default function DashboardManagement({ academicYear = '2026-2027', curren
             <span className="rounded-full bg-[#f5f5f6] px-3 py-1 text-xs font-semibold text-slate-600">{academicYear}</span>
           </div>
           <div className="relative">
+            {hasCollectionTrend ? (
+            <>
             <svg viewBox="0 0 360 160" className="w-full h-64">
               <defs>
                 <linearGradient id="paymentTrendFill" x1="0" x2="0" y1="0" y2="1">
@@ -298,6 +314,12 @@ export default function DashboardManagement({ academicYear = '2026-2027', curren
             <div className="grid grid-cols-6 gap-2 text-[11px] text-slate-500 px-4 -mt-4">
               {collectionTrend.map((month) => <span key={month.key}>{month.label}</span>)}
             </div>
+            </>
+            ) : (
+              <div className="h-64 rounded-lg bg-[#f5f5f6] flex items-center justify-center text-sm text-slate-500">
+                No payment collections yet.
+              </div>
+            )}
           </div>
         </section>
         )}
@@ -333,14 +355,15 @@ export default function DashboardManagement({ academicYear = '2026-2027', curren
             </div>
             <span className="rounded-full bg-[#f5f5f6] px-3 py-1 text-xs font-bold text-emerald-500">{loading ? '-' : `${admittedRate}%`}</span>
           </div>
+          {hasAdmissionPipeline ? (
           <div className="grid md:grid-cols-[1fr_.85fr] gap-5 items-center">
             <div className="space-y-1">
-              {courseAdmissionStages.map((stage, index) => (
+              {courseAdmissionStages.map((stage) => (
                 <div
                   key={stage.label}
                   className="mx-auto h-10"
                   style={{
-                    width: `${100 - index * 14}%`,
+                    width: `${Math.max(12, Math.round((stage.value / maxAdmissionStageValue) * 100))}%`,
                     background: stage.color,
                     clipPath: 'polygon(0 0, 100% 0, 88% 100%, 12% 100%)',
                   }}
@@ -357,6 +380,11 @@ export default function DashboardManagement({ academicYear = '2026-2027', curren
               ))}
             </div>
           </div>
+          ) : (
+            <div className="h-44 rounded-lg bg-[#f5f5f6] flex items-center justify-center text-sm text-slate-500">
+              No admission records yet.
+            </div>
+          )}
         </section>
         )}
 
