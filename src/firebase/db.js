@@ -368,8 +368,46 @@ export async function createAttendanceNotification(data) {
   return createCollectionDocument('attendanceNotifications', data);
 }
 
-export async function getTimetableManagementData(academicYear = '') {
+async function getLinkedParentStudents(academicYear = '', currentUser = {}) {
   const yearConstraints = academicYearWhere(academicYear);
+  const profile = currentUser?.uid ? await getUserProfile(currentUser.uid).catch(() => null) : null;
+  const linkedStudentRecordIds = uniqueValues([
+    ...(currentUser.linkedStudentRecordIds || []),
+    ...(profile?.linkedStudentRecordIds || []),
+  ]);
+  const linkedStudentIds = uniqueValues([
+    ...(currentUser.linkedStudentIds || []),
+    ...(profile?.linkedStudentIds || []),
+  ]);
+
+  const [studentsByRecordId, studentsByStudentId] = await Promise.all([
+    getCollectionDocuments('students', linkedStudentRecordIds),
+    listCollectionWhereIn('students', 'studentId', linkedStudentIds, yearConstraints),
+  ]);
+
+  return filterByAcademicYear(mergeById([studentsByRecordId, studentsByStudentId]), academicYear);
+}
+
+export async function getTimetableManagementData(academicYear = '', currentUser = {}) {
+  const yearConstraints = academicYearWhere(academicYear);
+
+  if (currentUser?.roleId === 'parent') {
+    const [students, classrooms, timetableEntries, publications] = await Promise.all([
+      getLinkedParentStudents(academicYear, currentUser),
+      listCollection('classrooms'),
+      listCollection('timetableEntries', yearConstraints),
+      listCollection('timetablePublications', yearConstraints),
+    ]);
+
+    return {
+      students,
+      staff: [],
+      classrooms,
+      timetableEntries: filterByAcademicYear(timetableEntries, academicYear),
+      publications: filterByAcademicYear(publications, academicYear),
+    };
+  }
+
   const [students, staff, classrooms, timetableEntries, publications] = await Promise.all([
     listCollection('students', yearConstraints),
     listCollection('staffMembers'),

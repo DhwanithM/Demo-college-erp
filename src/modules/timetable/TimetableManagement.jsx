@@ -32,7 +32,7 @@ export default function TimetableManagement({ currentUser, academicYear = '2026-
     const loadTimetable = async () => {
       if (!isFirebaseConfigured) return;
       try {
-        const data = await getTimetableManagementData(academicYear);
+        const data = await getTimetableManagementData(academicYear, currentUser);
         if (data.students.length) setStudents(data.students);
         if (data.staff.length) setStaff(data.staff.filter((member) => member.status !== 'Archived'));
         if (data.classrooms.length) setClassrooms(data.classrooms);
@@ -43,7 +43,7 @@ export default function TimetableManagement({ currentUser, academicYear = '2026-
       }
     };
     loadTimetable();
-  }, [academicYear]);
+  }, [academicYear, currentUser]);
 
   const currentRoleId = currentUser?.roleId || 'admin';
   const canCreate = canAccess(defaultRoles, currentRoleId, 'timetable.create');
@@ -52,7 +52,10 @@ export default function TimetableManagement({ currentUser, academicYear = '2026-
 
   const faculty = staff.filter((member) => member.staffType === 'Faculty' && member.status !== 'Archived');
   const courseStudents = scopedStudents.length ? scopedStudents : filterStudentsByCourse(students, selectedCourseCode, selectedCourse);
-  const courseEntries = filterByCourse(entries, selectedCourseCode, selectedCourse);
+  const parentCourseCodes = new Set(courseStudents.map((student) => student.courseCode).filter(Boolean));
+  const courseEntries = currentRoleId === 'parent' && selectedCourseCode === 'all' && parentCourseCodes.size
+    ? entries.filter((entry) => parentCourseCodes.has(entry.courseCode))
+    : filterByCourse(entries, selectedCourseCode, selectedCourse);
   const classOptions = getClassOptions(courseStudents);
   const timeSlotOptions = getTimeSlotOptions(courseEntries);
   const filteredEntries = useMemo(() => {
