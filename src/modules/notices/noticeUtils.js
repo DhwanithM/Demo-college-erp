@@ -1,3 +1,5 @@
+import { isAllCourses, recordMatchesCourse } from '../shared/courseFilters.js';
+
 export const noticeTypes = ['Digital Notice', 'Circular', 'Event Announcement'];
 export const noticeAudiences = ['All', 'Students', 'Faculty', 'Parents', 'Administration'];
 export const noticePriorities = ['Normal', 'Important', 'Urgent'];
@@ -62,6 +64,29 @@ export function filterNotices(items = [], filters = {}) {
       .filter(Boolean)
       .some((value) => value.toLowerCase().includes(term));
     return typeMatches && audienceMatches && statusMatches && textMatches;
+  });
+}
+
+export function noticeMatchesCourseScope(item = {}, selectedCourseCode = 'all', selectedCourse = null) {
+  if (isAllCourses(selectedCourseCode)) return true;
+  if (!item.courseCode && !item.courseName && !item.program && !item.programName && !item.className && !item.classKey) return true;
+  return recordMatchesCourse(item, selectedCourseCode, selectedCourse);
+}
+
+export function getNoticeAudienceForRole(roleId = '') {
+  if (roleId === 'faculty') return 'Faculty';
+  if (roleId === 'parent') return 'Parents';
+  if (roleId === 'student') return 'Students';
+  return '';
+}
+
+export function filterVisibleNoticesForRole(items = [], roleId = '', canManage = false, now = new Date()) {
+  if (canManage) return items;
+  const audience = getNoticeAudienceForRole(roleId);
+  return items.filter((item) => {
+    const visibleStatus = getNoticeDisplayStatus(item, now) === 'Published';
+    const visibleAudience = item.audience === 'All' || (audience && item.audience === audience);
+    return visibleStatus && visibleAudience;
   });
 }
 

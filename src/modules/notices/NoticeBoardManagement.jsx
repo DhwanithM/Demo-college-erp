@@ -10,11 +10,18 @@ import {
 import { isFirebaseConfigured } from '../../firebase/config';
 import { canAccess, defaultRoles } from '../userRoles/rolePermissions';
 import { demoNoticeItems } from './demoNotices';
-import { filterNotices, formatDisplayDate, noticeAudiences, noticeTypes, validateNoticeForm } from './noticeUtils';
+import {
+  filterNotices,
+  filterVisibleNoticesForRole,
+  formatDisplayDate,
+  noticeAudiences,
+  noticeMatchesCourseScope,
+  noticeTypes,
+  validateNoticeForm,
+} from './noticeUtils';
 import NoticeModal from './components/NoticeModal';
 import NoticePreviewPanel from './components/NoticePreviewPanel';
 import NoticeTable from './components/NoticeTable';
-import { filterByCourse } from '../shared/courseFilters';
 
 export default function NoticeBoardManagement({ currentUser, academicYear = '2026-2027', selectedCourse = null, selectedCourseCode = 'all' }) {
   const [notices, setNotices] = useState(isFirebaseConfigured ? [] : demoNoticeItems);
@@ -43,9 +50,18 @@ export default function NoticeBoardManagement({ currentUser, academicYear = '202
   const canCreate = canAccess(defaultRoles, currentRoleId, 'notices.create');
   const canEdit = canAccess(defaultRoles, currentRoleId, 'notices.edit');
   const canArchive = canAccess(defaultRoles, currentRoleId, 'notices.archive');
-  const courseNotices = useMemo(() => filterByCourse(notices, selectedCourseCode, selectedCourse), [notices, selectedCourse, selectedCourseCode]);
-  const visibleNotices = useMemo(() => filterNotices(courseNotices, filters), [courseNotices, filters]);
-  const selectedNotice = courseNotices.find((item) => item.id === selectedId) || visibleNotices[0] || courseNotices[0];
+  const canManageNotices = canCreate || canEdit || canArchive;
+  const courseNotices = useMemo(
+    () => notices.filter((item) => noticeMatchesCourseScope(item, selectedCourseCode, selectedCourse)),
+    [notices, selectedCourse, selectedCourseCode],
+  );
+  const roleScopedNotices = useMemo(
+    () => filterVisibleNoticesForRole(courseNotices, currentRoleId, canManageNotices),
+    [canManageNotices, courseNotices, currentRoleId],
+  );
+  const activeFilters = useMemo(() => (canManageNotices ? filters : { ...filters, status: '' }), [canManageNotices, filters]);
+  const visibleNotices = useMemo(() => filterNotices(roleScopedNotices, activeFilters), [roleScopedNotices, activeFilters]);
+  const selectedNotice = roleScopedNotices.find((item) => item.id === selectedId) || visibleNotices[0] || roleScopedNotices[0];
 
   const buildPayload = (form) => ({
     ...form,
@@ -54,7 +70,7 @@ export default function NoticeBoardManagement({ currentUser, academicYear = '202
     body: form.body.trim(),
     createdByName: currentUser?.name || 'Admin Office',
     courseCode: selectedCourseCode === 'all' ? '' : selectedCourseCode,
-    courseName: selectedCourse?.courseName || '',
+    courseName: selectedCourseCode === 'all' ? '' : selectedCourse?.courseName || selectedCourse?.name || '',
   });
 
   const saveNotice = async (form) => {
@@ -155,14 +171,16 @@ export default function NoticeBoardManagement({ currentUser, academicYear = '202
           {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist announcements.</p>}
           {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
         </div>
-        <button onClick={() => setShowModal(true)} disabled={!canCreate} className="h-10 px-5 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm flex items-center gap-2 disabled:bg-slate-300">
-          <Plus size={16} /> Announcement
-        </button>
+        {canCreate && (
+          <button onClick={() => setShowModal(true)} className="h-10 px-5 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm flex items-center gap-2">
+            <Plus size={16} /> Announcement
+          </button>
+        )}
       </div>
 
       <div className="flex flex-col xl:flex-row gap-5">
         <div className="xl:w-[68%] min-w-0">
-          <div className="grid md:grid-cols-4 gap-3 mb-4">
+          <div className={`grid gap-3 mb-4 ${canManageNotices ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
             <div className="relative md:col-span-1">
               <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input value={filters.search} onChange={(event) => updateFilter('search', event.target.value)} placeholder="Search..." className="w-full h-10 rounded-lg bg-[#f0f0f2] border-0 pl-10 pr-3 text-sm" />
@@ -175,14 +193,25 @@ export default function NoticeBoardManagement({ currentUser, academicYear = '202
               <option value="">All Audiences</option>
               {noticeAudiences.map((item) => <option key={item}>{item}</option>)}
             </select>
-            <select value={filters.status} onChange={(event) => updateFilter('status', event.target.value)} className="h-10 rounded-lg bg-[#f0f0f2] border-0 px-3 text-sm">
-              <option value="">All Statuses</option>
-              {['Draft', 'Published', 'Scheduled', 'Expired', 'Archived'].map((item) => <option key={item}>{item}</option>)}
-            </select>
+            {canManageNotices && (
+              <select value={filters.status} onChange={(event) => updateFilter('status', event.target.value)} className="h-10 rounded-lg bg-[#f0f0f2] border-0 px-3 text-sm">
+                <option value="">All Statuses</option>
+                {['Draft', 'Published', 'Scheduled', 'Expired', 'Archived'].map((item) => <option key={item}>{item}</option>)}
+              </select>
+            )}
           </div>
-          <NoticeTable notices={visibleNotices} canEdit={canEdit} onEdit={setEditingNotice} onPreview={selectForPreview} onArchive={archiveNotice} onPublish={publishNotice} />
+          <NoticeTable
+            notices={visibleNotices}
+            canArchive={canArchive}
+            canEdit={canEdit}
+            showActions={canManageNotices}
+            onEdit={setEditingNotice}
+            onPreview={selectForPreview}
+            onArchive={archiveNotice}
+            onPublish={publishNotice}
+          />
         </div>
-        <NoticePreviewPanel canPublish={canEdit} notice={selectedNotice} onPublish={publishNotice} />
+        <NoticePreviewPanel canPublish={canEdit} notice={selectedNotice} showActions={canManageNotices} onPublish={publishNotice} />
       </div>
 
       {showModal && <NoticeModal onClose={() => setShowModal(false)} onSave={saveNotice} />}

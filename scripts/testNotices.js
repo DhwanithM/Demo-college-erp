@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import {
   filterNotices,
+  filterVisibleNoticesForRole,
   getNoticeDisplayStatus,
   isExpired,
   isPublished,
+  noticeMatchesCourseScope,
   summarizeNotices,
   validateNoticeForm,
 } from '../src/modules/notices/noticeUtils.js';
@@ -80,6 +82,28 @@ assert.deepEqual(summarizeNotices(notices, now), {
 assert.equal(filterNotices(notices, { type: 'Circular' }).length, 1);
 assert.equal(filterNotices(notices, { audience: 'Students' }).length, 1);
 assert.equal(filterNotices(notices, { search: 'old' }).length, 1);
+
+const courseScopedNotices = [
+  { ...notices[0], id: 'global', courseCode: '' },
+  { ...notices[0], id: 'bsc', courseCode: 'BSC-NURSING', courseName: 'B.Sc Nursing' },
+  { ...notices[0], id: 'gnm', courseCode: 'GNM', courseName: 'GNM Nursing' },
+];
+assert.deepEqual(
+  courseScopedNotices
+    .filter((item) => noticeMatchesCourseScope(item, 'BSC-NURSING', { courseName: 'B.Sc Nursing' }))
+    .map((item) => item.id),
+  ['global', 'bsc'],
+);
+assert.equal(noticeMatchesCourseScope(courseScopedNotices[2], 'all', null), true);
+assert.deepEqual(
+  filterVisibleNoticesForRole(notices, 'faculty', false, now).map((item) => item.id),
+  [],
+);
+assert.deepEqual(
+  filterVisibleNoticesForRole(notices, 'student', false, now).map((item) => item.id),
+  ['n1'],
+);
+assert.equal(filterVisibleNoticesForRole(notices, 'admin', true, now).length, 4);
 
 assert.equal(validateNoticeForm({}), 'Title is required.');
 assert.equal(validateNoticeForm({
