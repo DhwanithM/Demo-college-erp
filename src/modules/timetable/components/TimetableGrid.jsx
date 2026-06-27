@@ -2,7 +2,7 @@ import { Archive, Edit3 } from 'lucide-react';
 import StatusBadge from '../../students/components/StatusBadge';
 import { timeSlots, weekDays } from '../timetableUtils';
 
-export default function TimetableGrid({ canArchive, canCreate, canEdit, entries, onArchive, onCreate, onEdit, selectedClass }) {
+export default function TimetableGrid({ canArchive, canCreate, canEdit, entries, onArchive, onCreate, onEdit }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm border-separate border-spacing-1">
@@ -34,23 +34,28 @@ export default function TimetableGrid({ canArchive, canCreate, canEdit, entries,
                             </div>
                             <StatusBadge value={entry.status || 'Draft'} />
                           </div>
-                          <div className="flex gap-2 mt-3">
-                            <button disabled={!canEdit} onClick={() => onEdit(entry)} className="h-8 px-3 rounded-md bg-white border border-slate-200 text-xs font-semibold flex items-center gap-1 disabled:opacity-40">
-                              <Edit3 size={13} /> Edit
-                            </button>
-                            <button disabled={!canArchive} onClick={() => onArchive(entry)} className="h-8 px-3 rounded-md bg-white border border-slate-200 text-xs font-semibold flex items-center gap-1 disabled:opacity-40">
-                              <Archive size={13} /> Archive
-                            </button>
-                          </div>
+                          {(canEdit || canArchive) && (
+                            <div className="flex gap-2 mt-3">
+                              {canEdit && (
+                                <button onClick={() => onEdit(entry)} className="h-8 px-3 rounded-md bg-white border border-slate-200 text-xs font-semibold flex items-center gap-1">
+                                  <Edit3 size={13} /> Edit
+                                </button>
+                              )}
+                              {canArchive && (
+                                <button onClick={() => onArchive(entry)} className="h-8 px-3 rounded-md bg-white border border-slate-200 text-xs font-semibold flex items-center gap-1">
+                                  <Archive size={13} /> Archive
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ))}
-                      {!dayEntries.length && (
+                      {!dayEntries.length && canCreate && (
                         <button
                           type="button"
-                          disabled={!canCreate}
-                          onClick={() => onCreate({ day, timeSlot: slot, classKey: selectedClass === 'All' ? '' : selectedClass })}
+                          onClick={() => onCreate({ day, timeSlot: slot })}
                           className="w-full min-h-16 rounded-md border border-dashed border-slate-200 p-2 text-left text-xs text-slate-400 hover:border-emerald-300 hover:text-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
-                          title={canCreate ? 'Add timetable entry' : 'No permission to create timetable entries'}
+                          title="Add timetable entry"
                         >
                           + Add class
                         </button>

@@ -22,7 +22,6 @@ export default function TimetableManagement({ currentUser, academicYear = '2026-
   const [staff, setStaff] = useState(isFirebaseConfigured ? [] : demoStaffMembers);
   const [classrooms, setClassrooms] = useState(isFirebaseConfigured ? [] : demoClassrooms);
   const [entries, setEntries] = useState(isFirebaseConfigured ? [] : demoTimetableEntries);
-  const [selectedClass, setSelectedClass] = useState('All');
   const [search, setSearch] = useState('');
   const [loadError, setLoadError] = useState('');
   const [showEntryModal, setShowEntryModal] = useState(false);
@@ -49,6 +48,7 @@ export default function TimetableManagement({ currentUser, academicYear = '2026-
   const currentRoleId = currentUser?.roleId || 'admin';
   const canCreate = canAccess(defaultRoles, currentRoleId, 'timetable.create');
   const canEdit = canAccess(defaultRoles, currentRoleId, 'timetable.edit');
+  const canManageTimetable = canCreate || canEdit;
 
   const faculty = staff.filter((member) => member.staffType === 'Faculty' && member.status !== 'Archived');
   const courseStudents = scopedStudents.length ? scopedStudents : filterStudentsByCourse(students, selectedCourseCode, selectedCourse);
@@ -56,23 +56,27 @@ export default function TimetableManagement({ currentUser, academicYear = '2026-
   const classOptions = getClassOptions(courseStudents);
   const filteredEntries = useMemo(() => {
     const term = search.trim().toLowerCase();
-    const byClass = selectedClass === 'All' ? courseEntries : courseEntries.filter((entry) => entry.classKey === selectedClass);
-    if (!term) return byClass;
-    return byClass.filter((entry) =>
+    if (!term) return courseEntries;
+    return courseEntries.filter((entry) =>
       [entry.subject, entry.classKey, entry.facultyName, entry.classroomName, entry.day]
         .filter(Boolean)
         .some((value) => value.toLowerCase().includes(term))
     );
-  }, [courseEntries, search, selectedClass]);
+  }, [courseEntries, search]);
 
   const buildEntryPayload = (form) => {
     const facultyMember = faculty.find((item) => item.id === form.facultyId);
     const classroom = classrooms.find((item) => item.id === form.classroomId);
+    const classStudent = courseStudents.find((student) => `${student.className} - ${student.section}` === form.classKey);
     return {
       ...form,
       subject: form.subject.trim(),
       facultyName: facultyMember?.name || '',
       classroomName: classroom?.roomNo || '',
+      courseCode: selectedCourseCode === 'all' ? classStudent?.courseCode || '' : selectedCourseCode,
+      courseName: selectedCourseCode === 'all'
+        ? classStudent?.courseName || classStudent?.program || ''
+        : selectedCourse?.courseName || selectedCourse?.name || '',
       status: 'Draft',
     };
   };
@@ -159,26 +163,17 @@ export default function TimetableManagement({ currentUser, academicYear = '2026-
           {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist timetables.</p>}
           {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={() => openEntryModal()} disabled={!canCreate} className="h-10 px-5 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm flex items-center gap-2 disabled:bg-slate-300">
-            <Plus size={16} /> New Entry
-          </button>
-        </div>
+        {canCreate && (
+          <div className="flex items-center gap-3">
+            <button onClick={() => openEntryModal()} className="h-10 px-5 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm flex items-center gap-2">
+              <Plus size={16} /> New Entry
+            </button>
+          </div>
+        )}
       </div>
 
       <div>
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2 mb-5">
-            {['All', ...classOptions].map((classKey) => (
-              <button
-                key={classKey}
-                onClick={() => setSelectedClass(classKey)}
-                className={`h-10 px-4 rounded-md border text-sm ${selectedClass === classKey ? 'bg-[#33373e] text-white border-[#33373e]' : 'bg-white text-slate-600 border-slate-200'}`}
-              >
-                {classKey}
-              </button>
-            ))}
-          </div>
           <div className="relative mb-4">
             <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search subject, faculty, classroom..." className="w-full h-11 rounded-lg bg-[#f0f0f2] border-0 pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-orange-100" />
@@ -188,7 +183,6 @@ export default function TimetableManagement({ currentUser, academicYear = '2026-
             canCreate={canCreate}
             canEdit={canEdit}
             canArchive={canEdit}
-            selectedClass={selectedClass}
             onCreate={openEntryModal}
             onEdit={setEditingEntry}
             onArchive={archiveEntry}
@@ -209,7 +203,7 @@ export default function TimetableManagement({ currentUser, academicYear = '2026-
           onSave={saveEntry}
         />
       )}
-      {editingEntry && (
+      {editingEntry && canManageTimetable && (
         <TimetableEntryModal
           mode="edit"
           initialEntry={editingEntry}
