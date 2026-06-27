@@ -104,7 +104,6 @@ export const moduleRegistry = [
     icon: Bell,
     status: 'active',
     permission: 'notices.view',
-    hideFromSidebar: true,
   },
   {
     id: 'document-management',

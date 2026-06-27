@@ -72,7 +72,7 @@ assert.equal(canAccess(defaultRoles, 'parent', 'documents.view'), true);
 assert.equal(canAccess(defaultRoles, 'parent', 'documents.upload'), false);
 assert.equal(canAccess(defaultRoles, 'parent', 'parentPortal.view'), true);
 assert.equal(canAccess(defaultRoles, 'parent', 'parentPortal.viewAll'), false);
-assert.equal(canAccess(defaultRoles, 'parent', 'notices.view'), false);
+assert.equal(canAccess(defaultRoles, 'parent', 'notices.view'), true);
 assert.equal(canAccess(defaultRoles, 'parent', 'attendance.view'), false);
 assert.equal(canAccess(defaultRoles, 'parent', 'fees.view'), false);
 

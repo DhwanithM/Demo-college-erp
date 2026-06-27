@@ -1,5 +1,4 @@
 import { Archive, Edit3 } from 'lucide-react';
-import StatusBadge from '../../students/components/StatusBadge';
 import { getTimeSlotLabel, getTimeSlotOptions, weekDays } from '../timetableUtils';
 
 export default function TimetableGrid({ canArchive, canCreate, canEdit, entries, onArchive, onCreate, onEdit }) {
@@ -35,7 +34,6 @@ export default function TimetableGrid({ canArchive, canCreate, canEdit, entries,
                               <div className="text-xs text-slate-500">{entry.facultyName}</div>
                               <div className="text-xs text-slate-500">{entry.classroomName}</div>
                             </div>
-                            <StatusBadge value={entry.status || 'Draft'} />
                           </div>
                           {(canEdit || canArchive) && (
                             <div className="flex gap-2 mt-3">

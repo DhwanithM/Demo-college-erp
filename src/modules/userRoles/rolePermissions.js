@@ -162,6 +162,7 @@ export const defaultRoles = [
       'academicCurriculum.view',
       'timetable.view',
       'exams.view',
+      'notices.view',
       'documents.view',
       'parentPortal.view',
     ],
