@@ -2186,3 +2186,147 @@ html{color-scheme:dark}::selection{background:rgba(0,255,136,.18);color:#eafff5}
   padding:8px!important;
   border-radius:999px!important;
 }
+
+/* Final light-mode color authority: green brand palette instead of lavender. */
+.erp-shell.light-mode {
+  --erp-surface-2:#f5fbf3;
+  --erp-surface-3:#e6f3e2;
+  --erp-border:rgba(10,93,0,.18);
+  --erp-accent:#0a5d00;
+  --erp-accent-hover:#084a00;
+  background:#f7fbf6!important;
+}
+
+.erp-shell.light-mode > .flex > main {
+  background:#f7fbf6!important;
+}
+
+.erp-shell.light-mode .erp-header,
+.erp-shell.light-mode .erp-workspace,
+.erp-shell.light-mode [class~="bg-white"] {
+  border-color:rgba(10,93,0,.14)!important;
+}
+
+.erp-shell.light-mode [class*="bg-[#f5f5f6]"],
+.erp-shell.light-mode [class*="bg-[#f0f0f2]"],
+.erp-shell.light-mode .erp-demo-table,
+.erp-shell.light-mode .erp-demo-table > button,
+.erp-shell.light-mode .erp-demo-table > div {
+  background:#f5fbf3!important;
+}
+
+.erp-shell.light-mode h1,
+.erp-shell.light-mode [class*="text-[#f39a5f]"],
+.erp-shell.light-mode [class*="text-[#fb8d49]"],
+.erp-shell.light-mode [class*="text-orange-"],
+.erp-shell.light-mode .text-emerald-500 {
+  color:#0a5d00!important;
+  -webkit-text-fill-color:#0a5d00!important;
+}
+
+.erp-shell.light-mode input,
+.erp-shell.light-mode select,
+.erp-shell.light-mode textarea {
+  border-color:rgba(10,93,0,.18)!important;
+}
+
+.erp-shell.light-mode input:focus,
+.erp-shell.light-mode select:focus,
+.erp-shell.light-mode textarea:focus {
+  border-color:rgba(10,93,0,.52)!important;
+  box-shadow:0 0 0 3px rgba(10,93,0,.10)!important;
+}
+
+.erp-shell.light-mode select option:checked {
+  background:#e5f3e0!important;
+  color:#063d00!important;
+}
+
+.erp-shell.light-mode table thead,
+.erp-shell.light-mode table thead tr,
+.erp-shell.light-mode table thead th,
+.erp-shell.light-mode table [class*="bg-[#e7e7e9]"] {
+  background:#edf7ea!important;
+}
+
+.erp-shell.light-mode table tbody tr,
+.erp-shell.light-mode table tbody tr[class~="bg-white"],
+.erp-shell.light-mode table tbody td[class~="bg-white"] {
+  box-shadow:0 0 0 1px rgba(10,93,0,.12)!important;
+}
+
+.erp-shell.light-mode table tbody tr:hover,
+.erp-shell.light-mode table tbody tr.erp-row-selected,
+.erp-shell.light-mode table tbody tr.erp-row-selected td {
+  background:rgba(10,93,0,.08)!important;
+}
+
+.erp-shell.light-mode button[class*="bg-[#333"],
+.erp-shell.light-mode button[class*="bg-[#343"],
+.erp-shell.light-mode button[class*="bg-[#fb"],
+.erp-shell.light-mode button[class*="bg-orange"],
+.erp-shell.light-mode button[class*="border-[#333"],
+.erp-shell.light-mode button[class*="border-[#343"],
+.erp-shell.light-mode button[class*="border-[#fb"],
+.erp-shell.light-mode button[class*="border-orange"],
+.erp-shell.light-mode button.rounded-full:not(.erp-theme-toggle):not(.erp-notification-button),
+.erp-shell.light-mode .erp-header button:first-child {
+  background:#0a5d00!important;
+  border-color:#0a5d00!important;
+  color:#ffffff!important;
+  box-shadow:0 10px 24px rgba(10,93,0,.18)!important;
+}
+
+.erp-shell.light-mode button[class*="bg-[#333"]:hover:not(:disabled),
+.erp-shell.light-mode button[class*="bg-[#343"]:hover:not(:disabled),
+.erp-shell.light-mode button[class*="bg-[#fb"]:hover:not(:disabled),
+.erp-shell.light-mode button[class*="bg-orange"]:hover:not(:disabled),
+.erp-shell.light-mode button.rounded-full:not(.erp-theme-toggle):not(.erp-notification-button):hover:not(:disabled),
+.erp-shell.light-mode .erp-header button:first-child:hover:not(:disabled) {
+  background:#084a00!important;
+  border-color:#084a00!important;
+}
+
+.erp-shell.light-mode .erp-sidebar {
+  background:#ffffff!important;
+  border-right:1px solid #d7ead2!important;
+}
+
+.erp-shell.light-mode .erp-sidebar-brand-card,
+.erp-shell.light-mode .erp-sidebar-menu-card,
+.erp-shell.light-mode .erp-sidebar-theme-switch,
+.erp-shell.light-mode .erp-sidebar > .erp-sidebar-sticky:first-child > .erp-sidebar-brand-card,
+.erp-shell.light-mode .erp-sidebar > .erp-sidebar-sticky:first-child > .erp-sidebar-menu-card,
+.erp-shell.light-mode .erp-sidebar > .erp-sidebar-sticky:first-child > .erp-sidebar-theme-switch {
+  background:#f2faef!important;
+  border-color:#d7ead2!important;
+}
+
+.erp-shell.light-mode .erp-sidebar-logo,
+.erp-shell.light-mode .erp-sidebar-expand-logo,
+.erp-shell.light-mode .erp-sidebar-collapse-button {
+  background:#e5f3e0!important;
+  border-color:#c9e5c2!important;
+  color:#0a5d00!important;
+}
+
+.erp-shell.light-mode .erp-sidebar .erp-sidebar-menu-card > nav.erp-sidebar-nav > button.erp-sidebar-item:hover {
+  background:#edf7ea!important;
+  color:#063d00!important;
+}
+
+.erp-shell.light-mode .erp-sidebar .erp-sidebar-menu-card > nav.erp-sidebar-nav > button.erp-sidebar-item.is-active,
+.erp-shell.light-mode .erp-sidebar-theme-switch button.is-active {
+  background:#e5f3e0!important;
+  border-color:#b8dcae!important;
+  color:#0a5d00!important;
+}
+
+.erp-shell.light-mode .erp-dashboard-donut-hole {
+  box-shadow:inset 0 0 0 1px rgba(10,93,0,.14),0 12px 28px rgba(10,93,0,.08)!important;
+}
+
+.erp-shell.light-mode .erp-modal-form,
+.erp-shell.light-mode div[class*="fixed"][class*="inset-0"][class*="z-50"] > form {
+  border-color:rgba(10,93,0,.18)!important;
+}
