@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Bell, FileText, GraduationCap, UserRound, Wallet } from 'lucide-react';
+import { Bell, FileText, GraduationCap, LoaderCircle, UserRound, Wallet } from 'lucide-react';
 import {
   getParentPortalData,
 } from '../../firebase/db';
@@ -111,6 +111,12 @@ export default function ParentPortal({ currentUser, academicYear = '2026-2027', 
           <h1 className="text-2xl font-bold text-slate-900">Parent Portal</h1>
           <p className="text-sm text-slate-500 mt-1">A focused view of attendance, academics, fees, notices, and verified documents.</p>
           {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist and load parent portal records.</p>}
+          {loading && (
+            <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-[#f5f5f6] px-3 py-1 text-xs font-bold text-slate-600">
+              <LoaderCircle size={14} className="animate-spin text-emerald-600" />
+              Fetching data from database...
+            </p>
+          )}
           {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
         </div>
         {canViewAllStudents && (
@@ -145,7 +151,9 @@ export default function ParentPortal({ currentUser, academicYear = '2026-2027', 
                       <span className="text-[#34363d]">{icon}</span>
                       {label}
                     </div>
-                    <div className="mt-2 text-xl font-bold text-slate-900">{loading ? '...' : value}</div>
+                    <div className="mt-2 text-xl font-bold text-slate-900">
+                      {loading ? <LoaderCircle size={20} className="animate-spin text-emerald-600" /> : value}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -166,7 +174,12 @@ export default function ParentPortal({ currentUser, academicYear = '2026-2027', 
         </>
       ) : (
         <div className="rounded-lg bg-[#f5f5f6] p-6 text-sm text-slate-600 mt-5">
-          {canViewAllStudents
+          {loading ? (
+            <span className="inline-flex items-center gap-2 font-semibold">
+              <LoaderCircle size={18} className="animate-spin text-emerald-600" />
+              Fetching student records from database...
+            </span>
+          ) : canViewAllStudents
             ? 'No student records were found for parent portal review.'
             : 'No linked student record was found for this parent account.'}
         </div>

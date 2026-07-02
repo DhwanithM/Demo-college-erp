@@ -2,15 +2,22 @@ import StatusBadge from '../../students/components/StatusBadge';
 import { formatCurrency } from '../../fees/feeUtils';
 
 export default function FeeStatusCard({ feeStatus }) {
-  const total = Math.max(Number(feeStatus.totalAssigned || 0), 1);
-  const paidPercent = Math.round((Number(feeStatus.totalPaid || 0) / total) * 100);
-  const adjustedPercent = Math.round((Number(feeStatus.totalAdjusted || 0) / total) * 100);
-  const duePercent = Math.max(0, 100 - paidPercent - adjustedPercent);
-  const graph = [
-    { label: 'Paid', value: paidPercent, color: '#22c55e' },
-    { label: 'Adjustment', value: adjustedPercent, color: '#64748b' },
-    { label: 'Due', value: duePercent, color: '#ef4444' },
-  ];
+  const totalAssigned = Number(feeStatus.totalAssigned || 0);
+  const totalPaid = Number(feeStatus.totalPaid || 0);
+  const totalAdjusted = Number(feeStatus.totalAdjusted || 0);
+  const totalDue = Number(feeStatus.totalDue || 0);
+  const hasAssignedFee = totalAssigned > 0;
+  const total = hasAssignedFee ? totalAssigned : 1;
+  const paidPercent = hasAssignedFee ? Math.round((totalPaid / total) * 100) : 0;
+  const adjustedPercent = hasAssignedFee ? Math.round((totalAdjusted / total) * 100) : 0;
+  const duePercent = hasAssignedFee ? Math.round((totalDue / total) * 100) : 0;
+  const graph = !hasAssignedFee || totalDue <= 0
+    ? [{ label: 'Paid', value: 100, color: '#22c55e' }]
+    : [
+      { label: 'Paid', value: paidPercent, color: '#22c55e' },
+      { label: 'Adjustment', value: adjustedPercent, color: '#64748b' },
+      { label: 'Due', value: duePercent, color: '#ef4444' },
+    ];
   return (
     <div className="bg-white border border-slate-100 rounded-lg p-5 shadow-sm">
       <div className="flex items-center justify-between mb-4">
