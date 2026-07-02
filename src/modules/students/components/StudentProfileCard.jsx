@@ -87,7 +87,7 @@ export default function StudentProfileCard({
             </button>
           )}
           <button
-            onClick={() => onOpenDocuments?.(student)}
+            onClick={() => onSummaryTabSelect ? onSummaryTabSelect('documents', student) : onOpenDocuments?.(student)}
             className="h-9 px-4 rounded-full bg-[#f5f5f6] text-slate-700 border border-slate-200 font-semibold text-xs flex items-center justify-center gap-2"
           >
             <FileText size={14} /> Documents
@@ -99,13 +99,13 @@ export default function StudentProfileCard({
       <div className="pt-5">
         {showSummaryTabs && (
         <div className="flex flex-wrap gap-2 mb-5">
-          {resolvedSummaryTabs.map((tab, index) => (
+          {resolvedSummaryTabs.map((tab) => (
             <button
               key={tab.id || tab.label}
               type="button"
               onClick={() => onSummaryTabSelect?.(tab.id || tab.label, student)}
               className={`h-10 px-4 rounded-lg border text-xs font-semibold flex items-center gap-2 ${
-                index === 0
+                tab.active
                   ? 'bg-[#33373e] text-white border-[#33373e]'
                   : 'bg-[#f5f5f6] text-slate-600 border-slate-100'
               }`}

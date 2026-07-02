@@ -814,7 +814,6 @@ export default function StudentInformationManagement({ user, onLogout }) {
                     marksEntries={selectedMarksEntries}
                     onApprove={approveStudentAdmission}
                     onEdit={setEditingStudent}
-                    onOpenStudentModule={openStudentModule}
                     promotions={selectedPromotions}
                     results={selectedResults}
                     student={selectedStudent}
@@ -1017,17 +1016,25 @@ function StudentDetailPage({
   onBack,
   onEdit,
   onOpenDocuments,
-  onOpenStudentModule,
   promotions = [],
   results = [],
   student,
   transfers = [],
 }) {
   const [showAllDetails, setShowAllDetails] = useState(false);
+  const [activeStat, setActiveStat] = useState('attendance');
   const verifiedDocs = documents.filter((item) => item.verificationStatus === 'Verified' || item.verificationStatus === 'Source PDF').length;
+  const pendingDocs = documents.filter((item) => item.verificationStatus === 'Pending Review').length;
   const presentRecords = attendanceRecords.filter((item) => item.status === 'Present').length;
+  const absentRecords = attendanceRecords.filter((item) => item.status === 'Absent').length;
+  const leaveRecords = attendanceRecords.filter((item) => ['Leave', 'On Leave'].includes(item.status)).length;
   const attendancePercentage = attendanceRecords.length ? Math.round((presentRecords / attendanceRecords.length) * 100) : 0;
   const examRecordCount = marksEntries.length + results.length;
+  const examPercentages = [...marksEntries, ...results].map((item) => Number(item.percentage || 0)).filter((value) => value > 0);
+  const examAverage = examPercentages.length ? Math.round(examPercentages.reduce((sum, value) => sum + value, 0) / examPercentages.length) : 0;
+  const feeAssigned = feeAssignments.reduce((sum, item) => sum + Number(item.totalAmount || 0), 0);
+  const feePaid = feeAssignments.reduce((sum, item) => sum + Number(item.paidAmount || 0), 0);
+  const feeAdjusted = feeAssignments.reduce((sum, item) => sum + Number(item.adjustmentAmount || 0), 0);
   const feeDue = feeAssignments.reduce((sum, item) => sum + Number(item.dueAmount || 0), 0);
   const admissionStatus = latestAdmission?.status || student.status || PENDING_ADMISSION_STATUS;
   const canShowApproval = canApprove
@@ -1036,27 +1043,61 @@ function StudentDetailPage({
     && !statusRequiresSuperAdminApproval(latestAdmission?.status || '');
   const summaryTabs = [
     { id: 'profile', label: 'Profile', value: 'Open', icon: <UserRound size={14} /> },
-    { id: 'attendance', label: 'Attendance', value: `${attendancePercentage}%`, icon: <Bell size={14} /> },
-    { id: 'exams', label: 'Exams', value: `${examRecordCount}`, icon: <BookOpen size={14} /> },
-    { id: 'payment', label: 'Payment', value: feeDue ? `INR ${feeDue}` : 'No due', icon: <Wallet size={14} /> },
-    { id: 'documents', label: 'Docs', value: `${documents.length}`, icon: <FileText size={14} /> },
+    { id: 'attendance', label: 'Attendance', value: `${attendancePercentage}%`, icon: <Bell size={14} />, active: activeStat === 'attendance' },
+    { id: 'exams', label: 'Exams', value: `${examRecordCount}`, icon: <BookOpen size={14} />, active: activeStat === 'exams' },
+    { id: 'payment', label: 'Payment', value: feeDue ? `INR ${feeDue}` : 'No due', icon: <Wallet size={14} />, active: activeStat === 'payment' },
+    { id: 'documents', label: 'Docs', value: `${documents.length}`, icon: <FileText size={14} />, active: activeStat === 'documents' },
   ];
+  const statDetails = {
+    attendance: {
+      title: 'Attendance Stats',
+      helper: `${attendancePercentage}% attendance from ${attendanceRecords.length} marked record${attendanceRecords.length === 1 ? '' : 's'}.`,
+      items: [
+        ['Present', presentRecords],
+        ['Absent', absentRecords],
+        ['Leave', leaveRecords],
+        ['Total Records', attendanceRecords.length],
+      ],
+    },
+    exams: {
+      title: 'Exam Stats',
+      helper: examRecordCount ? `${examAverage}% average across available marks/results.` : 'No marks or result records available.',
+      items: [
+        ['Marks Entries', marksEntries.length],
+        ['Results', results.length],
+        ['Average', examRecordCount ? `${examAverage}%` : '0%'],
+        ['Records', examRecordCount],
+      ],
+    },
+    payment: {
+      title: 'Payment Stats',
+      helper: feeDue ? `INR ${feeDue} due across ${feeAssignments.length} assignment${feeAssignments.length === 1 ? '' : 's'}.` : 'No fee due recorded.',
+      items: [
+        ['Assigned', `INR ${feeAssigned}`],
+        ['Paid', `INR ${feePaid}`],
+        ['Adjusted', `INR ${feeAdjusted}`],
+        ['Due', `INR ${feeDue}`],
+      ],
+    },
+    documents: {
+      title: 'Document Stats',
+      helper: `${verifiedDocs}/${documents.length || 0} documents verified.`,
+      items: [
+        ['Total', documents.length],
+        ['Verified', verifiedDocs],
+        ['Pending', pendingDocs],
+        ['Other', Math.max(0, documents.length - verifiedDocs - pendingDocs)],
+      ],
+    },
+  };
+  const selectedStat = statDetails[activeStat] || statDetails.attendance;
 
   const handleSummaryTabSelect = (tabId) => {
     if (tabId === 'profile') {
       setShowAllDetails(true);
       return;
     }
-    if (tabId === 'documents') {
-      onOpenDocuments?.(student);
-      return;
-    }
-    const moduleMap = {
-      attendance: 'attendance',
-      exams: 'examination-results',
-      payment: 'fees',
-    };
-    if (moduleMap[tabId]) onOpenStudentModule?.(moduleMap[tabId], student);
+    if (statDetails[tabId]) setActiveStat(tabId);
   };
 
   return (
@@ -1088,6 +1129,26 @@ function StudentDetailPage({
         summaryTabs={summaryTabs}
         student={student}
       />
+
+      <section className="mb-5 rounded-lg border border-emerald-500/30 bg-emerald-950/10 p-4 shadow-[0_0_24px_rgba(16,185,129,0.08)]">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 className="font-bold text-slate-900">{selectedStat.title}</h3>
+            <p className="text-sm text-slate-500 mt-1">{selectedStat.helper}</p>
+          </div>
+          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+            In-page stats
+          </span>
+        </div>
+        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
+          {selectedStat.items.map(([label, value]) => (
+            <div key={label} className="rounded-lg border border-slate-100 bg-white p-3">
+              <div className="text-xs font-semibold text-slate-500">{label}</div>
+              <div className="mt-1 text-lg font-extrabold text-slate-900">{value}</div>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <div className="grid xl:grid-cols-[1.1fr_.9fr] gap-5 mb-5">
         <section className="bg-white border border-slate-100 rounded-lg p-5 shadow-sm">
@@ -1138,7 +1199,7 @@ function StudentDetailPage({
       <button
         type="button"
         onClick={() => setShowAllDetails((open) => !open)}
-        className="mb-5 h-10 px-5 rounded-lg bg-[#33373e] text-white font-semibold text-sm"
+        className="mb-5 h-12 px-6 rounded-lg bg-[#00ff88] text-[#02100d] border border-emerald-300 font-extrabold text-sm shadow-[0_0_22px_rgba(0,255,136,0.35)] hover:bg-emerald-300 focus:outline-none focus:ring-4 focus:ring-emerald-200"
       >
         {showAllDetails ? 'Hide all details' : 'View all details'}
       </button>
