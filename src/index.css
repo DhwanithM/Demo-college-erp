@@ -897,9 +897,23 @@ html{color-scheme:dark}::selection{background:rgba(0,255,136,.18);color:#eafff5}
 }
 
 .erp-shell.light-mode .parent-attendance-card {
-  background:#ffffff!important;
-  border-color:#dfe7f5!important;
-  box-shadow:0 18px 42px rgba(43,60,104,.10)!important;
+  background:
+    radial-gradient(circle at 7% 10%,rgba(37,99,235,.11),transparent 28%),
+    radial-gradient(circle at 94% 2%,rgba(34,197,94,.10),transparent 26%),
+    linear-gradient(145deg,#ffffff 0%,#f8fbff 48%,#f4f8ff 100%)!important;
+  border-color:#c7d8f4!important;
+  box-shadow:0 22px 54px rgba(37,64,118,.14), inset 0 1px 0 rgba(255,255,255,.9)!important;
+}
+
+.erp-shell.light-mode .parent-attendance-kicker {
+  color:#2563eb!important;
+}
+
+.erp-shell.light-mode .parent-attendance-total-pill {
+  background:#e8f0ff!important;
+  border-color:#c7d8ff!important;
+  color:#2563eb!important;
+  box-shadow:0 8px 18px rgba(37,99,235,.10)!important;
 }
 
 .erp-shell.light-mode .parent-attendance-header h3,
@@ -910,7 +924,7 @@ html{color-scheme:dark}::selection{background:rgba(0,255,136,.18);color:#eafff5}
 .erp-shell.light-mode .parent-attendance-ring-core strong,
 .erp-shell.light-mode .parent-attendance-breakdown-row strong,
 .erp-shell.light-mode .parent-attendance-breakdown-row b {
-  color:#152238!important;
+  color:#14213d!important;
 }
 
 .erp-shell.light-mode .parent-attendance-header p,
@@ -920,21 +934,94 @@ html{color-scheme:dark}::selection{background:rgba(0,255,136,.18);color:#eafff5}
 .erp-shell.light-mode .parent-attendance-subject-counts span,
 .erp-shell.light-mode .parent-attendance-metric>span:not(.parent-attendance-metric-icon),
 .erp-shell.light-mode .parent-attendance-breakdown-row span {
-  color:#6b7890!important;
+  color:#687896!important;
 }
 
-.erp-shell.light-mode .parent-attendance-overview,
-.erp-shell.light-mode .parent-attendance-detail,
-.erp-shell.light-mode .parent-attendance-subject,
-.erp-shell.light-mode .parent-attendance-metric,
+.erp-shell.light-mode .parent-attendance-overview {
+  background:
+    linear-gradient(135deg,rgba(37,99,235,.08),rgba(255,255,255,.92) 52%,rgba(34,197,94,.07))!important;
+  border-color:#cfe0fb!important;
+  box-shadow:0 14px 30px rgba(37,64,118,.08)!important;
+}
+
+.erp-shell.light-mode .parent-attendance-metric {
+  background:#ffffff!important;
+  border-color:#dce7f7!important;
+  box-shadow:0 14px 28px rgba(30,58,138,.11)!important;
+}
+
+.erp-shell.light-mode .parent-attendance-metric-icon {
+  background:color-mix(in srgb,var(--metric-color) 17%,#ffffff)!important;
+}
+
+.erp-shell.light-mode .parent-attendance-subject {
+  background:
+    radial-gradient(circle at 0% 0%,var(--subject-soft),transparent 48%),
+    linear-gradient(145deg,#ffffff,#fbfdff)!important;
+  border-color:#d2def1!important;
+  color:#14213d!important;
+  box-shadow:0 12px 24px rgba(30,58,138,.07)!important;
+}
+
+.erp-shell.light-mode .parent-attendance-subject:hover,
+.erp-shell.light-mode .parent-attendance-subject.is-selected {
+  border-color:color-mix(in srgb,var(--subject-color) 48%,#bfd1ee)!important;
+  box-shadow:0 18px 34px color-mix(in srgb,var(--subject-color) 17%,transparent)!important;
+}
+
+.erp-shell.light-mode .parent-attendance-subject.is-selected {
+  background:
+    radial-gradient(circle at 0% 0%,var(--subject-soft),transparent 52%),
+    linear-gradient(145deg,#ffffff,#f7fbff)!important;
+}
+
+.erp-shell.light-mode .parent-attendance-subject-top b {
+  background:#eef4ff!important;
+  border-color:#d3e2fb!important;
+  color:#2563eb!important;
+}
+
+.erp-shell.light-mode .parent-attendance-subject-track,
+.erp-shell.light-mode .parent-attendance-bar-track {
+  background:#e8edf5!important;
+}
+
+.erp-shell.light-mode .parent-attendance-detail {
+  background:
+    radial-gradient(circle at 100% 0%,var(--detail-soft),transparent 44%),
+    linear-gradient(145deg,#ffffff,#f8fbff)!important;
+  border-color:color-mix(in srgb,var(--detail-color) 30%,#c8d7ef)!important;
+  box-shadow:0 22px 42px rgba(30,58,138,.13)!important;
+}
+
 .erp-shell.light-mode .parent-attendance-breakdown-row {
   background:#ffffff!important;
-  border-color:#dfe7f5!important;
+  border-color:#dce7f7!important;
+  box-shadow:0 10px 20px rgba(30,58,138,.07)!important;
 }
 
 .erp-shell.light-mode .parent-attendance-ring-core {
-  background:#ffffff!important;
-  border-color:#e2e8f4!important;
+  background:linear-gradient(145deg,#ffffff,#f5f8ff)!important;
+  border-color:#dce7f7!important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.9)!important;
+}
+
+.erp-shell.light-mode .parent-attendance-ring-core span {
+  color:#64748b!important;
+}
+
+.erp-shell.light-mode .parent-attendance-stack {
+  background:#e8edf5!important;
+}
+
+.erp-shell.light-mode .parent-attendance-note {
+  color:#2563eb!important;
+}
+
+.erp-shell.light-mode .parent-attendance-empty {
+  background:#f8fbff!important;
+  border-color:#cfe0fb!important;
+  color:#64748b!important;
 }
 
 @media(max-width:1279px) {
