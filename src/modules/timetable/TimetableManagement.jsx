@@ -10,19 +10,16 @@ import {
 } from '../../firebase/db';
 import { isFirebaseConfigured } from '../../firebase/config';
 import { canAccess, defaultRoles } from '../userRoles/rolePermissions';
-import { demoStaffMembers } from '../facultyStaff/demoFacultyStaff';
-import { demoStudents } from '../students/demoStudents';
-import { demoClassrooms, demoTimetableEntries } from './demoTimetable';
 import { filterTimetableEntriesByCourse, formatDisplayDate, getClassOptions, getTimeSlotOptions, hasTimetableConflict, normalizeTimeSlotFields, validateTimetableEntry } from './timetableUtils';
 import TimetableEntryModal from './components/TimetableEntryModal';
 import TimetableGrid from './components/TimetableGrid';
 import { filterStudentsByCourse } from '../shared/courseFilters';
 
-export default function TimetableManagement({ currentUser, academicYear = '2026-2027', scopedStudents = [], selectedCourse = null, selectedCourseCode = 'all' }) {
-  const [students, setStudents] = useState(isFirebaseConfigured ? [] : demoStudents);
-  const [staff, setStaff] = useState(isFirebaseConfigured ? [] : demoStaffMembers);
-  const [classrooms, setClassrooms] = useState(isFirebaseConfigured ? [] : demoClassrooms);
-  const [entries, setEntries] = useState(isFirebaseConfigured ? [] : demoTimetableEntries);
+export default function TimetableManagement({ currentUser, academicYear = '', scopedStudents = [], selectedCourse = null, selectedCourseCode = 'all' }) {
+  const [students, setStudents] = useState([]);
+  const [staff, setStaff] = useState([]);
+  const [classrooms, setClassrooms] = useState([]);
+  const [entries, setEntries] = useState([]);
   const [search, setSearch] = useState('');
   const [statusView, setStatusView] = useState('active');
   const [loadError, setLoadError] = useState('');
@@ -32,16 +29,20 @@ export default function TimetableManagement({ currentUser, academicYear = '2026-
 
   useEffect(() => {
     const loadTimetable = async () => {
-      if (!isFirebaseConfigured) return;
+      if (!isFirebaseConfigured) {
+        setLoadError('Live Firebase data is not configured.');
+        return;
+      }
       try {
         const data = await getTimetableManagementData(academicYear, currentUser);
-        if (data.students.length) setStudents(data.students);
-        if (data.staff.length) setStaff(data.staff.filter((member) => member.status !== 'Archived'));
-        if (data.classrooms.length) setClassrooms(data.classrooms);
-        setEntries(data.timetableEntries);
+        setStudents(data.students || []);
+        setStaff((data.staff || []).filter((member) => member.status !== 'Archived'));
+        setClassrooms(data.classrooms || []);
+        setEntries(data.timetableEntries || []);
+        setLoadError('');
       } catch (error) {
-        console.warn('Using demo timetable because Firestore is not reachable.', error);
-        setLoadError('Unable to load Firestore timetable records. Showing demo/local records.');
+        console.error('Unable to load live timetable records.', error);
+        setLoadError('Unable to load live timetable records.');
       }
     };
     loadTimetable();
@@ -128,11 +129,9 @@ export default function TimetableManagement({ currentUser, academicYear = '2026-
         await updateTimetableEntry(editingEntry.id, updates);
         setEntries((prev) => prev.map((entry) => entry.id === editingEntry.id ? { ...entry, ...updates } : entry));
         toast.success('Timetable entry updated');
-      } catch {
-        setEntries((prev) => prev.map((entry) => entry.id === editingEntry.id ? { ...entry, ...updates } : entry));
-        toast.success('Timetable entry updated locally. Check Firebase setup to persist it.');
-      } finally {
         setEditingEntry(null);
+      } catch {
+        toast.error('Timetable entry was not saved to live data.');
       }
       return;
     }
@@ -141,13 +140,12 @@ export default function TimetableManagement({ currentUser, academicYear = '2026-
     const createPayload = { ...payload, academicYear, createdAtText };
     try {
       const id = await createTimetableEntry(createPayload);
-      setEntries((prev) => [{ id: id || `local-tt-${Date.now()}`, ...createPayload }, ...prev]);
+      if (!id) throw new Error('Missing timetable entry id.');
+      setEntries((prev) => [{ id, ...createPayload }, ...prev]);
       toast.success('Timetable entry saved');
-    } catch {
-      setEntries((prev) => [{ id: `local-tt-${Date.now()}`, ...createPayload }, ...prev]);
-      toast.success('Timetable entry saved locally. Check Firebase setup to persist it.');
-    } finally {
       setShowEntryModal(false);
+    } catch {
+      toast.error('Timetable entry was not saved to live data.');
     }
   };
 
@@ -162,8 +160,7 @@ export default function TimetableManagement({ currentUser, academicYear = '2026-
       setEntries((prev) => prev.map((item) => item.id === entry.id ? { ...item, ...updates } : item));
       toast.success('Timetable entry archived');
     } catch {
-      setEntries((prev) => prev.map((item) => item.id === entry.id ? { ...item, ...updates } : item));
-      toast.success('Timetable entry archived locally');
+      toast.error('Timetable entry was not archived in live data.');
     }
   };
 
@@ -178,8 +175,7 @@ export default function TimetableManagement({ currentUser, academicYear = '2026-
       setEntries((prev) => prev.map((item) => item.id === entry.id ? { ...item, ...updates } : item));
       toast.success('Timetable entry restored');
     } catch {
-      setEntries((prev) => prev.map((item) => item.id === entry.id ? { ...item, ...updates } : item));
-      toast.success('Timetable entry restored locally');
+      toast.error('Timetable entry was not restored in live data.');
     }
   };
 
@@ -195,7 +191,7 @@ export default function TimetableManagement({ currentUser, academicYear = '2026-
           <div className="text-sm font-bold text-slate-500 mb-2">Academics / <span className="text-[#f39a5f]">Timetable Management</span></div>
           <h1 className="text-2xl font-bold text-slate-900">Timetable Management</h1>
           <p className="text-sm text-slate-500 mt-1">Class timetable creation and schedule management.</p>
-          {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist timetables.</p>}
+          {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Live Firebase data is not configured.</p>}
           {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
         </div>
         {canCreate && (

@@ -63,8 +63,10 @@ export default function TopHeader({
             <select
               value={academicYear}
               onChange={(event) => onAcademicYearChange?.(event.target.value)}
+              disabled={!academicYears.length}
               className="w-44 h-11 bg-white border border-slate-200 rounded-lg shadow-[0_2px_8px_rgba(15,23,42,0.04)] px-4 text-sm text-slate-600 outline-none focus:border-[#fb9a5b] focus:ring-2 focus:ring-orange-100"
             >
+              {!academicYears.length && <option value="">Academic Year</option>}
               {academicYears.map((year) => (
                 <option key={year} value={year}>{year}</option>
               ))}

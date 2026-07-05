@@ -6,10 +6,10 @@ import StudentInformationManagement from './modules/students/StudentInformationM
 import { logoutUser, subscribeToAuthState } from './firebase/auth';
 import { getInstituteShellData, getUserProfile } from './firebase/db';
 import ParticleBackground from './components/ParticleBackground';
-import { demoInstituteSettings, normalizeInstituteSettings } from './modules/settings/demoSettings';
+import { normalizeInstituteSettings } from './modules/settings/settingsModel';
 
 
-function buildCollegeFromInstitute(institute = demoInstituteSettings) {
+function buildCollegeFromInstitute(institute = {}) {
   const normalizedInstitute = normalizeInstituteSettings(institute);
   return {
     id: 'main-campus',
@@ -85,7 +85,7 @@ function AccessPending({ user, onLogout }) {
 
 export default function App() {
   const [user, setUser] = useState(null);
-  const [institute, setInstitute] = useState(demoInstituteSettings);
+  const [institute, setInstitute] = useState({});
   const [selectedCollege, setSelectedCollege] = useState(() => {
     const stored = sessionStorage.getItem('selectedCollege');
     return stored ? JSON.parse(stored) : null;
@@ -124,7 +124,7 @@ export default function App() {
         const data = await getInstituteShellData();
         if (data) setInstitute(normalizeInstituteSettings(data));
       } catch (error) {
-        console.warn('Using demo institute for college selection.', error);
+        console.error('Unable to load live institute for college selection.', error);
       }
     };
     loadInstitute();

@@ -259,7 +259,7 @@ function ExamReportsPanel({ marksEntries = [], studentResults = [] }) {
 }
 
 export default function ReportsManagement({
-  academicYear = '2026-2027',
+  academicYear = '',
   admissions = [],
   attendanceRecords = [],
   currentUser,

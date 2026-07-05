@@ -12,8 +12,6 @@ import {
   updateStaffMember,
 } from '../../firebase/db';
 import { isFirebaseConfigured } from '../../firebase/config';
-import { demoAttendanceRecords, demoDepartments, demoLeaveRecords, demoStaffMembers } from './demoFacultyStaff';
-import { demoTimetableEntries } from '../timetable/demoTimetable';
 import { buildAttendanceKey, formatDisplayDate, relationMatchesStaff, validateLeaveForm, validateStaffForm } from './facultyStaffUtils';
 import { defaultRoles, canAccess } from '../userRoles/rolePermissions';
 import LeaveModal from './components/LeaveModal';
@@ -112,12 +110,12 @@ function StaffDetailPage({
   );
 }
 
-export default function FacultyStaffManagement({ currentUser, academicYear = '2026-2027', onOpenDocuments, selectedCourse = null, selectedCourseCode = 'all' }) {
-  const [staffMembers, setStaffMembers] = useState(isFirebaseConfigured ? [] : demoStaffMembers);
-  const [departments, setDepartments] = useState(isFirebaseConfigured ? [] : demoDepartments);
-  const [leaveRecords, setLeaveRecords] = useState(isFirebaseConfigured ? [] : demoLeaveRecords);
-  const [attendanceRecords, setAttendanceRecords] = useState(isFirebaseConfigured ? [] : demoAttendanceRecords);
-  const [timetableEntries, setTimetableEntries] = useState(isFirebaseConfigured ? [] : demoTimetableEntries);
+export default function FacultyStaffManagement({ currentUser, academicYear = '', onOpenDocuments, selectedCourse = null, selectedCourseCode = 'all' }) {
+  const [staffMembers, setStaffMembers] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [leaveRecords, setLeaveRecords] = useState([]);
+  const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [timetableEntries, setTimetableEntries] = useState([]);
   const [selectedId, setSelectedId] = useState('');
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('All');
@@ -147,7 +145,10 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
 
   useEffect(() => {
     const loadFacultyStaff = async () => {
-      if (!isFirebaseConfigured) return;
+      if (!isFirebaseConfigured) {
+        setLoadError('Live Firebase data is not configured.');
+        return;
+      }
       try {
         const data = await getFacultyStaffData(academicYear);
         setStaffMembers(data.staff || []);
@@ -156,9 +157,10 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
         setLeaveRecords(data.leaveRecords || []);
         setAttendanceRecords(data.attendanceRecords || []);
         setTimetableEntries(data.timetableEntries || []);
+        setLoadError('');
       } catch (error) {
-        console.warn('Using demo faculty/staff because Firestore is not reachable.', error);
-        setLoadError('Unable to load Firestore faculty/staff records. Showing demo/local records.');
+        console.warn('Unable to load live faculty/staff data.', error);
+        setLoadError('Unable to load live faculty/staff records.');
       }
     };
     loadFacultyStaff();
@@ -234,15 +236,14 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
 
     try {
       const id = await createStaffMember(payload);
-      const created = { id: id || `local-staff-${Date.now()}`, ...payload };
+      if (!id) throw new Error('Live staff record was not created.');
+      const created = { id, ...payload };
       setStaffMembers((prev) => [created, ...prev]);
       setSelectedId(created.id);
-      toast.success(id ? 'Staff record saved' : 'Staff record added locally. Add Firebase keys to persist.');
-    } catch {
-      const local = { id: `local-staff-${Date.now()}`, ...payload };
-      setStaffMembers((prev) => [local, ...prev]);
-      setSelectedId(local.id);
-      toast.success('Staff record added locally. Check Firebase setup to persist it.');
+      toast.success('Staff record saved');
+    } catch (error) {
+      console.error('Unable to create live staff record.', error);
+      toast.error('Staff record was not saved to live data.');
     } finally {
       setShowStaffModal(false);
     }
@@ -273,9 +274,9 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
       await updateStaffMember(editingStaff.id, updates);
       setStaffMembers((prev) => prev.map((member) => (member.id === editingStaff.id ? { ...member, ...updates } : member)));
       toast.success('Staff record updated');
-    } catch {
-      setStaffMembers((prev) => prev.map((member) => (member.id === editingStaff.id ? { ...member, ...updates } : member)));
-      toast.success('Staff record updated locally. Check Firebase setup to persist it.');
+    } catch (error) {
+      console.error('Unable to update live staff record.', error);
+      toast.error('Staff record was not saved to live data.');
     } finally {
       setEditingStaff(null);
     }
@@ -293,9 +294,9 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
       const next = staffMembers.find((item) => item.id !== member.id && item.status !== 'Archived');
       if (selectedId === member.id && next) setSelectedId(next.id);
       toast.success('Staff record archived');
-    } catch {
-      setStaffMembers((prev) => prev.map((item) => (item.id === member.id ? { ...item, ...updates } : item)));
-      toast.success('Staff record archived locally. Check Firebase setup to persist it.');
+    } catch (error) {
+      console.error('Unable to archive live staff record.', error);
+      toast.error('Staff record archive was not saved to live data.');
     }
   };
 
@@ -311,11 +312,9 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
       setSelectedId(member.id);
       setStatusFilter('active');
       toast.success('Staff record restored');
-    } catch {
-      setStaffMembers((prev) => prev.map((item) => (item.id === member.id ? { ...item, ...updates } : item)));
-      setSelectedId(member.id);
-      setStatusFilter('active');
-      toast.success('Staff record restored locally. Check Firebase setup to persist it.');
+    } catch (error) {
+      console.error('Unable to restore live staff record.', error);
+      toast.error('Staff record restore was not saved to live data.');
     }
   };
 
@@ -342,11 +341,12 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
 
     try {
       const id = await createStaffLeaveRecord(payload);
-      setLeaveRecords((prev) => [{ id: id || `local-leave-${Date.now()}`, ...payload }, ...prev]);
+      if (!id) throw new Error('Live leave request was not created.');
+      setLeaveRecords((prev) => [{ id, ...payload }, ...prev]);
       toast.success('Leave request saved');
-    } catch {
-      setLeaveRecords((prev) => [{ id: `local-leave-${Date.now()}`, ...payload }, ...prev]);
-      toast.success('Leave request saved locally. Check Firebase setup to persist it.');
+    } catch (error) {
+      console.error('Unable to create live leave request.', error);
+      toast.error('Leave request was not saved to live data.');
     } finally {
       setLeaveStaff(null);
     }
@@ -362,9 +362,9 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
       await updateStaffLeaveRecord(leaveRecord.id, updates);
       setLeaveRecords((prev) => prev.map((record) => (record.id === leaveRecord.id ? { ...record, ...updates } : record)));
       toast.success(`Leave ${status.toLowerCase()}`);
-    } catch {
-      setLeaveRecords((prev) => prev.map((record) => (record.id === leaveRecord.id ? { ...record, ...updates } : record)));
-      toast.success(`Leave ${status.toLowerCase()} locally`);
+    } catch (error) {
+      console.error('Unable to update live leave request.', error);
+      toast.error('Leave decision was not saved to live data.');
     }
   };
 
@@ -391,11 +391,12 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
 
     try {
       const id = await createStaffAttendanceRecord(payload);
-      setAttendanceRecords((prev) => [{ id: id || `local-attendance-${Date.now()}`, ...payload }, ...prev]);
+      if (!id) throw new Error('Live staff attendance record was not created.');
+      setAttendanceRecords((prev) => [{ id, ...payload }, ...prev]);
       toast.success(`Attendance marked ${status.toLowerCase()}`);
-    } catch {
-      setAttendanceRecords((prev) => [{ id: `local-attendance-${Date.now()}`, ...payload }, ...prev]);
-      toast.success(`Attendance marked ${status.toLowerCase()} locally`);
+    } catch (error) {
+      console.error('Unable to create live staff attendance.', error);
+      toast.error('Staff attendance was not saved to live data.');
     }
   };
 
@@ -427,7 +428,7 @@ export default function FacultyStaffManagement({ currentUser, academicYear = '20
         <div>
           <div className="text-sm font-bold text-slate-500 mb-2">Academics / <span className="text-[#f39a5f]">Faculty & Staff Management</span></div>
           <h1 className="text-2xl font-bold text-slate-900">Faculty & Staff Management</h1>
-          {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist records.</p>}
+          {!isFirebaseConfigured && <p className="text-xs text-rose-600 mt-2">Live Firebase data is not configured.</p>}
           {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
         </div>
       </div>

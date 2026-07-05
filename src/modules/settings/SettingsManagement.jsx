@@ -4,16 +4,16 @@ import toast from 'react-hot-toast';
 import { getSettingsData, saveSystemSetting } from '../../firebase/db';
 import { isFirebaseConfigured } from '../../firebase/config';
 import { canAccess, defaultRoles } from '../userRoles/rolePermissions';
-import { demoAcademicYearSettings, demoIdFormatSettings, demoInstituteSettings, demoModuleDefaultSettings, normalizeInstituteSettings } from './demoSettings';
+import { normalizeInstituteSettings } from './settingsModel';
 import { buildNextId, formatDisplayDate, summarizeSettings, validateAcademicYearSettings, validateInstituteSettings } from './settingsUtils';
 import AcademicsManagement from '../academics/AcademicsManagement';
 import UserRoleManagement from '../userRoles/UserRoleManagement';
 
 export default function SettingsManagement({ currentUser, selectedCourse = null, selectedCourseCode = 'all' }) {
-  const [institute, setInstitute] = useState(isFirebaseConfigured ? {} : demoInstituteSettings);
-  const [academicYear, setAcademicYear] = useState(isFirebaseConfigured ? {} : demoAcademicYearSettings);
-  const [idFormats, setIdFormats] = useState(isFirebaseConfigured ? {} : demoIdFormatSettings);
-  const [moduleDefaults, setModuleDefaults] = useState(isFirebaseConfigured ? {} : demoModuleDefaultSettings);
+  const [institute, setInstitute] = useState({});
+  const [academicYear, setAcademicYear] = useState({});
+  const [idFormats, setIdFormats] = useState({});
+  const [moduleDefaults, setModuleDefaults] = useState({});
   const [loading, setLoading] = useState(isFirebaseConfigured);
   const [loadError, setLoadError] = useState('');
   const [activeSection, setActiveSection] = useState('');
@@ -35,16 +35,21 @@ export default function SettingsManagement({ currentUser, selectedCourse = null,
 
   useEffect(() => {
     const loadSettings = async () => {
-      if (!isFirebaseConfigured) return;
+      if (!isFirebaseConfigured) {
+        setLoadError('Live Firebase data is not configured.');
+        setLoading(false);
+        return;
+      }
       try {
         const data = await getSettingsData();
-        if (data.institute) setInstitute(normalizeInstituteSettings(data.institute));
-        if (data.academicYear) setAcademicYear(data.academicYear);
-        if (data.idFormats) setIdFormats(data.idFormats);
-        if (data.moduleDefaults) setModuleDefaults(data.moduleDefaults);
+        setInstitute(data.institute ? normalizeInstituteSettings(data.institute) : {});
+        setAcademicYear(data.academicYear || {});
+        setIdFormats(data.idFormats || {});
+        setModuleDefaults(data.moduleDefaults || {});
+        setLoadError('');
       } catch (error) {
-        console.warn('Using demo settings because Firestore is not reachable.', error);
-        setLoadError('Unable to load Firestore settings. Showing demo/local records.');
+        console.error('Unable to load live settings.', error);
+        setLoadError('Unable to load live settings.');
       } finally {
         setLoading(false);
       }
@@ -178,7 +183,7 @@ export default function SettingsManagement({ currentUser, selectedCourse = null,
           <div className="text-sm font-bold text-slate-500 mb-2">Administration / <span className="text-[#f39a5f]">Settings</span></div>
           <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
           <p className="text-sm text-slate-500 mt-1">Institute profile, academic year, ID formats, and module defaults.</p>
-          {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist settings.</p>}
+          {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Live Firebase data is not configured.</p>}
           {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -217,7 +222,7 @@ export default function SettingsManagement({ currentUser, selectedCourse = null,
               <ArrowLeft size={15} /> Back
             </button>
           </div>
-          <AcademicsManagement currentUser={currentUser} academicYear={academicYear.name || '2026-2027'} selectedCourse={selectedCourse} selectedCourseCode={selectedCourseCode} />
+          <AcademicsManagement currentUser={currentUser} academicYear={academicYear.name || ''} selectedCourse={selectedCourse} selectedCourseCode={selectedCourseCode} />
         </div>
       )}
 

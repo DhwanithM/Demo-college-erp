@@ -32,5 +32,6 @@ export function validateAcademicYearSettings(form) {
 }
 
 export function buildNextId(format = '', nextNumber = 1) {
-  return format.replace('{year}', '2026').replace('{number}', String(nextNumber).padStart(5, '0'));
+  const year = String(new Date().getFullYear());
+  return format.replace('{year}', year).replace('{number}', String(nextNumber).padStart(5, '0'));
 }

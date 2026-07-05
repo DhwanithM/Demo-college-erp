@@ -14,18 +14,6 @@ import {
   visibleParentNotices,
   visibleStudentDocuments,
 } from './parentPortalUtils';
-import {
-  demoAcademicSubjects,
-} from '../academics/demoAcademics';
-import {
-  demoParentAttendance,
-  demoParentDocuments,
-  demoParentFees,
-  demoParentMarks,
-  demoParentNotices,
-  demoParentResults,
-  demoParentStudents,
-} from './demoParentPortal';
 import AttendanceCard from './components/AttendanceCard';
 import FeeStatusCard from './components/FeeStatusCard';
 import ParentDocumentsPanel from './components/ParentDocumentsPanel';
@@ -34,39 +22,42 @@ import PerformanceCard from './components/PerformanceCard';
 import StudentSwitcher from './components/StudentSwitcher';
 import { filterStudentsByCourse } from '../shared/courseFilters';
 
-export default function ParentPortal({ currentUser, academicYear = '2026-2027', selectedCourse = null, selectedCourseCode = 'all' }) {
-  const [students, setStudents] = useState(isFirebaseConfigured ? [] : demoParentStudents);
-  const [attendance, setAttendance] = useState(isFirebaseConfigured ? [] : demoParentAttendance);
-  const [marks, setMarks] = useState(isFirebaseConfigured ? [] : demoParentMarks);
-  const [results, setResults] = useState(isFirebaseConfigured ? [] : demoParentResults);
-  const [fees, setFees] = useState(isFirebaseConfigured ? [] : demoParentFees);
-  const [notices, setNotices] = useState(isFirebaseConfigured ? [] : demoParentNotices);
-  const [documents, setDocuments] = useState(isFirebaseConfigured ? [] : demoParentDocuments);
-  const [academicSubjects, setAcademicSubjects] = useState(isFirebaseConfigured ? [] : demoAcademicSubjects);
-  const [selectedId, setSelectedId] = useState(isFirebaseConfigured ? '' : demoParentStudents[0]?.id || '');
+export default function ParentPortal({ currentUser, academicYear = '', selectedCourse = null, selectedCourseCode = 'all' }) {
+  const [students, setStudents] = useState([]);
+  const [attendance, setAttendance] = useState([]);
+  const [marks, setMarks] = useState([]);
+  const [results, setResults] = useState([]);
+  const [fees, setFees] = useState([]);
+  const [notices, setNotices] = useState([]);
+  const [documents, setDocuments] = useState([]);
+  const [academicSubjects, setAcademicSubjects] = useState([]);
+  const [selectedId, setSelectedId] = useState('');
   const [loading, setLoading] = useState(isFirebaseConfigured);
   const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     const loadPortal = async () => {
-      if (!isFirebaseConfigured) return;
+      if (!isFirebaseConfigured) {
+        setLoadError('Live Firebase data is not configured.');
+        setLoading(false);
+        return;
+      }
       try {
         const data = await getParentPortalData(academicYear, currentUser);
-        if (data.students.length) {
-          const linked = getParentLinkedStudents(data.students, currentUser);
-          setStudents(linked);
-          setSelectedId(linked[0]?.id || '');
-        }
-        setAttendance(data.studentAttendance);
-        setMarks(data.marksEntries);
-        setResults(data.studentResults);
-        setFees(data.feeAssignments);
-        setNotices(data.noticeItems);
-        setDocuments(data.managedDocuments);
+        const linked = getParentLinkedStudents(data.students || [], currentUser);
+        setStudents(linked);
+        setSelectedId(linked[0]?.id || '');
+        setAttendance(data.studentAttendance || []);
+        setMarks(data.marksEntries || []);
+        setResults(data.studentResults || []);
+        setFees(data.feeAssignments || []);
+        setNotices(data.noticeItems || []);
+        setDocuments(data.managedDocuments || []);
         setAcademicSubjects(data.academicSubjects || []);
+        setLoadError('');
       } catch (error) {
-        console.warn('Using demo parent portal data because Firestore is not reachable.', error);
-        setLoadError('Unable to load Firestore parent portal records. Showing demo/local records.');
+        console.error('Unable to load live parent portal records.', error);
+        setLoadError('Unable to load live parent portal records.');
       } finally {
         setLoading(false);
       }
@@ -110,7 +101,7 @@ export default function ParentPortal({ currentUser, academicYear = '2026-2027', 
           <div className="text-sm font-bold text-slate-500 mb-2">Parent Portal / <span className="text-[#f39a5f]">Student Overview</span></div>
           <h1 className="text-2xl font-bold text-slate-900">Parent Portal</h1>
           <p className="text-sm text-slate-500 mt-1">A focused view of attendance, academics, fees, notices, and verified documents.</p>
-          {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist and load parent portal records.</p>}
+          {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Live Firebase data is not configured.</p>}
           {loading && (
             <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-[#f5f5f6] px-3 py-1 text-xs font-bold text-slate-600">
               <LoaderCircle size={14} className="animate-spin text-emerald-600" />

@@ -13,13 +13,23 @@ import {
 import { db } from './config';
 
 const SCHEMA_DOC_ID = '__schema';
-export const DEFAULT_ACADEMIC_YEAR = '2025-2026';
 
 function requireDb() {
   if (!db) {
     throw new Error('Firebase Firestore is not configured.');
   }
   return db;
+}
+
+function requireWritableDocId(id, label = 'Record') {
+  const store = requireDb();
+  if (!id) {
+    throw new Error(`${label} id is required.`);
+  }
+  if (id.startsWith('demo-') || id.startsWith('local-')) {
+    throw new Error(`${label} must be a live Firestore record.`);
+  }
+  return store;
 }
 
 function filterByAcademicYear(records = [], academicYear = '') {
@@ -101,8 +111,8 @@ async function listCollectionWhereIn(collectionName, fieldName, values = [], con
 }
 
 async function createCollectionDocument(collectionName, data) {
-  if (!db) return null;
-  const ref = await addDoc(collection(db, collectionName), {
+  const store = requireDb();
+  const ref = await addDoc(collection(store, collectionName), {
     ...data,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -159,8 +169,8 @@ export async function createStudentAdmission(data) {
 }
 
 export async function updateStudentAdmission(id, data) {
-  if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;
-  await updateDoc(doc(db, 'studentAdmissions', id), {
+  const store = requireWritableDocId(id, 'Student admission');
+  await updateDoc(doc(store, 'studentAdmissions', id), {
     ...data,
     updatedAt: serverTimestamp(),
   });
@@ -171,8 +181,8 @@ export async function createStudentDocument(data) {
 }
 
 export async function updateStudentDocument(id, data) {
-  if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;
-  await updateDoc(doc(db, 'studentDocuments', id), {
+  const store = requireWritableDocId(id, 'Student document');
+  await updateDoc(doc(store, 'studentDocuments', id), {
     ...data,
     updatedAt: serverTimestamp(),
   });
@@ -188,16 +198,16 @@ export async function createStudentTransfer(data) {
 
 
 export async function updateStudent(id, data) {
-  if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;
-  await updateDoc(doc(db, 'students', id), {
+  const store = requireWritableDocId(id, 'Student');
+  await updateDoc(doc(store, 'students', id), {
     ...data,
     updatedAt: serverTimestamp(),
   });
 }
 
 export async function archiveStudent(id, data = {}) {
-  if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;
-  await updateDoc(doc(db, 'students', id), {
+  const store = requireWritableDocId(id, 'Student');
+  await updateDoc(doc(store, 'students', id), {
     ...data,
     status: 'Archived',
     archivedAt: serverTimestamp(),
@@ -206,8 +216,8 @@ export async function archiveStudent(id, data = {}) {
 }
 
 export async function restoreStudent(id, data = {}) {
-  if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;
-  await updateDoc(doc(db, 'students', id), {
+  const store = requireWritableDocId(id, 'Student');
+  await updateDoc(doc(store, 'students', id), {
     ...data,
     status: data.status || 'Active',
     restoredAt: serverTimestamp(),
@@ -232,8 +242,8 @@ export async function getUserProfile(uid) {
 }
 
 export async function createUserProfile(uid, data) {
-  if (!db || !uid) return null;
-  await setDoc(doc(db, 'users', uid), {
+  const store = requireWritableDocId(uid, 'User');
+  await setDoc(doc(store, 'users', uid), {
     ...data,
     uid,
     createdAt: serverTimestamp(),
@@ -243,17 +253,17 @@ export async function createUserProfile(uid, data) {
 }
 
 export async function updateUserProfile(uid, data) {
-  if (!db || !uid || uid.startsWith('demo-') || uid.startsWith('local-')) return;
-  await updateDoc(doc(db, 'users', uid), {
+  const store = requireWritableDocId(uid, 'User');
+  await updateDoc(doc(store, 'users', uid), {
     ...data,
     updatedAt: serverTimestamp(),
   });
 }
 
 export async function createRole(data) {
-  if (!db) return null;
+  const store = requireDb();
   const roleId = data.id || `role-${Date.now()}`;
-  await setDoc(doc(db, 'roles', roleId), {
+  await setDoc(doc(store, 'roles', roleId), {
     ...data,
     id: roleId,
     createdAt: serverTimestamp(),
@@ -263,11 +273,12 @@ export async function createRole(data) {
 }
 
 export async function updateRole(id, data) {
-  if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;
-  await updateDoc(doc(db, 'roles', id), {
+  const store = requireWritableDocId(id, 'Role');
+  await setDoc(doc(store, 'roles', id), {
     ...data,
+    id,
     updatedAt: serverTimestamp(),
-  });
+  }, { merge: true });
 }
 
 export async function getFacultyStaffData(academicYear = '') {
@@ -322,16 +333,16 @@ export async function createStaffMember(data) {
 }
 
 export async function updateStaffMember(id, data) {
-  if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;
-  await updateDoc(doc(db, 'staffMembers', id), {
+  const store = requireWritableDocId(id, 'Staff member');
+  await updateDoc(doc(store, 'staffMembers', id), {
     ...data,
     updatedAt: serverTimestamp(),
   });
 }
 
 export async function archiveStaffMember(id, data = {}) {
-  if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;
-  await updateDoc(doc(db, 'staffMembers', id), {
+  const store = requireWritableDocId(id, 'Staff member');
+  await updateDoc(doc(store, 'staffMembers', id), {
     ...data,
     status: 'Archived',
     archivedAt: serverTimestamp(),
@@ -340,8 +351,8 @@ export async function archiveStaffMember(id, data = {}) {
 }
 
 export async function restoreStaffMember(id, data = {}) {
-  if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;
-  await updateDoc(doc(db, 'staffMembers', id), {
+  const store = requireWritableDocId(id, 'Staff member');
+  await updateDoc(doc(store, 'staffMembers', id), {
     ...data,
     status: 'Active',
     restoredAt: serverTimestamp(),
@@ -358,8 +369,8 @@ export async function createStaffLeaveRecord(data) {
 }
 
 export async function updateStaffLeaveRecord(id, data) {
-  if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;
-  await updateDoc(doc(db, 'staffLeaveRecords', id), {
+  const store = requireWritableDocId(id, 'Staff leave record');
+  await updateDoc(doc(store, 'staffLeaveRecords', id), {
     ...data,
     updatedAt: serverTimestamp(),
   });
@@ -388,8 +399,8 @@ export async function createStudentAttendanceRecord(data) {
 }
 
 export async function updateStudentAttendanceRecord(id, data) {
-  if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;
-  await updateDoc(doc(db, 'studentAttendanceRecords', id), {
+  const store = requireWritableDocId(id, 'Student attendance record');
+  await updateDoc(doc(store, 'studentAttendanceRecords', id), {
     ...data,
     updatedAt: serverTimestamp(),
   });
@@ -459,16 +470,16 @@ export async function createTimetableEntry(data) {
 }
 
 export async function updateTimetableEntry(id, data) {
-  if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;
-  await updateDoc(doc(db, 'timetableEntries', id), {
+  const store = requireWritableDocId(id, 'Timetable entry');
+  await updateDoc(doc(store, 'timetableEntries', id), {
     ...data,
     updatedAt: serverTimestamp(),
   });
 }
 
 export async function archiveTimetableEntry(id, data = {}) {
-  if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;
-  await updateDoc(doc(db, 'timetableEntries', id), {
+  const store = requireWritableDocId(id, 'Timetable entry');
+  await updateDoc(doc(store, 'timetableEntries', id), {
     ...data,
     status: 'Archived',
     archivedAt: serverTimestamp(),
@@ -500,8 +511,8 @@ export async function createExamSchedule(data) {
 }
 
 export async function updateExamSchedule(id, data) {
-  if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;
-  await updateDoc(doc(db, 'examSchedules', id), {
+  const store = requireWritableDocId(id, 'Exam schedule');
+  await updateDoc(doc(store, 'examSchedules', id), {
     ...data,
     updatedAt: serverTimestamp(),
   });
@@ -516,8 +527,8 @@ export async function createMarksEntry(data) {
 }
 
 export async function updateMarksEntry(id, data) {
-  if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;
-  await updateDoc(doc(db, 'marksEntries', id), {
+  const store = requireWritableDocId(id, 'Marks entry');
+  await updateDoc(doc(store, 'marksEntries', id), {
     ...data,
     updatedAt: serverTimestamp(),
   });
@@ -549,8 +560,8 @@ export async function createFeeStructure(data) {
 }
 
 export async function updateFeeStructure(id, data) {
-  if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;
-  await updateDoc(doc(db, 'feeStructures', id), {
+  const store = requireWritableDocId(id, 'Fee structure');
+  await updateDoc(doc(store, 'feeStructures', id), {
     ...data,
     updatedAt: serverTimestamp(),
   });
@@ -561,8 +572,8 @@ export async function createFeeAssignment(data) {
 }
 
 export async function updateFeeAssignment(id, data) {
-  if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;
-  await updateDoc(doc(db, 'feeAssignments', id), {
+  const store = requireWritableDocId(id, 'Fee assignment');
+  await updateDoc(doc(store, 'feeAssignments', id), {
     ...data,
     updatedAt: serverTimestamp(),
   });
@@ -596,8 +607,8 @@ export async function createHostelRoom(data) {
 }
 
 export async function updateHostelRoom(id, data) {
-  if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;
-  await updateDoc(doc(db, 'hostelRooms', id), {
+  const store = requireWritableDocId(id, 'Hostel room');
+  await updateDoc(doc(store, 'hostelRooms', id), {
     ...data,
     updatedAt: serverTimestamp(),
   });
@@ -642,16 +653,16 @@ export async function createNoticeItem(data) {
 }
 
 export async function updateNoticeItem(id, data) {
-  if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;
-  await updateDoc(doc(db, 'noticeItems', id), {
+  const store = requireWritableDocId(id, 'Communication item');
+  await updateDoc(doc(store, 'noticeItems', id), {
     ...data,
     updatedAt: serverTimestamp(),
   });
 }
 
 export async function archiveNoticeItem(id, data = {}) {
-  if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;
-  await updateDoc(doc(db, 'noticeItems', id), {
+  const store = requireWritableDocId(id, 'Communication item');
+  await updateDoc(doc(store, 'noticeItems', id), {
     ...data,
     status: 'Archived',
     archivedAt: serverTimestamp(),
@@ -675,16 +686,16 @@ export async function createManagedDocument(data) {
 }
 
 export async function updateManagedDocument(id, data) {
-  if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;
-  await updateDoc(doc(db, 'managedDocuments', id), {
+  const store = requireWritableDocId(id, 'Managed document');
+  await updateDoc(doc(store, 'managedDocuments', id), {
     ...data,
     updatedAt: serverTimestamp(),
   });
 }
 
 export async function archiveManagedDocument(id, data = {}) {
-  if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;
-  await updateDoc(doc(db, 'managedDocuments', id), {
+  const store = requireWritableDocId(id, 'Managed document');
+  await updateDoc(doc(store, 'managedDocuments', id), {
     ...data,
     verificationStatus: 'Archived',
     archivedAt: serverTimestamp(),
@@ -797,16 +808,16 @@ export async function createAcademicCalendarEvent(data) {
 }
 
 export async function updateAcademicCalendarEvent(id, data) {
-  requireDb();
-  await updateDoc(doc(db, 'academicCalendarEvents', id), {
+  const store = requireWritableDocId(id, 'Academic calendar event');
+  await updateDoc(doc(store, 'academicCalendarEvents', id), {
     ...data,
     updatedAt: serverTimestamp(),
   });
 }
 
 export async function restoreTimetableEntry(id, data = {}) {
-  if (!db || !id || id.startsWith('demo-') || id.startsWith('local-')) return;
-  await updateDoc(doc(db, 'timetableEntries', id), {
+  const store = requireWritableDocId(id, 'Timetable entry');
+  await updateDoc(doc(store, 'timetableEntries', id), {
     ...data,
     status: 'Draft',
     restoredAt: serverTimestamp(),
@@ -870,14 +881,14 @@ export async function getInstituteShellData() {
 }
 
 export async function saveSystemSetting(id, data) {
-  if (!db || !id) return null;
-  await setDoc(doc(db, 'systemSettings', id), {
+  const store = requireWritableDocId(id, 'System setting');
+  await setDoc(doc(store, 'systemSettings', id), {
     ...data,
     id,
     updatedAt: serverTimestamp(),
   }, { merge: true });
   if (id === 'institute') {
-    await setDoc(doc(db, 'colleges', 'main-campus'), {
+    await setDoc(doc(store, 'colleges', 'main-campus'), {
       name: data.name || '',
       code: data.instituteId || data.code || '',
       instituteId: data.instituteId || data.code || '',

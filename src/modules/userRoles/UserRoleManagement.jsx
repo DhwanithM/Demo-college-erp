@@ -11,7 +11,6 @@ import {
 } from '../../firebase/db';
 import { createManagedAuthUser } from '../../firebase/auth';
 import { isFirebaseConfigured } from '../../firebase/config';
-import { demoRoles, demoUsers } from './demoUserRoles';
 import { canAccess, defaultRoles, validateUserForm, validateUserUpdate } from './rolePermissions';
 import RolePermissionEditor from './components/RolePermissionEditor';
 import UserModal from './components/UserModal';
@@ -24,8 +23,8 @@ function mergeRoles(firestoreRoles) {
 }
 
 export default function UserRoleManagement({ currentUser }) {
-  const [users, setUsers] = useState(isFirebaseConfigured ? [] : demoUsers);
-  const [roles, setRoles] = useState(isFirebaseConfigured ? defaultRoles : demoRoles);
+  const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState(defaultRoles);
   const [selectedRoleId, setSelectedRoleId] = useState('admin');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(isFirebaseConfigured);
@@ -37,16 +36,21 @@ export default function UserRoleManagement({ currentUser }) {
 
   useEffect(() => {
     const loadUsersAndRoles = async () => {
-      if (!isFirebaseConfigured) return;
+      if (!isFirebaseConfigured) {
+        setLoadError('Live Firebase data is not configured.');
+        setLoading(false);
+        return;
+      }
       try {
         const data = await getUserRoleData();
         setRoles(mergeRoles(data.roles));
-        if (data.users.length) setUsers(data.users);
+        setUsers(data.users || []);
         const studentData = await getStudentInformationData().catch(() => ({ students: [] }));
         setStudentOptions(studentData.students.filter((student) => student.status !== 'Archived'));
+        setLoadError('');
       } catch (error) {
-        console.warn('Using demo users and roles because Firestore is not reachable.', error);
-        setLoadError('Unable to load Firestore users/roles. Showing demo/local records.');
+        console.error('Unable to load live users/roles.', error);
+        setLoadError('Unable to load live users/roles.');
       } finally {
         setLoading(false);
       }
@@ -98,6 +102,10 @@ export default function UserRoleManagement({ currentUser }) {
       toast.error('You do not have permission to edit roles.');
       return;
     }
+    if (!isFirebaseConfigured) {
+      toast.error('Live Firebase data is not configured.');
+      return;
+    }
     setSavingRole(true);
     try {
       const missingRoles = defaultRoles.filter((role) => !roles.some((item) => item.id === role.id));
@@ -105,8 +113,7 @@ export default function UserRoleManagement({ currentUser }) {
       setRoles(mergeRoles([...roles, ...missingRoles]));
       toast.success(missingRoles.length ? 'Default roles seeded' : 'Default roles already available');
     } catch {
-      setRoles(mergeRoles(roles));
-      toast.success('Default roles available locally. Check Firebase setup to persist them.');
+      toast.error('Default roles were not synced to live data.');
     } finally {
       setSavingRole(false);
     }
@@ -118,21 +125,17 @@ export default function UserRoleManagement({ currentUser }) {
       return;
     }
     if (nextRole.locked) return;
-    setRoles((prev) => prev.map((role) => (role.id === nextRole.id ? nextRole : role)));
+    if (!isFirebaseConfigured) {
+      toast.error('Live Firebase data is not configured.');
+      return;
+    }
     setSavingRole(true);
     try {
-      if (nextRole.id.startsWith('local-') || nextRole.id.startsWith('demo-')) {
-        const id = await createRole(nextRole);
-        if (id) {
-          setRoles((prev) => prev.map((role) => (role.id === nextRole.id ? { ...nextRole, id } : role)));
-          setSelectedRoleId(id);
-        }
-      } else {
-        await updateRole(nextRole.id, nextRole);
-      }
+      await updateRole(nextRole.id, nextRole);
+      setRoles((prev) => prev.map((role) => (role.id === nextRole.id ? nextRole : role)));
       toast.success('Role permissions updated');
     } catch {
-      toast.success('Role permissions updated locally. Check Firebase setup to persist them.');
+      toast.error('Role permissions were not saved to live data.');
     } finally {
       setSavingRole(false);
     }
@@ -147,6 +150,10 @@ export default function UserRoleManagement({ currentUser }) {
     const validationMessage = validateUserForm(form);
     if (validationMessage) {
       toast.error(validationMessage);
+      return;
+    }
+    if (!isFirebaseConfigured) {
+      toast.error('Live Firebase data is not configured.');
       return;
     }
 
@@ -170,21 +177,9 @@ export default function UserRoleManagement({ currentUser }) {
       await createUserProfile(authUser.uid, profile);
       setUsers((prev) => [profile, ...prev]);
       toast.success('User created');
-    } catch {
-      const localUser = {
-        uid: `local-user-${Date.now()}`,
-        name: form.name.trim(),
-        email: form.email.trim(),
-        roleId: form.roleId,
-        status: 'Active',
-        createdBy: currentUser?.uid || '',
-        createdAtText,
-        ...getLinkedStudentPayload(form),
-      };
-      setUsers((prev) => [localUser, ...prev]);
-      toast.success(isFirebaseConfigured ? 'User saved locally. Check Firebase Auth permissions.' : 'User saved locally. Add Firebase keys to persist.');
-    } finally {
       setShowUserModal(false);
+    } catch {
+      toast.error('User was not created in live data.');
     }
   };
 
@@ -200,6 +195,10 @@ export default function UserRoleManagement({ currentUser }) {
       toast.error(validationMessage);
       return;
     }
+    if (!isFirebaseConfigured) {
+      toast.error('Live Firebase data is not configured.');
+      return;
+    }
 
     const updates = {
       name: form.name.trim(),
@@ -213,11 +212,9 @@ export default function UserRoleManagement({ currentUser }) {
       await updateUserProfile(editingUser.uid, updates);
       setUsers((prev) => prev.map((user) => (user.uid === editingUser.uid ? { ...user, ...updates } : user)));
       toast.success('User updated');
-    } catch {
-      setUsers((prev) => prev.map((user) => (user.uid === editingUser.uid ? { ...user, ...updates } : user)));
-      toast.success('User updated locally. Check Firebase setup to persist it.');
-    } finally {
       setEditingUser(null);
+    } catch {
+      toast.error('User was not updated in live data.');
     }
   };
 
@@ -228,7 +225,7 @@ export default function UserRoleManagement({ currentUser }) {
           <div className="text-sm font-bold text-slate-500 mb-2">Administration / <span className="text-[#f39a5f]">User & Role Management</span></div>
           <h1 className="text-2xl font-bold text-slate-900">User & Role Management</h1>
           <p className="text-sm text-slate-500 mt-1">Create ERP users, assign roles, and manage module permissions.</p>
-          {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist users and roles.</p>}
+          {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Live Firebase data is not configured.</p>}
           {isFirebaseConfigured && <p className="text-xs text-slate-500 mt-2">For a fresh Firebase project, create the first admin profile before tightening deployed rules.</p>}
           {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
         </div>

@@ -1,26 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, FileText, GraduationCap, TrendingUp, Users, Wallet } from 'lucide-react';
-import { demoStudents } from '../students/demoStudents';
-import { demoStaffMembers } from '../facultyStaff/demoFacultyStaff';
-import { demoFeeAdjustments, demoFeeAssignments, demoFeeCollections } from '../fees/demoFees';
-import { demoManagedDocuments } from '../documents/demoDocuments';
-import { demoExamSchedules } from '../exams/demoExams';
 import { getDashboardData } from '../../firebase/db';
 import { isFirebaseConfigured } from '../../firebase/config';
 import { formatCurrency, summarizeFees } from '../fees/feeUtils';
 import { canAccess, defaultRoles } from '../userRoles/rolePermissions';
 import { filterByCourse, filterStudentScopedRecords, filterStudentsByCourse } from '../shared/courseFilters';
-
-const fallbackDashboardData = {
-  students: demoStudents,
-  studentAdmissions: [],
-  staff: demoStaffMembers,
-  feeAssignments: demoFeeAssignments,
-  feeCollections: demoFeeCollections,
-  feeAdjustments: demoFeeAdjustments,
-  managedDocuments: demoManagedDocuments,
-  examSchedules: demoExamSchedules,
-};
 
 const emptyDashboardData = {
   students: [],
@@ -94,8 +78,8 @@ function DashboardCard({ color = '#38bdf8', icon, label, value, helper, onClick 
   );
 }
 
-export default function DashboardManagement({ academicYear = '2026-2027', currentUser, onNavigate, scopedStudents = [], selectedCourse = null, selectedCourseCode = 'all' }) {
-  const [dashboardData, setDashboardData] = useState(isFirebaseConfigured ? null : fallbackDashboardData);
+export default function DashboardManagement({ academicYear = '', currentUser, onNavigate, scopedStudents = [], selectedCourse = null, selectedCourseCode = 'all' }) {
+  const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(isFirebaseConfigured);
   const [loadError, setLoadError] = useState('');
 
@@ -104,7 +88,8 @@ export default function DashboardManagement({ academicYear = '2026-2027', curren
 
     const loadDashboard = async () => {
       if (!isFirebaseConfigured) {
-        setDashboardData(fallbackDashboardData);
+        setDashboardData(emptyDashboardData);
+        setLoadError('Live Firebase data is not configured.');
         setLoading(false);
         return;
       }

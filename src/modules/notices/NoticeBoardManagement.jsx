@@ -9,7 +9,6 @@ import {
 } from '../../firebase/db';
 import { isFirebaseConfigured } from '../../firebase/config';
 import { canAccess, defaultRoles } from '../userRoles/rolePermissions';
-import { demoNoticeItems } from './demoNotices';
 import {
   filterNotices,
   filterVisibleNoticesForRole,
@@ -23,9 +22,9 @@ import NoticeModal from './components/NoticeModal';
 import NoticePreviewPanel from './components/NoticePreviewPanel';
 import NoticeTable from './components/NoticeTable';
 
-export default function NoticeBoardManagement({ currentUser, academicYear = '2026-2027', selectedCourse = null, selectedCourseCode = 'all' }) {
-  const [notices, setNotices] = useState(isFirebaseConfigured ? [] : demoNoticeItems);
-  const [selectedId, setSelectedId] = useState(isFirebaseConfigured ? '' : demoNoticeItems[0]?.id || '');
+export default function NoticeBoardManagement({ currentUser, academicYear = '', selectedCourse = null, selectedCourseCode = 'all' }) {
+  const [notices, setNotices] = useState([]);
+  const [selectedId, setSelectedId] = useState('');
   const [filters, setFilters] = useState({ search: '', type: '', audience: '', status: '' });
   const [loadError, setLoadError] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -33,14 +32,18 @@ export default function NoticeBoardManagement({ currentUser, academicYear = '202
 
   useEffect(() => {
     const loadNotices = async () => {
-      if (!isFirebaseConfigured) return;
+      if (!isFirebaseConfigured) {
+        setLoadError('Live Firebase data is not configured.');
+        return;
+      }
       try {
         const data = await getNoticeBoardData(academicYear);
         setNotices(data.noticeItems);
         setSelectedId(data.noticeItems[0]?.id || '');
+        setLoadError('');
       } catch (error) {
-        console.warn('Using demo notices because Firestore is not reachable.', error);
-        setLoadError('Unable to load Firestore notice records. Showing demo/local records.');
+        console.warn('Unable to load live communication data.', error);
+        setLoadError('Unable to load live communication records.');
       }
     };
     loadNotices();
@@ -91,9 +94,9 @@ export default function NoticeBoardManagement({ currentUser, academicYear = '202
         await updateNoticeItem(editingNotice.id, updates);
         setNotices((prev) => prev.map((item) => item.id === editingNotice.id ? { ...item, ...updates } : item));
         toast.success('Announcement updated');
-      } catch {
-        setNotices((prev) => prev.map((item) => item.id === editingNotice.id ? { ...item, ...updates } : item));
-        toast.success('Announcement updated locally');
+      } catch (error) {
+        console.error('Unable to update live announcement.', error);
+        toast.error('Announcement was not saved to live data.');
       } finally {
         setEditingNotice(null);
       }
@@ -107,15 +110,14 @@ export default function NoticeBoardManagement({ currentUser, academicYear = '202
     const createPayload = { ...payload, academicYear, createdAtText: formatDisplayDate() };
     try {
       const id = await createNoticeItem(createPayload);
-      const created = { id: id || `local-notice-${Date.now()}`, ...createPayload };
+      if (!id) throw new Error('Live announcement was not created.');
+      const created = { id, ...createPayload };
       setNotices((prev) => [created, ...prev]);
       setSelectedId(created.id);
       toast.success('Announcement created');
-    } catch {
-      const created = { id: `local-notice-${Date.now()}`, ...createPayload };
-      setNotices((prev) => [created, ...prev]);
-      setSelectedId(created.id);
-      toast.success('Announcement created locally');
+    } catch (error) {
+      console.error('Unable to create live announcement.', error);
+      toast.error('Announcement was not saved to live data.');
     } finally {
       setShowModal(false);
     }
@@ -131,9 +133,9 @@ export default function NoticeBoardManagement({ currentUser, academicYear = '202
       await archiveNoticeItem(notice.id, updates);
       setNotices((prev) => prev.map((item) => item.id === notice.id ? { ...item, ...updates } : item));
       toast.success('Announcement archived');
-    } catch {
-      setNotices((prev) => prev.map((item) => item.id === notice.id ? { ...item, ...updates } : item));
-      toast.success('Announcement archived locally');
+    } catch (error) {
+      console.error('Unable to archive live announcement.', error);
+      toast.error('Announcement archive was not saved to live data.');
     }
   };
 
@@ -152,10 +154,9 @@ export default function NoticeBoardManagement({ currentUser, academicYear = '202
       setNotices((prev) => prev.map((item) => item.id === notice.id ? { ...item, ...updates } : item));
       setSelectedId(notice.id);
       toast.success('Announcement published');
-    } catch {
-      setNotices((prev) => prev.map((item) => item.id === notice.id ? { ...item, ...updates } : item));
-      setSelectedId(notice.id);
-      toast.success('Announcement published locally');
+    } catch (error) {
+      console.error('Unable to publish live announcement.', error);
+      toast.error('Announcement publish was not saved to live data.');
     }
   };
 
@@ -169,7 +170,7 @@ export default function NoticeBoardManagement({ currentUser, academicYear = '202
           <div className="text-sm font-bold text-slate-500 mb-2">Administration / <span className="text-[#f39a5f]">Communication</span></div>
           <h1 className="text-2xl font-bold text-slate-900">Communication</h1>
           <p className="text-sm text-slate-500 mt-1">Announcements, circular management, event communication, audience targeting, and publication status.</p>
-          {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist announcements.</p>}
+          {!isFirebaseConfigured && <p className="text-xs text-rose-600 mt-2">Live Firebase data is not configured.</p>}
           {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
         </div>
         {canCreate && (

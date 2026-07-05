@@ -14,7 +14,6 @@ import {
 import { isFirebaseConfigured } from '../../firebase/config';
 import { canAccess, defaultRoles } from '../userRoles/rolePermissions';
 import { getClassOptions } from '../timetable/timetableUtils';
-import { demoAssessments, demoExamSchedules, demoExamStaff, demoExamStudents, demoMarksEntries, demoReportCards, demoResults } from './demoExams';
 import { calculateGrade, calculatePercentage, calculateResultStatus, formatDisplayDate, summarizeStudentMarks, validateExamSchedule, validateMarksEntry } from './examUtils';
 import ExamScheduleModal from './components/ExamScheduleModal';
 import ExamScheduleTable from './components/ExamScheduleTable';
@@ -22,14 +21,14 @@ import MarksEntryModal from './components/MarksEntryModal';
 import ResultsPanel from './components/ResultsPanel';
 import { filterByCourse, filterStudentScopedRecords, filterStudentsByCourse } from '../shared/courseFilters';
 
-export default function ExaminationResultManagement({ currentUser, academicYear = '2026-2027', scopedStudents = [], selectedCourse = null, selectedCourseCode = 'all' }) {
-  const [students, setStudents] = useState(isFirebaseConfigured ? [] : demoExamStudents);
-  const [staff, setStaff] = useState(isFirebaseConfigured ? [] : demoExamStaff);
-  const [schedules, setSchedules] = useState(isFirebaseConfigured ? [] : demoExamSchedules);
-  const [, setAssessments] = useState(isFirebaseConfigured ? [] : demoAssessments);
-  const [marks, setMarks] = useState(isFirebaseConfigured ? [] : demoMarksEntries);
-  const [results, setResults] = useState(isFirebaseConfigured ? [] : demoResults);
-  const [reportCards, setReportCards] = useState(isFirebaseConfigured ? [] : demoReportCards);
+export default function ExaminationResultManagement({ currentUser, academicYear = '', scopedStudents = [], selectedCourse = null, selectedCourseCode = 'all' }) {
+  const [students, setStudents] = useState([]);
+  const [staff, setStaff] = useState([]);
+  const [schedules, setSchedules] = useState([]);
+  const [, setAssessments] = useState([]);
+  const [marks, setMarks] = useState([]);
+  const [results, setResults] = useState([]);
+  const [reportCards, setReportCards] = useState([]);
   const [search, setSearch] = useState('');
   const [loadError, setLoadError] = useState('');
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -41,19 +40,23 @@ export default function ExaminationResultManagement({ currentUser, academicYear 
 
   useEffect(() => {
     const loadExams = async () => {
-      if (!isFirebaseConfigured) return;
+      if (!isFirebaseConfigured) {
+        setLoadError('Live Firebase data is not configured.');
+        return;
+      }
       try {
         const data = await getExaminationResultData(academicYear);
-        if (data.students.length) setStudents(data.students.filter((student) => student.status !== 'Archived'));
-        if (data.staff.length) setStaff(data.staff.filter((member) => member.staffType === 'Faculty' && member.status !== 'Archived'));
+        setStudents(data.students.filter((student) => student.status !== 'Archived'));
+        setStaff(data.staff.filter((member) => member.staffType === 'Faculty' && member.status !== 'Archived'));
         setSchedules(data.examSchedules);
         setAssessments(data.assessments);
         setMarks(data.marks);
         setResults(data.results);
         setReportCards(data.reportCards);
+        setLoadError('');
       } catch (error) {
-        console.warn('Using demo exam data because Firestore is not reachable.', error);
-        setLoadError('Unable to load Firestore exam records. Showing demo/local records.');
+        console.warn('Unable to load live exam data.', error);
+        setLoadError('Unable to load live exam records.');
       }
     };
     loadExams();
@@ -232,9 +235,9 @@ export default function ExaminationResultManagement({ currentUser, academicYear 
         await updateExamSchedule(editingSchedule.id, updates);
         setSchedules((prev) => prev.map((item) => item.id === editingSchedule.id ? { ...item, ...updates } : item));
         toast.success('Exam schedule updated');
-      } catch {
-        setSchedules((prev) => prev.map((item) => item.id === editingSchedule.id ? { ...item, ...updates } : item));
-        toast.success('Exam schedule updated locally');
+      } catch (error) {
+        console.error('Unable to update live exam schedule.', error);
+        toast.error('Exam schedule was not saved to live data.');
       } finally {
         setEditingSchedule(null);
       }
@@ -243,11 +246,12 @@ export default function ExaminationResultManagement({ currentUser, academicYear 
     const createPayload = { ...payload, academicYear, createdAtText: formatDisplayDate() };
     try {
       const id = await createExamSchedule(createPayload);
-      setSchedules((prev) => [{ id: id || `local-exam-${Date.now()}`, ...createPayload }, ...prev]);
+      if (!id) throw new Error('Live exam schedule was not created.');
+      setSchedules((prev) => [{ id, ...createPayload }, ...prev]);
       toast.success('Exam scheduled');
-    } catch {
-      setSchedules((prev) => [{ id: `local-exam-${Date.now()}`, ...createPayload }, ...prev]);
-      toast.success('Exam scheduled locally');
+    } catch (error) {
+      console.error('Unable to create live exam schedule.', error);
+      toast.error('Exam schedule was not saved to live data.');
     } finally {
       setShowScheduleModal(false);
     }
@@ -274,11 +278,12 @@ export default function ExaminationResultManagement({ currentUser, academicYear 
     };
     try {
       const id = await createInternalAssessment(payload);
-      setAssessments((prev) => [{ id: id || `local-assessment-${Date.now()}`, ...payload }, ...prev]);
+      if (!id) throw new Error('Live assessment was not created.');
+      setAssessments((prev) => [{ id, ...payload }, ...prev]);
       toast.success('Assessment created');
-    } catch {
-      setAssessments((prev) => [{ id: `local-assessment-${Date.now()}`, ...payload }, ...prev]);
-      toast.success('Assessment created locally');
+    } catch (error) {
+      console.error('Unable to create live assessment.', error);
+      toast.error('Assessment was not saved to live data.');
     }
   };
 
@@ -317,14 +322,13 @@ export default function ExaminationResultManagement({ currentUser, academicYear 
         setMarks((prev) => prev.map((item) => item.id === existing.id ? { ...item, ...payload } : item));
       } else {
         const id = await createMarksEntry(payload);
-        setMarks((prev) => [{ id: id || `local-marks-${Date.now()}`, ...payload }, ...prev]);
+        if (!id) throw new Error('Live marks entry was not created.');
+        setMarks((prev) => [{ id, ...payload }, ...prev]);
       }
       toast.success('Marks saved');
-    } catch {
-      setMarks((prev) => existing
-        ? prev.map((item) => item.id === existing.id ? { ...item, ...payload } : item)
-        : [{ id: `local-marks-${Date.now()}`, ...payload }, ...prev]);
-      toast.success('Marks saved locally');
+    } catch (error) {
+      console.error('Unable to save live marks.', error);
+      toast.error('Marks were not saved to live data.');
     } finally {
       setShowMarksModal(false);
     }
@@ -352,11 +356,12 @@ export default function ExaminationResultManagement({ currentUser, academicYear 
     }).filter((item) => item.totalMax > 0);
     try {
       const ids = await Promise.all(generated.map((item) => createStudentResult(item)));
-      setResults((prev) => [...generated.map((item, index) => ({ id: ids[index] || `local-result-${Date.now()}-${index}`, ...item })), ...prev]);
+      if (ids.some((id) => !id)) throw new Error('One or more live results were not created.');
+      setResults((prev) => [...generated.map((item, index) => ({ id: ids[index], ...item })), ...prev]);
       toast.success('Results generated');
-    } catch {
-      setResults((prev) => [...generated.map((item, index) => ({ id: `local-result-${Date.now()}-${index}`, ...item })), ...prev]);
-      toast.success('Results generated locally');
+    } catch (error) {
+      console.error('Unable to generate live results.', error);
+      toast.error('Results were not saved to live data.');
     }
   };
 
@@ -375,11 +380,12 @@ export default function ExaminationResultManagement({ currentUser, academicYear 
     }));
     try {
       const ids = await Promise.all(cards.map((item) => createReportCard(item)));
-      setReportCards((prev) => [...cards.map((item, index) => ({ id: ids[index] || `local-card-${Date.now()}-${index}`, ...item })), ...prev]);
+      if (ids.some((id) => !id)) throw new Error('One or more live report cards were not created.');
+      setReportCards((prev) => [...cards.map((item, index) => ({ id: ids[index], ...item })), ...prev]);
       toast.success('Report cards generated');
-    } catch {
-      setReportCards((prev) => [...cards.map((item, index) => ({ id: `local-card-${Date.now()}-${index}`, ...item })), ...prev]);
-      toast.success('Report cards generated locally');
+    } catch (error) {
+      console.error('Unable to generate live report cards.', error);
+      toast.error('Report cards were not saved to live data.');
     }
   };
 
@@ -390,7 +396,7 @@ export default function ExaminationResultManagement({ currentUser, academicYear 
           <div className="text-sm font-bold text-slate-500 mb-2">Academics / <span className="text-[#f39a5f]">Examination & Result Management</span></div>
           <h1 className="text-2xl font-bold text-slate-900">Examination & Result Management</h1>
           <p className="text-sm text-slate-500 mt-1">Exam scheduling, internal assessment, marks entry, grade calculation, results, and report cards.</p>
-          {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist exams and results.</p>}
+          {!isFirebaseConfigured && <p className="text-xs text-rose-600 mt-2">Live Firebase data is not configured.</p>}
           {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
         </div>
       </div>

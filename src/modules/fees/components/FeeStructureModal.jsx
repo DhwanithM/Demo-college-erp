@@ -3,9 +3,9 @@ import { useState } from 'react';
 export default function FeeStructureModal({ classOptions, initialStructure = null, mode = 'create', onClose, onSave }) {
   const isEdit = mode === 'edit';
   const [form, setForm] = useState({
-    name: initialStructure?.name || 'Annual Fee Structure',
+    name: initialStructure?.name || '',
     classKey: initialStructure?.classKey || classOptions[0] || '',
-    academicYear: initialStructure?.academicYear || '2026-2027',
+    academicYear: initialStructure?.academicYear || '',
     tuitionFee: initialStructure?.tuitionFee || 0,
     libraryFee: initialStructure?.libraryFee || 0,
     labFee: initialStructure?.labFee || 0,

@@ -9,13 +9,6 @@ import { isFirebaseConfigured } from '../../firebase/config';
 import { canAccess, defaultRoles } from '../userRoles/rolePermissions';
 import { formatCurrency, formatDisplayDate } from '../fees/feeUtils';
 import {
-  demoFinancialAdjustments,
-  demoFinancialAssignments,
-  demoFinancialCollections,
-  demoFinancialSnapshots,
-  demoFinancialStructures,
-} from './demoFinancialReports';
-import {
   buildClassAnalytics,
   buildCollectionReport,
   buildFinancialSummary,
@@ -110,9 +103,12 @@ function downloadPdf(filename, {
     const content = [];
     let y = 758;
     if (pageIndex === 0) {
+      const dateLabel = filters.fromDate || filters.toDate
+        ? `${filters.fromDate || 'Start'} to ${filters.toDate || 'Today'}`
+        : 'All dates';
       content.push(textCommand('Financial Report', 40, y, 18));
       y -= 18;
-      content.push(textCommand(`Course: ${selectedCourseCode === 'all' ? 'All Courses' : selectedCourseCode} | ${filters.fromDate} to ${filters.toDate}`, 40, y, 9));
+      content.push(textCommand(`Course: ${selectedCourseCode === 'all' ? 'All Courses' : selectedCourseCode} | ${dateLabel}`, 40, y, 9));
       y -= 30;
       [
         ['Assigned Fees', formatCurrency(summary.totalAssigned)],
@@ -183,17 +179,17 @@ function downloadPdf(filename, {
   URL.revokeObjectURL(url);
 }
 
-export default function FinancialReports({ currentUser, academicYear = '2026-2027', scopedStudents = [], selectedCourse = null, selectedCourseCode = 'all' }) {
-  const [structures, setStructures] = useState(isFirebaseConfigured ? [] : demoFinancialStructures);
-  const [assignments, setAssignments] = useState(isFirebaseConfigured ? [] : demoFinancialAssignments);
-  const [collections, setCollections] = useState(isFirebaseConfigured ? [] : demoFinancialCollections);
-  const [adjustments, setAdjustments] = useState(isFirebaseConfigured ? [] : demoFinancialAdjustments);
-  const [snapshots, setSnapshots] = useState(isFirebaseConfigured ? [] : demoFinancialSnapshots);
+export default function FinancialReports({ currentUser, academicYear = '', scopedStudents = [], selectedCourse = null, selectedCourseCode = 'all' }) {
+  const [structures, setStructures] = useState([]);
+  const [assignments, setAssignments] = useState([]);
+  const [collections, setCollections] = useState([]);
+  const [adjustments, setAdjustments] = useState([]);
+  const [snapshots, setSnapshots] = useState([]);
   const [activeReport, setActiveReport] = useState('collections');
   const [exportFormat, setExportFormat] = useState('pdf');
   const [filters, setFilters] = useState({
-    fromDate: '2026-06-01',
-    toDate: new Date().toISOString().slice(0, 10),
+    fromDate: '',
+    toDate: '',
     classKey: '',
     paymentMode: '',
   });
@@ -202,7 +198,11 @@ export default function FinancialReports({ currentUser, academicYear = '2026-202
 
   useEffect(() => {
     const loadReports = async () => {
-      if (!isFirebaseConfigured) return;
+      if (!isFirebaseConfigured) {
+        setLoadError('Live Firebase data is not configured.');
+        setLoading(false);
+        return;
+      }
       try {
         const data = await getFinancialReportsData(academicYear);
         setStructures(data.feeStructures);
@@ -214,9 +214,10 @@ export default function FinancialReports({ currentUser, academicYear = '2026-202
         setCollections(data.feeCollections.map((item) => ({ ...item, classKey: item.classKey || assignmentClassMap[item.assignmentId] || '' })));
         setAdjustments(data.feeAdjustments);
         setSnapshots(data.financialReportSnapshots);
+        setLoadError('');
       } catch (error) {
-        console.warn('Using demo financial reports because Firestore is not reachable.', error);
-        setLoadError('Unable to load Firestore financial reports. Showing demo/local records.');
+        console.warn('Unable to load live financial reports.', error);
+        setLoadError('Unable to load live financial reports.');
       } finally {
         setLoading(false);
       }
@@ -271,11 +272,12 @@ export default function FinancialReports({ currentUser, academicYear = '2026-202
     };
     try {
       const id = await createFinancialReportSnapshot(payload);
-      setSnapshots((prev) => [{ id: id || `local-financial-snapshot-${Date.now()}`, ...payload, courseCode: selectedCourseCode }, ...prev]);
+      if (!id) throw new Error('Live financial snapshot was not created.');
+      setSnapshots((prev) => [{ id, ...payload, courseCode: selectedCourseCode }, ...prev]);
       toast.success('Financial summary saved');
-    } catch {
-      setSnapshots((prev) => [{ id: `local-financial-snapshot-${Date.now()}`, ...payload, courseCode: selectedCourseCode }, ...prev]);
-      toast.success('Financial summary saved locally');
+    } catch (error) {
+      console.error('Unable to save live financial summary.', error);
+      toast.error('Financial summary was not saved to live data.');
     }
   };
 
@@ -359,7 +361,7 @@ export default function FinancialReports({ currentUser, academicYear = '2026-202
           <div className="text-sm font-bold text-slate-500 mb-2">Finance / <span className="text-[#f39a5f]">Financial Reports</span></div>
           <h1 className="text-2xl font-bold text-slate-900">Financial Reports</h1>
           <p className="text-sm text-slate-500 mt-1">Collection reports, outstanding reports, class-wise fee analytics, and saved financial summaries.</p>
-          {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist financial report snapshots.</p>}
+          {!isFirebaseConfigured && <p className="text-xs text-rose-600 mt-2">Live Firebase data is not configured.</p>}
           {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
         </div>
         <div className="flex items-center gap-3 flex-wrap">

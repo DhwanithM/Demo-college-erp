@@ -10,7 +10,6 @@ import {
 import { isFirebaseConfigured } from '../../firebase/config';
 import { uploadManagedDocumentFile } from '../../firebase/storage';
 import { canAccess, defaultRoles } from '../userRoles/rolePermissions';
-import { demoDocumentStaff, demoDocumentStudents, demoManagedDocuments } from './demoDocuments';
 import { documentCategories, documentOwnerTypes, documentStatuses, filterDocuments, formatDisplayDate, resolveOwnerName, validateDocumentForm } from './documentUtils';
 import DocumentPreviewPanel from './components/DocumentPreviewPanel';
 import DocumentTable from './components/DocumentTable';
@@ -57,10 +56,10 @@ function documentMatchesCurrentStaff(document = {}, identityTokens = new Set()) 
     .some((value) => identityTokens.has(value));
 }
 
-export default function DocumentManagement({ currentUser, academicYear = '2026-2027', ownerFilter = null, scopedStudents = [], selectedCourse = null, selectedCourseCode = 'all' }) {
-  const [students, setStudents] = useState(isFirebaseConfigured ? [] : demoDocumentStudents);
-  const [staff, setStaff] = useState(isFirebaseConfigured ? [] : demoDocumentStaff);
-  const [documents, setDocuments] = useState(isFirebaseConfigured ? [] : demoManagedDocuments);
+export default function DocumentManagement({ currentUser, academicYear = '', ownerFilter = null, scopedStudents = [], selectedCourse = null, selectedCourseCode = 'all' }) {
+  const [students, setStudents] = useState([]);
+  const [staff, setStaff] = useState([]);
+  const [documents, setDocuments] = useState([]);
   const [selectedId, setSelectedId] = useState('');
   const [filters, setFilters] = useState({ search: '', ownerType: '', category: '', status: '' });
   const [loading, setLoading] = useState(isFirebaseConfigured);
@@ -70,16 +69,21 @@ export default function DocumentManagement({ currentUser, academicYear = '2026-2
 
   useEffect(() => {
     const loadDocuments = async () => {
-      if (!isFirebaseConfigured) return;
+      if (!isFirebaseConfigured) {
+        setLoadError('Live Firebase data is not configured.');
+        setLoading(false);
+        return;
+      }
       try {
         const data = await getDocumentManagementData(academicYear);
-        if (data.students.length) setStudents(data.students.filter((student) => student.status !== 'Archived'));
-        if (data.staff.length) setStaff(data.staff.filter((member) => member.status !== 'Archived'));
+        setStudents(data.students.filter((student) => student.status !== 'Archived'));
+        setStaff(data.staff.filter((member) => member.status !== 'Archived'));
         setDocuments(data.managedDocuments);
         setSelectedId('');
+        setLoadError('');
       } catch (error) {
-        console.warn('Using demo documents because Firestore is not reachable.', error);
-        setLoadError('Unable to load Firestore document records. Showing locally created records only.');
+        console.warn('Unable to load live documents.', error);
+        setLoadError('Unable to load live document records.');
       } finally {
         setLoading(false);
       }
@@ -205,15 +209,14 @@ export default function DocumentManagement({ currentUser, academicYear = '2026-2
     const payload = { ...buildDocumentPayload(form, fileData), academicYear };
     try {
       const id = await createManagedDocument(payload);
-      const created = { id: id || `local-document-${Date.now()}`, ...payload };
+      if (!id) throw new Error('Live document was not created.');
+      const created = { id, ...payload };
       setDocuments((prev) => [created, ...prev]);
       setSelectedId(created.id);
-      toast.success(uploadError ? 'Document metadata saved. File upload is unavailable.' : id ? 'Document saved' : 'Document saved locally');
-    } catch {
-      const created = { id: `local-document-${Date.now()}`, ...payload };
-      setDocuments((prev) => [created, ...prev]);
-      setSelectedId(created.id);
-      toast.success('Document saved locally. Check Firebase setup to persist it.');
+      toast.success(uploadError ? 'Document metadata saved. File upload is unavailable.' : 'Document saved');
+    } catch (error) {
+      console.error('Unable to save live document.', error);
+      toast.error('Document was not saved to live data.');
     } finally {
       setUploading(false);
       setShowUploadModal(false);
@@ -233,9 +236,9 @@ export default function DocumentManagement({ currentUser, academicYear = '2026-2
       await updateManagedDocument(document.id, updates);
       setDocuments((prev) => prev.map((item) => item.id === document.id ? { ...item, ...updates } : item));
       toast.success(`Document marked ${verificationStatus.toLowerCase()}`);
-    } catch {
-      setDocuments((prev) => prev.map((item) => item.id === document.id ? { ...item, ...updates } : item));
-      toast.success(`Document marked ${verificationStatus.toLowerCase()} locally`);
+    } catch (error) {
+      console.error('Unable to update live document verification.', error);
+      toast.error('Document verification was not saved to live data.');
     }
   };
 
@@ -252,9 +255,9 @@ export default function DocumentManagement({ currentUser, academicYear = '2026-2
       await archiveManagedDocument(document.id, updates);
       setDocuments((prev) => prev.map((item) => item.id === document.id ? { ...item, ...updates } : item));
       toast.success('Document archived');
-    } catch {
-      setDocuments((prev) => prev.map((item) => item.id === document.id ? { ...item, ...updates } : item));
-      toast.success('Document archived locally');
+    } catch (error) {
+      console.error('Unable to archive live document.', error);
+      toast.error('Document archive was not saved to live data.');
     }
   };
 
@@ -278,7 +281,7 @@ export default function DocumentManagement({ currentUser, academicYear = '2026-2
               : 'Search documents first. Click one document to view metadata and verification actions.'}
           </p>
           {loading && <p className="text-xs text-slate-500 mt-2">Loading live document records...</p>}
-          {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist documents and upload files.</p>}
+          {!isFirebaseConfigured && <p className="text-xs text-rose-600 mt-2">Live Firebase data is not configured.</p>}
           {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
         </div>
         {!isOwnerFilterActive && canUpload && (

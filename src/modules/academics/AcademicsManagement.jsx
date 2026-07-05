@@ -5,7 +5,6 @@ import { createAcademicBatch, createAcademicProgram, createAcademicSubject, getA
 import { isFirebaseConfigured } from '../../firebase/config';
 import { canAccess, defaultRoles } from '../userRoles/rolePermissions';
 import StatusBadge from '../students/components/StatusBadge';
-import { demoAcademicBatches, demoAcademicPrograms, demoAcademicSubjects } from './demoAcademics';
 import { filterAcademicItems, formatDisplayDate, validateBatch, validateProgram, validateSubject } from './academicUtils';
 import { filterByCourse } from '../shared/courseFilters';
 
@@ -15,25 +14,29 @@ const tabs = [
   ['batches', 'Batches'],
 ];
 
-export default function AcademicsManagement({ currentUser, academicYear = '2026-2027', selectedCourse = null, selectedCourseCode = 'all' }) {
-  const [programs, setPrograms] = useState(isFirebaseConfigured ? [] : demoAcademicPrograms);
-  const [subjects, setSubjects] = useState(isFirebaseConfigured ? [] : demoAcademicSubjects);
-  const [batches, setBatches] = useState(isFirebaseConfigured ? [] : demoAcademicBatches);
+export default function AcademicsManagement({ currentUser, academicYear = '', selectedCourse = null, selectedCourseCode = 'all' }) {
+  const [programs, setPrograms] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [batches, setBatches] = useState([]);
   const [activeTab, setActiveTab] = useState('programs');
   const [search, setSearch] = useState('');
   const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     const loadAcademics = async () => {
-      if (!isFirebaseConfigured) return;
+      if (!isFirebaseConfigured) {
+        setLoadError('Live Firebase data is not configured.');
+        return;
+      }
       try {
         const data = await getAcademicsData(academicYear);
         setPrograms(data.academicPrograms);
         setSubjects(data.academicSubjects);
         setBatches(data.academicBatches);
+        setLoadError('');
       } catch (error) {
-        console.warn('Using demo academic data because Firestore is not reachable.', error);
-        setLoadError('Unable to load Firestore academic records. Showing demo/local records.');
+        console.warn('Unable to load live academic data.', error);
+        setLoadError('Unable to load live academic records.');
       }
     };
     loadAcademics();
@@ -62,23 +65,27 @@ export default function AcademicsManagement({ currentUser, academicYear = '2026-
         const message = validateProgram(payload);
         if (message) return toast.error(message);
         const id = await createAcademicProgram(payload);
-        setPrograms((prev) => [{ id: id || `local-program-${Date.now()}`, ...payload }, ...prev]);
+        if (!id) throw new Error('Live academic program was not created.');
+        setPrograms((prev) => [{ id, ...payload }, ...prev]);
       } else if (activeTab === 'subjects') {
         const payload = { subjectName: `Subject ${subjects.length + 1}`, subjectCode: `SUB-${subjects.length + 1}`, programName: programs[0]?.name || 'General', creditHours: 5, academicYear, status: 'Active', createdAtText };
         const message = validateSubject(payload);
         if (message) return toast.error(message);
         const id = await createAcademicSubject(payload);
-        setSubjects((prev) => [{ id: id || `local-subject-${Date.now()}`, ...payload }, ...prev]);
+        if (!id) throw new Error('Live academic subject was not created.');
+        setSubjects((prev) => [{ id, ...payload }, ...prev]);
       } else if (activeTab === 'batches') {
         const payload = { className: `Class ${batches.length + 1}`, section: 'A', programName: programs[0]?.name || 'General', classTeacher: 'Unassigned', capacity: 45, academicYear, status: 'Active', createdAtText };
         const message = validateBatch(payload);
         if (message) return toast.error(message);
         const id = await createAcademicBatch(payload);
-        setBatches((prev) => [{ id: id || `local-batch-${Date.now()}`, ...payload }, ...prev]);
+        if (!id) throw new Error('Live academic batch was not created.');
+        setBatches((prev) => [{ id, ...payload }, ...prev]);
       }
       toast.success('Academic record created');
-    } catch {
-      toast.success('Academic record created locally');
+    } catch (error) {
+      console.error('Unable to create live academic record.', error);
+      toast.error('Academic record was not saved to live data.');
     }
   };
 
@@ -95,7 +102,7 @@ export default function AcademicsManagement({ currentUser, academicYear = '2026-
           <div className="text-sm font-bold text-slate-500 mb-2">Academics / <span className="text-[#f39a5f]">Academic Setup</span></div>
           <h1 className="text-2xl font-bold text-slate-900">Academics</h1>
           <p className="text-sm text-slate-500 mt-1">Programs, subjects, batches, and sections setup.</p>
-          {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist academic setup.</p>}
+          {!isFirebaseConfigured && <p className="text-xs text-rose-600 mt-2">Live Firebase data is not configured.</p>}
           {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
         </div>
         <button onClick={createQuickRecord} disabled={!canManage} className="h-10 px-5 rounded-full bg-[#fb9a5b] text-white font-semibold text-sm flex items-center gap-2 disabled:bg-slate-300">

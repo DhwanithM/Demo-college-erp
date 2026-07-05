@@ -15,13 +15,6 @@ import {
   formatDisplayDate,
   summarizeAttendance,
 } from './attendanceUtils';
-import {
-  demoAttendanceStaff,
-  demoAttendanceStudents,
-  demoStaffAttendance,
-  demoStudentAttendance,
-} from './demoAttendance';
-import { demoAcademicSubjects } from '../academics/demoAcademics';
 import AttendanceTable from './components/AttendanceTable';
 import { filterStudentScopedRecords, filterStudentsByCourse } from '../shared/courseFilters';
 
@@ -39,7 +32,7 @@ function formatInputDate(inputDate) {
 
 export default function AttendanceManagement({
   currentUser,
-  academicYear = '2026-2027',
+  academicYear = '',
   initialBranch = '',
   initialMode = 'students',
   initialTask = '',
@@ -47,11 +40,11 @@ export default function AttendanceManagement({
   selectedCourse = null,
   selectedCourseCode = 'all',
 }) {
-  const [students, setStudents] = useState(isFirebaseConfigured ? [] : demoAttendanceStudents);
-  const [staff, setStaff] = useState(isFirebaseConfigured ? [] : demoAttendanceStaff);
-  const [studentAttendance, setStudentAttendance] = useState(isFirebaseConfigured ? [] : demoStudentAttendance);
-  const [staffAttendance, setStaffAttendance] = useState(isFirebaseConfigured ? [] : demoStaffAttendance);
-  const [academicSubjects, setAcademicSubjects] = useState(isFirebaseConfigured ? [] : demoAcademicSubjects);
+  const [students, setStudents] = useState([]);
+  const [staff, setStaff] = useState([]);
+  const [studentAttendance, setStudentAttendance] = useState([]);
+  const [staffAttendance, setStaffAttendance] = useState([]);
+  const [academicSubjects, setAcademicSubjects] = useState([]);
   const [mode, setMode] = useState(initialMode || 'students');
   const [selectedSubjectCode, setSelectedSubjectCode] = useState('');
   const [search, setSearch] = useState('');
@@ -64,17 +57,22 @@ export default function AttendanceManagement({
 
   useEffect(() => {
     const loadAttendance = async () => {
-      if (!isFirebaseConfigured) return;
+      if (!isFirebaseConfigured) {
+        setLoadError('Live Firebase data is not configured.');
+        setLoading(false);
+        return;
+      }
       try {
         const data = await getAttendanceManagementData(academicYear);
-        if (data.students.length) setStudents(data.students.filter((student) => student.status !== 'Archived'));
-        if (data.staff.length) setStaff(data.staff.filter((member) => member.status !== 'Archived'));
+        setStudents(data.students.filter((student) => student.status !== 'Archived'));
+        setStaff(data.staff.filter((member) => member.status !== 'Archived'));
         setStudentAttendance(data.studentAttendance);
         setStaffAttendance(data.staffAttendance);
         setAcademicSubjects(data.academicSubjects || []);
+        setLoadError('');
       } catch (error) {
-        console.warn('Using demo attendance because Firestore is not reachable.', error);
-        setLoadError('Unable to load Firestore attendance records. Showing demo/local records.');
+        console.warn('Unable to load live attendance data.', error);
+        setLoadError('Unable to load live attendance records.');
       } finally {
         setLoading(false);
       }
@@ -260,15 +258,14 @@ export default function AttendanceManagement({
       const id = mode === 'students'
         ? await createStudentAttendanceRecord(payload)
         : await createStaffAttendanceRecord(payload);
-      const record = { id: id || `local-attendance-${Date.now()}`, ...payload };
+      if (!id) throw new Error('Live attendance record was not created.');
+      const record = { id, ...payload };
       if (mode === 'students') setStudentAttendance((prev) => [record, ...prev]);
       else setStaffAttendance((prev) => [record, ...prev]);
       toast.success(`${payload.entityName} marked ${status.toLowerCase()}`);
-    } catch {
-      const record = { id: `local-attendance-${Date.now()}`, ...payload };
-      if (mode === 'students') setStudentAttendance((prev) => [record, ...prev]);
-      else setStaffAttendance((prev) => [record, ...prev]);
-      toast.success(`Attendance marked locally. Check Firebase setup to persist it.`);
+    } catch (error) {
+      console.error('Unable to create live attendance record.', error);
+      toast.error('Attendance was not saved to live data.');
     }
   };
 
@@ -296,9 +293,9 @@ export default function AttendanceManagement({
       await updateStudentAttendanceRecord(attendanceRecord.id, attendanceUpdate);
       setStudentAttendance((prev) => prev.map((record) => record.id === attendanceRecord.id ? { ...record, ...attendanceUpdate } : record));
       toast.success('Parent notification queued');
-    } catch {
-      setStudentAttendance((prev) => prev.map((record) => record.id === attendanceRecord.id ? { ...record, ...attendanceUpdate } : record));
-      toast.success('Parent notification queued locally');
+    } catch (error) {
+      console.error('Unable to queue live parent notification.', error);
+      toast.error('Parent notification was not saved to live data.');
     }
   };
 
@@ -309,7 +306,7 @@ export default function AttendanceManagement({
           <div className="text-sm font-bold text-slate-500 mb-2">Academics / <span className="text-[#f39a5f]">Attendance Management</span></div>
           <h1 className="text-2xl font-bold text-slate-900">Attendance Management</h1>
           <p className="text-sm text-slate-500 mt-1">Student and faculty attendance tracking. Attendance summaries open from the Reports module.</p>
-          {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist attendance.</p>}
+          {!isFirebaseConfigured && <p className="text-xs text-rose-600 mt-2">Live Firebase data is not configured.</p>}
           {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
         </div>
         <div className="flex items-center gap-3">

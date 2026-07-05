@@ -18,6 +18,7 @@ import {
   createStudentAdmission,
   createStudentDocument,
   getInstituteShellData,
+  getSettingsData,
   getStudentInformationData,
   archiveStudent,
   restoreStudent,
@@ -26,9 +27,7 @@ import {
 } from '../../firebase/db';
 import { isFirebaseConfigured } from '../../firebase/config';
 import { getEnabledModules, getModuleById, getModuleByPath } from '../moduleRegistry';
-import { admissionCourses, admissionStudents } from './admissionSeedData';
 import DashboardManagement from '../dashboard/DashboardManagement';
-import DemoModulePage from './components/DemoModulePage';
 import Sidebar from './components/Sidebar';
 import StatusBadge from './components/StatusBadge';
 import StudentModal from './components/StudentModal';
@@ -64,7 +63,7 @@ import { canAccess, defaultRoles } from '../userRoles/rolePermissions';
 import AcademicsManagement from '../academics/AcademicsManagement';
 import CurriculumManagement from '../curriculum/CurriculumManagement';
 import SettingsManagement from '../settings/SettingsManagement';
-import { demoInstituteSettings, normalizeInstituteSettings } from '../settings/demoSettings';
+import { normalizeInstituteSettings } from '../settings/settingsModel';
 import { filterStudentScopedRecords, filterStudentsByCourse } from '../shared/courseFilters';
 import { getParentLinkedStudents } from '../parentPortal/parentPortalUtils';
 
@@ -237,8 +236,8 @@ export default function StudentInformationManagement({ user, onLogout }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [themeMode, setThemeMode] = useState(() => localStorage.getItem('erpThemeMode') || 'dark');
-  const [students, setStudents] = useState(isFirebaseConfigured ? [] : admissionStudents);
-  const [courses, setCourses] = useState(isFirebaseConfigured ? [] : admissionCourses);
+  const [students, setStudents] = useState([]);
+  const [courses, setCourses] = useState([]);
   const [selectedCourseCode, setSelectedCourseCode] = useState('all');
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState('');
@@ -255,8 +254,8 @@ export default function StudentInformationManagement({ user, onLogout }) {
   const [editingStudent, setEditingStudent] = useState(null);
   const [focusedStudentContext, setFocusedStudentContext] = useState(null);
   const [statusFilter, setStatusFilter] = useState('active');
-  const [academicYear, setAcademicYear] = useState('2025-2026');
-  const [institute, setInstitute] = useState(isFirebaseConfigured ? {} : demoInstituteSettings);
+  const [academicYear, setAcademicYear] = useState('');
+  const [institute, setInstitute] = useState({});
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const currentRoleId = user?.roleId || 'admin';
   const activePage = getPageFromPath(location.pathname);
@@ -329,10 +328,16 @@ export default function StudentInformationManagement({ user, onLogout }) {
     const loadShellSettings = async () => {
       if (!isFirebaseConfigured) return;
       try {
-        const data = await getInstituteShellData();
-        if (data) setInstitute(normalizeInstituteSettings(data));
+        const [instituteData, settingsData] = await Promise.all([
+          getInstituteShellData().catch(() => null),
+          getSettingsData().catch(() => null),
+        ]);
+        if (instituteData) setInstitute(normalizeInstituteSettings(instituteData));
+        if (settingsData?.academicYear?.name) {
+          setAcademicYear((prev) => prev || settingsData.academicYear.name);
+        }
       } catch (error) {
-        console.warn('Using demo institute settings because Firestore is not reachable.', error);
+        console.error('Unable to load live institute settings.', error);
       }
     };
     loadShellSettings();
@@ -348,32 +353,62 @@ export default function StudentInformationManagement({ user, onLogout }) {
 
   useEffect(() => {
     const loadStudentInformation = async () => {
-      if (!isFirebaseConfigured) return;
+      if (!isFirebaseConfigured) {
+        setLoadError('Live Firebase data is not configured.');
+        return;
+      }
       try {
         const data = await getStudentInformationData(academicYear);
-        if (data.students.length || isFirebaseConfigured) {
-          setStudents(data.students);
-          setSelectedId('');
+        const nextStudents = data.students || [];
+        const nextAdmissions = data.admissions || [];
+        const nextDocuments = data.documents || [];
+        const nextPromotions = data.promotions || [];
+        const nextTransfers = data.transfers || [];
+        const nextAttendanceRecords = data.attendanceRecords || [];
+        const nextMarksEntries = data.marksEntries || [];
+        const nextStudentResults = data.studentResults || [];
+        const nextFeeAssignments = data.feeAssignments || [];
+        setStudents(nextStudents);
+        setSelectedId('');
+        setAdmissions(nextAdmissions);
+        setStudentDocuments(nextDocuments);
+        setPromotions(nextPromotions);
+        setTransfers(nextTransfers);
+        setAttendanceRecords(nextAttendanceRecords);
+        setMarksEntries(nextMarksEntries);
+        setStudentResults(nextStudentResults);
+        setFeeAssignments(nextFeeAssignments);
+        setCourses(buildCourseOptionsFromStudents(nextStudents, data.admissionBatches || []));
+        if (!academicYear) {
+          const liveYears = [
+            ...nextStudents,
+            ...nextAdmissions,
+            ...nextDocuments,
+            ...nextPromotions,
+            ...nextTransfers,
+            ...nextAttendanceRecords,
+            ...nextMarksEntries,
+            ...nextStudentResults,
+            ...nextFeeAssignments,
+          ]
+            .map((record) => record?.academicYear)
+            .filter(Boolean)
+            .sort()
+            .reverse();
+          if (liveYears.length) setAcademicYear(liveYears[0]);
         }
-        setAdmissions(data.admissions);
-        setStudentDocuments(data.documents);
-        setPromotions(data.promotions);
-        setTransfers(data.transfers);
-        setAttendanceRecords(data.attendanceRecords || []);
-        setMarksEntries(data.marksEntries || []);
-        setStudentResults(data.studentResults || []);
-        setFeeAssignments(data.feeAssignments || []);
-        setCourses(buildCourseOptionsFromStudents(data.students, data.admissionBatches || []));
+        setLoadError('');
       } catch (error) {
-        console.warn('Using demo students because Firestore is not reachable.', error);
-        setLoadError('Unable to load Firestore records. Showing demo/local records.');
+        console.error('Unable to load live student records.', error);
+        setLoadError('Unable to load live student records.');
       }
     };
     loadStudentInformation();
   }, [academicYear]);
 
   const academicYearOptions = useMemo(() => {
-    const years = new Set(['2025-2026', '2026-2027', '2024-2025']);
+    const years = new Set();
+    if (academicYear) years.add(academicYear);
     [
       ...students,
       ...admissions,
@@ -388,10 +423,12 @@ export default function StudentInformationManagement({ user, onLogout }) {
       if (record?.academicYear) years.add(record.academicYear);
     });
     return [...years].sort().reverse();
-  }, [admissions, attendanceRecords, feeAssignments, marksEntries, promotions, studentDocuments, studentResults, students, transfers]);
+  }, [academicYear, admissions, attendanceRecords, feeAssignments, marksEntries, promotions, studentDocuments, studentResults, students, transfers]);
 
-  const recordBelongsToYear = (record) => record.academicYear === academicYear;
-  const yearStudents = useMemo(() => students.filter((student) => student.academicYear === academicYear), [academicYear, students]);
+  const recordBelongsToYear = (record) => !academicYear || record.academicYear === academicYear;
+  const yearStudents = useMemo(() => (
+    academicYear ? students.filter((student) => student.academicYear === academicYear) : students
+  ), [academicYear, students]);
   const parentLinkedStudents = useMemo(
     () => currentRoleId === 'parent' ? getParentLinkedStudents(yearStudents, user) : [],
     [currentRoleId, user, yearStudents]
@@ -419,27 +456,27 @@ export default function StudentInformationManagement({ user, onLogout }) {
     : null;
   const moduleScopedStudents = focusedStudent ? [focusedStudent] : courseStudents;
   const courseScopedAdmissions = useMemo(
-    () => filterStudentScopedRecords(admissions.filter((item) => item.academicYear === academicYear), courseStudents, effectiveSelectedCourseCode, selectedCourse),
+    () => filterStudentScopedRecords(admissions.filter((item) => !academicYear || item.academicYear === academicYear), courseStudents, effectiveSelectedCourseCode, selectedCourse),
     [academicYear, admissions, courseStudents, effectiveSelectedCourseCode, selectedCourse]
   );
   const courseScopedDocuments = useMemo(
-    () => filterStudentScopedRecords(studentDocuments.filter((item) => item.academicYear === academicYear), courseStudents, effectiveSelectedCourseCode, selectedCourse),
+    () => filterStudentScopedRecords(studentDocuments.filter((item) => !academicYear || item.academicYear === academicYear), courseStudents, effectiveSelectedCourseCode, selectedCourse),
     [academicYear, courseStudents, effectiveSelectedCourseCode, selectedCourse, studentDocuments]
   );
   const courseScopedPromotions = useMemo(
-    () => filterStudentScopedRecords(promotions.filter((item) => item.academicYear === academicYear), courseStudents, effectiveSelectedCourseCode, selectedCourse),
+    () => filterStudentScopedRecords(promotions.filter((item) => !academicYear || item.academicYear === academicYear), courseStudents, effectiveSelectedCourseCode, selectedCourse),
     [academicYear, courseStudents, effectiveSelectedCourseCode, promotions, selectedCourse]
   );
   const courseScopedAttendanceRecords = useMemo(
-    () => filterStudentScopedRecords(attendanceRecords.filter((item) => item.academicYear === academicYear), courseStudents, effectiveSelectedCourseCode, selectedCourse),
+    () => filterStudentScopedRecords(attendanceRecords.filter((item) => !academicYear || item.academicYear === academicYear), courseStudents, effectiveSelectedCourseCode, selectedCourse),
     [academicYear, attendanceRecords, courseStudents, effectiveSelectedCourseCode, selectedCourse]
   );
   const courseScopedMarksEntries = useMemo(
-    () => filterStudentScopedRecords(marksEntries.filter((item) => item.academicYear === academicYear), courseStudents, effectiveSelectedCourseCode, selectedCourse),
+    () => filterStudentScopedRecords(marksEntries.filter((item) => !academicYear || item.academicYear === academicYear), courseStudents, effectiveSelectedCourseCode, selectedCourse),
     [academicYear, courseStudents, effectiveSelectedCourseCode, marksEntries, selectedCourse]
   );
   const courseScopedStudentResults = useMemo(
-    () => filterStudentScopedRecords(studentResults.filter((item) => item.academicYear === academicYear), courseStudents, effectiveSelectedCourseCode, selectedCourse),
+    () => filterStudentScopedRecords(studentResults.filter((item) => !academicYear || item.academicYear === academicYear), courseStudents, effectiveSelectedCourseCode, selectedCourse),
     [academicYear, courseStudents, effectiveSelectedCourseCode, selectedCourse, studentResults]
   );
 
@@ -540,16 +577,25 @@ export default function StudentInformationManagement({ user, onLogout }) {
       toast.error(validationMessage);
       return;
     }
+    if (!isFirebaseConfigured) {
+      toast.error('Live Firebase data is not configured.');
+      return;
+    }
 
-    const nextNumber = String(4450 + students.length).padStart(5, '0');
+    const nextNumber = String(students.length + 1).padStart(5, '0');
     const selectedAcademicYear = form.academicYear;
+    if (!selectedAcademicYear) {
+      toast.error('Academic year is required.');
+      return;
+    }
     const createdAtText = formatDisplayDate();
     const pendingStatus = normalizeCreatedAdmissionStatus();
+    const yearToken = selectedAcademicYear.replace(/\D/g, '') || String(new Date().getFullYear());
     const payload = {
       ...form,
-      admissionNo: `ADM-2026-${nextNumber}`,
+      admissionNo: `ADM-${yearToken}-${nextNumber}`,
       studentId: `STU-${nextNumber}`,
-      institute: 'Maurya Institute of Allied Health Sciences',
+      institute: institute.name || user?.selectedCollege?.name || '',
       academicYear: selectedAcademicYear,
       status: pendingStatus,
       admissionApprovalStatus: pendingStatus,
@@ -558,7 +604,8 @@ export default function StudentInformationManagement({ user, onLogout }) {
 
     try {
       const id = await createStudent(payload);
-      const created = { id: id || `local-${Date.now()}`, ...payload };
+      if (!id) throw new Error('Missing student id.');
+      const created = { id, ...payload };
       const admission = {
         studentRecordId: created.id,
         studentId: created.studentId,
@@ -587,62 +634,22 @@ export default function StudentInformationManagement({ user, onLogout }) {
         verificationStatus: 'Pending Review',
         uploadedAtText: createdAtText,
       };
-      if (id) {
-        const [admissionId, documentId] = await Promise.all([
-          createStudentAdmission(admission),
-          createStudentDocument(admissionForm),
-        ]);
-        setAdmissions((prev) => [{ id: admissionId, ...admission }, ...prev]);
-        setStudentDocuments((prev) => [{ id: documentId, ...admissionForm }, ...prev]);
-      } else {
-        setAdmissions((prev) => [{ id: `local-admission-${Date.now()}`, ...admission }, ...prev]);
-        setStudentDocuments((prev) => [{ id: `local-document-${Date.now()}`, ...admissionForm }, ...prev]);
-      }
+      const [admissionId, documentId] = await Promise.all([
+        createStudentAdmission(admission),
+        createStudentDocument(admissionForm),
+      ]);
+      if (!admissionId || !documentId) throw new Error('Missing admission support record id.');
 
       setStudents((prev) => [created, ...prev]);
+      setAdmissions((prev) => [{ id: admissionId, ...admission }, ...prev]);
+      setStudentDocuments((prev) => [{ id: documentId, ...admissionForm }, ...prev]);
       setAcademicYear(selectedAcademicYear);
       setSelectedId(created.id);
-      toast.success(id ? 'Student admission sent for Super Admin approval' : 'Student added locally and marked pending approval. Add Firebase keys to persist.');
-    } catch {
-      const local = { id: `local-${Date.now()}`, ...payload };
-      const admission = {
-        id: `local-admission-${Date.now()}`,
-        studentRecordId: local.id,
-        studentId: local.studentId,
-        admissionNo: local.admissionNo,
-        academicYear: selectedAcademicYear,
-        idHolder: local.idHolder,
-        courseCode: local.courseCode,
-        courseName: local.courseName,
-        courseYear: local.courseYear,
-        admissionType: local.admissionType,
-        collegeName: local.collegeName,
-        collegeCode: local.collegeCode,
-        admissionDate: local.admissionDate,
-        seatType: local.seatType,
-        actualCategory: local.actualCategory,
-        status: pendingStatus,
-        submittedAtText: createdAtText,
-      };
-      const admissionForm = {
-        id: `local-document-${Date.now()}`,
-        studentRecordId: local.id,
-        studentId: local.studentId,
-        documentType: 'Admission Form',
-        academicYear: selectedAcademicYear,
-        uploadedBy: user?.name || 'Admin',
-        fileName: `${local.admissionNo}-admission-form.pdf`,
-        verificationStatus: 'Pending Review',
-        uploadedAtText: createdAtText,
-      };
-      setStudents((prev) => [local, ...prev]);
-      setAcademicYear(selectedAcademicYear);
-      setAdmissions((prev) => [admission, ...prev]);
-      setStudentDocuments((prev) => [admissionForm, ...prev]);
-      setSelectedId(local.id);
-      toast.success('Student added locally and marked pending approval. Check Firebase setup to persist it.');
-    } finally {
+      toast.success('Student admission sent for Super Admin approval');
       setShowModal(false);
+    } catch (error) {
+      console.error('Unable to save live student admission.', error);
+      toast.error('Student admission was not saved to live data.');
     }
   };
 
@@ -655,6 +662,10 @@ export default function StudentInformationManagement({ user, onLogout }) {
     const validationMessage = validateStudentProfile(form);
     if (validationMessage) {
       toast.error(validationMessage);
+      return;
+    }
+    if (!isFirebaseConfigured) {
+      toast.error('Live Firebase data is not configured.');
       return;
     }
 
@@ -677,19 +688,19 @@ export default function StudentInformationManagement({ user, onLogout }) {
         student.id === editingStudent.id ? { ...student, ...updates } : student
       )));
       toast.success('Student profile updated');
-    } catch {
-      setStudents((prev) => prev.map((student) => (
-        student.id === editingStudent.id ? { ...student, ...updates } : student
-      )));
-      toast.success('Student profile updated locally. Check Firebase setup to persist it.');
-    } finally {
       setEditingStudent(null);
+    } catch {
+      toast.error('Student profile was not saved to live data.');
     }
   };
 
   const approveStudentAdmission = async (student) => {
     if (!canApproveStudentAdmission(currentRoleId)) {
       toast.error('Only Super Admin can approve admissions.');
+      return;
+    }
+    if (!isFirebaseConfigured) {
+      toast.error('Live Firebase data is not configured.');
       return;
     }
 
@@ -718,17 +729,17 @@ export default function StudentInformationManagement({ user, onLogout }) {
       }
       toast.success('Student admission approved');
     } catch {
-      setStudents((prev) => prev.map((item) => item.id === student.id ? { ...item, ...studentUpdates } : item));
-      if (admission?.id) {
-        setAdmissions((prev) => prev.map((item) => item.id === admission.id ? { ...item, ...admissionUpdates } : item));
-      }
-      toast.success('Student admission approved locally. Check Firebase setup to persist it.');
+      toast.error('Student admission was not approved in live data.');
     }
   };
 
   const archiveSelectedStudent = async (student) => {
     if (!canArchiveStudents) {
       toast.error('You do not have permission to archive student records.');
+      return;
+    }
+    if (!isFirebaseConfigured) {
+      toast.error('Live Firebase data is not configured.');
       return;
     }
 
@@ -744,18 +755,17 @@ export default function StudentInformationManagement({ user, onLogout }) {
       if (selectedId === student.id && nextStudent) setSelectedId(nextStudent.id);
       toast.success('Student archived');
     } catch {
-      setStudents((prev) => prev.map((item) => (
-        item.id === student.id ? { ...item, ...updates } : item
-      )));
-      const nextStudent = students.find((item) => item.id !== student.id && item.status !== 'Archived');
-      if (selectedId === student.id && nextStudent) setSelectedId(nextStudent.id);
-      toast.success('Student archived locally. Check Firebase setup to persist it.');
+      toast.error('Student was not archived in live data.');
     }
   };
 
   const restoreArchivedStudent = async (student) => {
     if (!canArchiveStudents) {
       toast.error('You do not have permission to restore student records.');
+      return;
+    }
+    if (!isFirebaseConfigured) {
+      toast.error('Live Firebase data is not configured.');
       return;
     }
 
@@ -772,12 +782,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
       setStatusFilter('active');
       toast.success('Student restored');
     } catch {
-      setStudents((prev) => prev.map((item) => (
-        item.id === student.id ? { ...item, ...updates } : item
-      )));
-      setSelectedId(student.id);
-      setStatusFilter('active');
-      toast.success('Student restored locally. Check Firebase setup to persist it.');
+      toast.error('Student was not restored in live data.');
     }
   };
 
@@ -845,7 +850,7 @@ export default function StudentInformationManagement({ user, onLogout }) {
                   <div>
                     <div className="text-sm font-bold text-slate-500 mb-2">Academics / <span className="text-[#f39a5f]">Student Information Management</span></div>
                     <h1 className="text-2xl font-bold text-slate-900">Student Information Management</h1>
-                    {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist records.</p>}
+                    {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Live Firebase data is not configured.</p>}
                     {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
                   </div>
                   {canCreateAdmission && (
@@ -913,7 +918,6 @@ export default function StudentInformationManagement({ user, onLogout }) {
                       selectedId={selectedId}
                       onSelect={selectStudent}
                       onEdit={setEditingStudent}
-                      onDownload={(student) => toast.success(`${student.name} record downloaded`)}
                       onArchive={archiveSelectedStudent}
                       onRestore={restoreArchivedStudent}
                     />
@@ -989,7 +993,9 @@ export default function StudentInformationManagement({ user, onLogout }) {
                 ) : activePage === 'settings' ? (
                   <SettingsManagement currentUser={user} selectedCourse={selectedCourse} selectedCourseCode={effectiveSelectedCourseCode} />
                 ) : (
-                  <DemoModulePage page={activePage} onOpenStudents={() => navigateToModule('students')} />
+                  <div className="rounded-lg bg-[#f5f5f6] p-6 text-sm text-slate-600">
+                    This module is not available.
+                  </div>
                 )}
                 </ModuleErrorBoundary>
               </section>

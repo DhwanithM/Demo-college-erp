@@ -14,7 +14,7 @@ import {
   validateAcademicYearSettings,
   validateInstituteSettings,
 } from '../src/modules/settings/settingsUtils.js';
-import { normalizeInstituteSettings } from '../src/modules/settings/demoSettings.js';
+import { normalizeInstituteSettings } from '../src/modules/settings/settingsModel.js';
 
 assert.equal(buildClassKey({ className: 'Class XII', section: 'A' }), 'Class XII - A');
 assert.deepEqual(summarizeAcademics([{}], [{}, {}], [{}], [{ status: 'Published' }, { status: 'Draft' }]), {

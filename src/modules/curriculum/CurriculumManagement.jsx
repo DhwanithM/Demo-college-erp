@@ -5,7 +5,6 @@ import { createAcademicCalendarEvent, getAcademicsData, updateAcademicCalendarEv
 import { isFirebaseConfigured } from '../../firebase/config';
 import { canAccess, defaultRoles } from '../userRoles/rolePermissions';
 import StatusBadge from '../students/components/StatusBadge';
-import { demoAcademicCalendarEvents } from '../academics/demoAcademics';
 import { formatDisplayDate, validateCalendarEvent } from '../academics/academicUtils';
 import { filterByCourse } from '../shared/courseFilters';
 
@@ -77,24 +76,26 @@ function CurriculumEventModal({ initialEvent = null, onClose, onSave }) {
   );
 }
 
-export default function CurriculumManagement({ currentUser, academicYear = '2026-2027', selectedCourse = null, selectedCourseCode = 'all' }) {
-  const [events, setEvents] = useState(isFirebaseConfigured ? [] : demoAcademicCalendarEvents);
-  const [selectedEvent, setSelectedEvent] = useState(isFirebaseConfigured ? null : demoAcademicCalendarEvents[0] || null);
+export default function CurriculumManagement({ currentUser, academicYear = '', selectedCourse = null, selectedCourseCode = 'all' }) {
+  const [events, setEvents] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     const loadCurriculum = async () => {
-      if (!isFirebaseConfigured) return;
+      if (!isFirebaseConfigured) {
+        setLoadError('Live Firebase data is not configured.');
+        return;
+      }
       try {
         const data = await getAcademicsData(academicYear);
-        if (data.academicCalendarEvents.length) {
-          setEvents(data.academicCalendarEvents);
-          setSelectedEvent(data.academicCalendarEvents[0]);
-        }
+        setEvents(data.academicCalendarEvents || []);
+        setSelectedEvent(data.academicCalendarEvents?.[0] || null);
+        setLoadError('');
       } catch (error) {
-        console.warn('Using demo curriculum because Firestore is not reachable.', error);
-        setLoadError('Unable to load Firestore curriculum records. Showing demo/local records.');
+        console.warn('Unable to load live curriculum data.', error);
+        setLoadError('Unable to load live curriculum records.');
       }
     };
     loadCurriculum();
@@ -126,17 +127,15 @@ export default function CurriculumManagement({ currentUser, academicYear = '2026
     }
     try {
       const id = await createAcademicCalendarEvent(payload);
-      const created = { id: id || `local-curriculum-${Date.now()}`, ...payload };
+      if (!id) throw new Error('Live curriculum event was not created.');
+      const created = { id, ...payload };
       setEvents((prev) => [created, ...prev]);
       setSelectedEvent(created);
       toast.success('Curriculum event added');
-    } catch {
-      const created = { id: `local-curriculum-${Date.now()}`, ...payload };
-      setEvents((prev) => [created, ...prev]);
-      setSelectedEvent(created);
-      toast.success('Curriculum event added locally');
-    } finally {
       setShowModal(false);
+    } catch (error) {
+      console.error('Unable to create live curriculum event.', error);
+      toast.error('Curriculum event was not saved to live data.');
     }
   };
 
@@ -152,14 +151,13 @@ export default function CurriculumManagement({ currentUser, academicYear = '2026
       return;
     }
     try {
-      await Promise.all(publishable.filter((item) => !String(item.id).startsWith('demo-') && !String(item.id).startsWith('local-')).map((item) => updateAcademicCalendarEvent(item.id, updates)));
+      await Promise.all(publishable.map((item) => updateAcademicCalendarEvent(item.id, updates)));
       setEvents((prev) => prev.map((item) => item.status === 'Published' ? item : { ...item, ...updates }));
       setSelectedEvent((prev) => prev ? { ...prev, ...updates } : prev);
       toast.success('Curriculum published');
-    } catch {
-      setEvents((prev) => prev.map((item) => item.status === 'Published' ? item : { ...item, ...updates }));
-      setSelectedEvent((prev) => prev ? { ...prev, ...updates } : prev);
-      toast.success('Curriculum published locally');
+    } catch (error) {
+      console.error('Unable to publish live curriculum.', error);
+      toast.error('Curriculum was not published to live data.');
     }
   };
 
@@ -186,7 +184,7 @@ export default function CurriculumManagement({ currentUser, academicYear = '2026
           <div className="text-sm font-bold text-slate-500 mb-2">Academics / <span className="text-[#f39a5f]">Curriculum</span></div>
           <h1 className="text-2xl font-bold text-slate-900">Curriculum</h1>
           <p className="text-sm text-slate-500 mt-1">Calendar view for classes, tests, holidays, admissions, and academic events.</p>
-          {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist curriculum events.</p>}
+          {!isFirebaseConfigured && <p className="text-xs text-rose-600 mt-2">Live Firebase data is not configured.</p>}
           {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
         </div>
         <div className="flex items-center gap-3 flex-wrap">

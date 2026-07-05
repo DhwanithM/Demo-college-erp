@@ -1,19 +1,18 @@
 import { useState } from 'react';
 import { Upload, UserRound } from 'lucide-react';
-import { admissionCourses } from '../admissionSeedData';
 import { getAdmissionFieldsForCourse } from '../admissionFieldConfig';
 import { PENDING_ADMISSION_STATUS } from '../studentUtils';
 
 const defaultForm = {
   name: '',
-  className: '1 St Year',
-  section: 'Regular',
-  program: 'BSC Nursing',
-  courseCode: 'BSCN',
-  courseName: 'BSC Nursing',
-  courseYear: '1 St Year',
-  admissionType: 'Regular',
-  academicYear: '2025-2026',
+  className: '',
+  section: '',
+  program: '',
+  courseCode: '',
+  courseName: '',
+  courseYear: '',
+  admissionType: '',
+  academicYear: '',
   guardianName: '',
   idHolder: '',
   phone: '',
@@ -24,17 +23,29 @@ const defaultForm = {
 };
 
 export default function StudentModal({
-  academicYearOptions = ['2025-2026'],
-  courses = admissionCourses,
-  initialAcademicYear = '2025-2026',
-  initialCourseCode = 'BSCN',
+  academicYearOptions = [],
+  courses = [],
+  initialAcademicYear = '',
+  initialCourseCode = '',
   initialStudent = null,
   mode = 'create',
   canApproveAdmission = false,
   onClose,
   onSave,
 }) {
-  const initialCourse = courses.find((course) => course.courseCode === (initialStudent?.courseCode || initialCourseCode)) || courses[0];
+  const courseOptions = courses.length
+    ? courses
+    : initialStudent?.courseCode
+      ? [{
+          courseCode: initialStudent.courseCode,
+          courseName: initialStudent.courseName || initialStudent.program || initialStudent.courseCode,
+          courseYear: initialStudent.courseYear || initialStudent.className || '',
+          admissionType: initialStudent.admissionType || initialStudent.section || '',
+          collegeName: initialStudent.collegeName || '',
+          collegeCode: initialStudent.collegeCode || '',
+        }]
+      : [];
+  const initialCourse = courseOptions.find((course) => course.courseCode === (initialStudent?.courseCode || initialCourseCode)) || courseOptions[0] || {};
   const [form, setForm] = useState({
     ...defaultForm,
     academicYear: initialStudent?.academicYear || initialAcademicYear,
@@ -50,8 +61,9 @@ export default function StudentModal({
     ...initialStudent,
   });
   const isEdit = mode === 'edit';
-  const selectedCourse = courses.find((course) => course.courseCode === form.courseCode) || initialCourse || {};
+  const selectedCourse = courseOptions.find((course) => course.courseCode === form.courseCode) || initialCourse || {};
   const admissionFields = getAdmissionFieldsForCourse(selectedCourse);
+  const canSubmit = isEdit || (courseOptions.length > 0 && academicYearOptions.length > 0);
 
   const uploadProfilePhoto = (file) => {
     if (!file) return;
@@ -68,7 +80,7 @@ export default function StudentModal({
   };
 
   const updateCourse = (courseCode) => {
-    const course = courses.find((item) => item.courseCode === courseCode);
+    const course = courseOptions.find((item) => item.courseCode === courseCode);
     setForm((prev) => ({
       ...prev,
       courseCode,
@@ -135,15 +147,22 @@ export default function StudentModal({
               New admissions are saved as Pending Approval until a Super Admin approves them.
             </div>
           )}
+          {!canSubmit && (
+            <div className="sm:col-span-2 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
+              Live course and academic year data is required before creating an admission.
+            </div>
+          )}
           <label className="sm:col-span-2">
             <span className="block text-xs font-semibold text-slate-500 mb-1.5">Course</span>
             <select
               required
+              disabled={!courseOptions.length}
               value={form.courseCode}
               onChange={(event) => updateCourse(event.target.value)}
               className="w-full h-11 rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-[#fb9a5b] focus:ring-2 focus:ring-orange-100"
             >
-              {courses.map((course) => (
+              {!courseOptions.length && <option value="">No live courses available</option>}
+              {courseOptions.map((course) => (
                 <option key={course.courseCode} value={course.courseCode}>
                   {course.courseName} - {course.admissionType || course.courseYear}
                 </option>
@@ -154,10 +173,12 @@ export default function StudentModal({
             <span className="block text-xs font-semibold text-slate-500 mb-1.5">Academic Year</span>
             <select
               required
+              disabled={!academicYearOptions.length}
               value={form.academicYear}
               onChange={(event) => setForm((prev) => ({ ...prev, academicYear: event.target.value }))}
               className="w-full h-11 rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-[#fb9a5b] focus:ring-2 focus:ring-orange-100"
             >
+              {!academicYearOptions.length && <option value="">No live academic years available</option>}
               {academicYearOptions.map((year) => (
                 <option key={year} value={year}>{year}</option>
               ))}
@@ -196,7 +217,7 @@ export default function StudentModal({
           <button type="button" onClick={onClose} className="h-10 px-5 rounded-lg bg-slate-100 text-slate-700 font-semibold text-sm">
             Cancel
           </button>
-          <button type="submit" className="h-10 px-5 rounded-lg bg-[#33373e] text-white font-semibold text-sm">
+          <button type="submit" disabled={!canSubmit} className="h-10 px-5 rounded-lg bg-[#33373e] text-white font-semibold text-sm disabled:bg-slate-300 disabled:cursor-not-allowed">
             {isEdit ? 'Save Changes' : 'Save Admission'}
           </button>
         </div>

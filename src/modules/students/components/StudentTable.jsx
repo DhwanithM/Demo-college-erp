@@ -1,4 +1,4 @@
-import { Archive, ArchiveRestore, Download, Edit3, Eye, UserRound } from 'lucide-react';
+import { Archive, ArchiveRestore, Edit3, Eye, UserRound } from 'lucide-react';
 import StatusBadge from './StatusBadge';
 
 export default function StudentTable({
@@ -8,7 +8,6 @@ export default function StudentTable({
   students,
   statusFilter,
   onArchive,
-  onDownload,
   onEdit,
   onRestore,
   onSelect,
@@ -82,13 +81,6 @@ export default function StudentTable({
                       <Edit3 size={15} />
                     </button>
                   )}
-                  <button
-                    onClick={(event) => { event.stopPropagation(); onDownload(student); }}
-                    className="h-9 w-9 rounded-full border border-slate-200 flex items-center justify-center"
-                    title="Download record"
-                  >
-                    <Download size={15} />
-                  </button>
                   {canArchive && student.status !== 'Archived' && (
                     <button
                       onClick={(event) => { event.stopPropagation(); onArchive(student); }}

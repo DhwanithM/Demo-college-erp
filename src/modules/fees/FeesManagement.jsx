@@ -13,7 +13,6 @@ import {
 import { isFirebaseConfigured } from '../../firebase/config';
 import { canAccess, defaultRoles } from '../userRoles/rolePermissions';
 import { getClassOptions } from '../timetable/timetableUtils';
-import { demoFeeAdjustments, demoFeeAssignments, demoFeeCollections, demoFeeStructures, demoFeeStudents } from './demoFees';
 import {
   calculateDueAmount,
   calculateFeeStatus,
@@ -34,12 +33,12 @@ import FeeStructureModal from './components/FeeStructureModal';
 import FeeStructurePanel from './components/FeeStructurePanel';
 import { filterByCourse, filterStudentScopedRecords, filterStudentsByCourse } from '../shared/courseFilters';
 
-export default function FeesManagement({ currentUser, academicYear = '2026-2027', scopedStudents = [], selectedCourse = null, selectedCourseCode = 'all' }) {
-  const [students, setStudents] = useState(isFirebaseConfigured ? [] : demoFeeStudents);
-  const [structures, setStructures] = useState(isFirebaseConfigured ? [] : demoFeeStructures);
-  const [assignments, setAssignments] = useState(isFirebaseConfigured ? [] : demoFeeAssignments);
-  const [collections, setCollections] = useState(isFirebaseConfigured ? [] : demoFeeCollections);
-  const [adjustments, setAdjustments] = useState(isFirebaseConfigured ? [] : demoFeeAdjustments);
+export default function FeesManagement({ currentUser, academicYear = '', scopedStudents = [], selectedCourse = null, selectedCourseCode = 'all' }) {
+  const [students, setStudents] = useState([]);
+  const [structures, setStructures] = useState([]);
+  const [assignments, setAssignments] = useState([]);
+  const [collections, setCollections] = useState([]);
+  const [adjustments, setAdjustments] = useState([]);
   const [search, setSearch] = useState('');
   const [loadError, setLoadError] = useState('');
   const [showStructureModal, setShowStructureModal] = useState(false);
@@ -53,17 +52,21 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
 
   useEffect(() => {
     const loadFees = async () => {
-      if (!isFirebaseConfigured) return;
+      if (!isFirebaseConfigured) {
+        setLoadError('Live Firebase data is not configured.');
+        return;
+      }
       try {
         const data = await getFeesManagementData(academicYear);
-        if (data.students.length) setStudents(data.students.filter((student) => student.status !== 'Archived'));
+        setStudents(data.students.filter((student) => student.status !== 'Archived'));
         setStructures(data.feeStructures);
         setAssignments(data.feeAssignments);
         setCollections(data.feeCollections);
         setAdjustments(data.feeAdjustments);
+        setLoadError('');
       } catch (error) {
-        console.warn('Using demo fee data because Firestore is not reachable.', error);
-        setLoadError('Unable to load Firestore fee records. Showing demo/local records.');
+        console.warn('Unable to load live fee data.', error);
+        setLoadError('Unable to load live fee records.');
       }
     };
     loadFees();
@@ -287,9 +290,9 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
         await updateFeeStructure(editingStructure.id, updates);
         setStructures((prev) => prev.map((item) => item.id === editingStructure.id ? { ...item, ...updates } : item));
         toast.success('Fee structure updated');
-      } catch {
-        setStructures((prev) => prev.map((item) => item.id === editingStructure.id ? { ...item, ...updates } : item));
-        toast.success('Fee structure updated locally');
+      } catch (error) {
+        console.error('Unable to update live fee structure.', error);
+        toast.error('Fee structure was not saved to live data.');
       } finally {
         setEditingStructure(null);
       }
@@ -299,11 +302,12 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
     const createPayload = { ...payload, createdAtText: formatDisplayDate() };
     try {
       const id = await createFeeStructure(createPayload);
-      setStructures((prev) => [{ id: id || `local-fee-structure-${Date.now()}`, ...createPayload }, ...prev]);
+      if (!id) throw new Error('Live fee structure was not created.');
+      setStructures((prev) => [{ id, ...createPayload }, ...prev]);
       toast.success('Fee structure created');
-    } catch {
-      setStructures((prev) => [{ id: `local-fee-structure-${Date.now()}`, ...createPayload }, ...prev]);
-      toast.success('Fee structure created locally');
+    } catch (error) {
+      console.error('Unable to create live fee structure.', error);
+      toast.error('Fee structure was not saved to live data.');
     } finally {
       setShowStructureModal(false);
     }
@@ -343,11 +347,12 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
     }
     try {
       const ids = await Promise.all(payloads.map((payload) => createFeeAssignment(payload)));
-      setAssignments((prev) => [...payloads.map((payload, index) => ({ id: ids[index] || `local-fee-assignment-${Date.now()}-${index}`, ...payload })), ...prev]);
+      if (ids.some((id) => !id)) throw new Error('One or more live fee assignments were not created.');
+      setAssignments((prev) => [...payloads.map((payload, index) => ({ id: ids[index], ...payload })), ...prev]);
       toast.success('Fee structure assigned');
-    } catch {
-      setAssignments((prev) => [...payloads.map((payload, index) => ({ id: `local-fee-assignment-${Date.now()}-${index}`, ...payload })), ...prev]);
-      toast.success('Fee structure assigned locally');
+    } catch (error) {
+      console.error('Unable to assign live fee structure.', error);
+      toast.error('Fee assignments were not saved to live data.');
     }
   };
 
@@ -383,11 +388,12 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
       };
       try {
         const id = await createFeeCollection(collection);
-        setCollections((prev) => [{ id: id || `local-fee-collection-${Date.now()}`, ...collection }, ...prev]);
+        if (!id) throw new Error('Live fee collection was not created.');
+        setCollections((prev) => [{ id, ...collection }, ...prev]);
         toast.success('Manual fee collection posted');
-      } catch {
-        setCollections((prev) => [{ id: `local-fee-collection-${Date.now()}`, ...collection }, ...prev]);
-        toast.success('Manual fee collection posted locally');
+      } catch (error) {
+        console.error('Unable to post live manual fee collection.', error);
+        toast.error('Manual fee collection was not saved to live data.');
       } finally {
         setShowCollectionModal(false);
         setCollectionAssignmentId('');
@@ -419,14 +425,14 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
     };
     try {
       const id = await createFeeCollection(collection);
+      if (!id) throw new Error('Live fee collection was not created.');
       await updateFeeAssignment(assignment.id, assignmentUpdates);
-      setCollections((prev) => [{ id: id || `local-fee-collection-${Date.now()}`, ...collection }, ...prev]);
+      setCollections((prev) => [{ id, ...collection }, ...prev]);
       setAssignments((prev) => prev.map((item) => item.id === assignment.id ? { ...item, ...assignmentUpdates } : item));
       toast.success('Fee collection posted');
-    } catch {
-      setCollections((prev) => [{ id: `local-fee-collection-${Date.now()}`, ...collection }, ...prev]);
-      setAssignments((prev) => prev.map((item) => item.id === assignment.id ? { ...item, ...assignmentUpdates } : item));
-      toast.success('Fee collection posted locally');
+    } catch (error) {
+      console.error('Unable to post live fee collection.', error);
+      toast.error('Fee collection was not saved to live data.');
     } finally {
       setShowCollectionModal(false);
       setCollectionAssignmentId('');
@@ -466,14 +472,14 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
     };
     try {
       const id = await createFeeAdjustment(adjustment);
+      if (!id) throw new Error('Live fee adjustment was not created.');
       await updateFeeAssignment(assignment.id, assignmentUpdates);
-      setAdjustments((prev) => [{ id: id || `local-fee-adjustment-${Date.now()}`, ...adjustment }, ...prev]);
+      setAdjustments((prev) => [{ id, ...adjustment }, ...prev]);
       setAssignments((prev) => prev.map((item) => item.id === assignment.id ? { ...item, ...assignmentUpdates } : item));
       toast.success('Fee adjustment approved');
-    } catch {
-      setAdjustments((prev) => [{ id: `local-fee-adjustment-${Date.now()}`, ...adjustment }, ...prev]);
-      setAssignments((prev) => prev.map((item) => item.id === assignment.id ? { ...item, ...assignmentUpdates } : item));
-      toast.success('Fee adjustment approved locally');
+    } catch (error) {
+      console.error('Unable to approve live fee adjustment.', error);
+      toast.error('Fee adjustment was not saved to live data.');
     } finally {
       setShowAdjustmentModal(false);
     }
@@ -514,7 +520,7 @@ export default function FeesManagement({ currentUser, academicYear = '2026-2027'
           <div className="text-sm font-bold text-slate-500 mb-2">Finance / <span className="text-[#f39a5f]">Payment</span></div>
           <h1 className="text-2xl font-bold text-slate-900">Payment</h1>
           <p className="text-sm text-slate-500 mt-1">Student payment collection, due tracking, fee setup, waivers, and receipts.</p>
-          {!isFirebaseConfigured && <p className="text-xs text-orange-600 mt-2">Demo mode: add Firebase keys to persist fee records.</p>}
+          {!isFirebaseConfigured && <p className="text-xs text-rose-600 mt-2">Live Firebase data is not configured.</p>}
           {loadError && <p className="text-xs text-rose-600 mt-2">{loadError}</p>}
         </div>
       </div>
