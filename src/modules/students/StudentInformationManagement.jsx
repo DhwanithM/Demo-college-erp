@@ -959,7 +959,6 @@ export default function StudentInformationManagement({ user, onLogout }) {
                     initialBranch={location.state?.attendanceBranch}
                     initialMode={location.state?.attendanceMode}
                     initialTask={location.state?.attendanceTask}
-                    onOpenReports={(reportCategory) => navigateToModule('reports', { state: { reportCategory } })}
                     selectedCourse={selectedCourse}
                     selectedCourseCode={effectiveSelectedCourseCode}
                     scopedStudents={moduleScopedStudents}

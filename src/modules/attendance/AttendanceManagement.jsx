@@ -43,7 +43,6 @@ export default function AttendanceManagement({
   initialBranch = '',
   initialMode = 'students',
   initialTask = '',
-  onOpenReports,
   scopedStudents = [],
   selectedCourse = null,
   selectedCourseCode = 'all',
@@ -118,7 +117,6 @@ export default function AttendanceManagement({
   const canMarkStudents = canAccess(defaultRoles, currentRoleId, 'attendance.markStudents');
   const canMarkStaff = canAccess(defaultRoles, currentRoleId, 'attendance.markStaff');
   const canNotifyParents = canAccess(defaultRoles, currentRoleId, 'attendance.notifyParents');
-  const canViewReports = canAccess(defaultRoles, currentRoleId, 'attendance.reports');
 
   const courseStudents = scopedStudents.length ? scopedStudents : filterStudentsByCourse(students, selectedCourseCode, selectedCourse);
   const subjectOptions = useMemo(() => {
@@ -213,14 +211,6 @@ export default function AttendanceManagement({
       icon: <UserCheck size={22} />,
       meta: [`${staff.length} staff`, canMarkStaff ? 'Mark enabled' : 'View only'],
       onOpen: () => openAttendanceTask('staff', 'staff'),
-    },
-    canViewReports && {
-      id: 'reports',
-      title: 'Attendance Reports',
-      description: 'Open the Reports module for attendance summaries.',
-      icon: <CalendarDays size={22} />,
-      meta: [`${summary.percentage}%`, 'Reports module'],
-      onOpen: () => onOpenReports?.('attendance'),
     },
   ].filter(Boolean);
 

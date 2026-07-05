@@ -60,13 +60,6 @@ export default function Sidebar({ activePage, activeSubmenuId = '', collapsed = 
         state: { attendanceSubmenu: 'staff-attendance', attendanceTask: 'staff', attendanceBranch: 'mark-staff', attendanceMode: 'staff' },
         enabled: canAccess(defaultRoles, currentRoleId, 'attendance.markStaff') || canAccess(defaultRoles, currentRoleId, 'staff.attendance'),
       },
-      {
-        id: 'attendance-reports',
-        label: 'Attendance Reports',
-        moduleId: 'reports',
-        state: { reportCategory: 'attendance', sourceModule: 'attendance' },
-        enabled: canAccess(defaultRoles, currentRoleId, 'reports.view') && canAccess(defaultRoles, currentRoleId, 'attendance.reports'),
-      },
     ],
     reports: [
       {
