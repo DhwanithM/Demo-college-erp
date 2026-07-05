@@ -1739,34 +1739,37 @@ html{color-scheme:dark}::selection{background:rgba(0,255,136,.18);color:#eafff5}
 }
 
 .erp-shell .erp-sidebar-submenu {
-  margin:4px 0 6px 39px;
-  padding-left:12px;
-  border-left:1px solid rgba(148,163,184,.18);
+  margin:6px 0 8px 42px;
+  padding-left:13px;
+  border-left:1px solid rgba(148,163,184,.24);
   display:flex;
   flex-direction:column;
-  gap:3px;
+  gap:5px;
 }
 
 .erp-shell .erp-sidebar-subitem {
-  min-height:30px!important;
-  height:30px!important;
+  min-height:36px!important;
+  height:36px!important;
   width:100%!important;
-  padding:0 10px!important;
+  padding:0 12px!important;
   border:0!important;
-  border-radius:8px!important;
+  border-radius:10px!important;
   background:transparent!important;
-  color:rgba(226,232,240,.68)!important;
-  font-size:12px!important;
-  font-weight:700!important;
+  color:rgba(226,232,240,.74)!important;
+  font-size:13.5px!important;
+  font-weight:750!important;
+  line-height:1!important;
   text-align:left!important;
   display:flex!important;
   align-items:center!important;
+  transition:background .18s ease,color .18s ease,transform .18s ease!important;
 }
 
 .erp-shell .erp-sidebar-subitem:hover,
 .erp-shell .erp-sidebar-subitem.is-active {
   color:var(--erp-accent)!important;
-  background:rgba(0,255,136,.08)!important;
+  background:rgba(0,255,136,.12)!important;
+  transform:translateX(2px)!important;
 }
 
 .erp-shell .erp-sidebar-nav .erp-sidebar-item > span {
@@ -1948,17 +1951,17 @@ html{color-scheme:dark}::selection{background:rgba(0,255,136,.18);color:#eafff5}
 }
 
 .erp-shell.light-mode .erp-sidebar-submenu {
-  border-left-color:rgba(15,23,42,.12);
+  border-left-color:rgba(15,23,42,.16);
 }
 
 .erp-shell.light-mode .erp-sidebar-subitem {
-  color:#64748b!important;
+  color:#475569!important;
 }
 
 .erp-shell.light-mode .erp-sidebar-subitem:hover,
 .erp-shell.light-mode .erp-sidebar-subitem.is-active {
-  color:#047857!important;
-  background:rgba(16,185,129,.11)!important;
+  color:#065f46!important;
+  background:rgba(16,185,129,.14)!important;
 }
 
 .erp-shell.light-mode .erp-sidebar-nav .erp-sidebar-item > span,

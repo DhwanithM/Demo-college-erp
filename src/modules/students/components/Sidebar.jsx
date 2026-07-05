@@ -110,7 +110,7 @@ export default function Sidebar({ activePage, activeSubmenuId = '', collapsed = 
   const renderNavButton = ({ id, label, icon, status }) => {
     const active = activePage === id;
     const submenuItems = (submenuItemsByModule[id] || []).filter((item) => item.enabled);
-    const expanded = !collapsed && submenuItems.length && (active || hoveredModuleId === id);
+    const expanded = Boolean(!collapsed && submenuItems.length && (active || hoveredModuleId === id));
     return (
       <div
         key={id}
