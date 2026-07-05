@@ -6,11 +6,13 @@ import {
   ClipboardList,
   FileCheck2,
   GraduationCap,
+  Menu,
   Moon,
   Sun,
   UserCheck,
   Users,
   Wallet,
+  X,
 } from 'lucide-react';
 import { getEnabledModules, sortModulesByDisplayOrder } from '../../moduleRegistry';
 import { canAccess, defaultRoles } from '../../userRoles/rolePermissions';
@@ -18,6 +20,7 @@ import devloftLogo from '../../../../assets/logo.png';
 
 export default function Sidebar({ activePage, activeSubmenuId = '', collapsed = false, currentUser, onNavigate, onThemeToggle, onToggleCollapse, themeMode = 'dark' }) {
   const [expandedState, setExpandedState] = useState({ page: activePage, moduleId: activePage });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const currentRoleId = currentUser?.roleId || 'admin';
   const isSuperAdmin = currentRoleId === 'super-admin';
   const isAdmin = currentRoleId === 'admin';
@@ -172,6 +175,61 @@ export default function Sidebar({ activePage, activeSubmenuId = '', collapsed = 
     );
   };
 
+  const handleMobileNavigate = (item) => {
+    setExpandedState({ page: activePage, moduleId: '' });
+    setMobileMenuOpen(false);
+    onNavigate(item.id);
+  };
+
+  const handleMobileSubmenuNavigate = (item) => {
+    setExpandedState({ page: activePage, moduleId: item.moduleId });
+    setMobileMenuOpen(false);
+    onNavigate(item.moduleId, { state: item.state });
+  };
+
+  const renderMobileDrawerItem = ({ id, label, icon, status }) => {
+    const active = activePage === id;
+    const submenuItems = (submenuItemsByModule[id] || []).filter((item) => item.enabled);
+    const expanded = submenuItems.length > 0 && expandedModuleId === id;
+    return (
+      <div key={id} className="erp-mobile-drawer-item-wrap">
+        <button
+          type="button"
+          onClick={() => {
+            if (submenuItems.length > 0) {
+              setExpandedState({ page: activePage, moduleId: expanded ? '' : id });
+              return;
+            }
+            handleMobileNavigate({ id });
+          }}
+          className={`erp-mobile-drawer-item ${active ? 'is-active' : ''}`}
+          aria-expanded={submenuItems.length > 0 ? expanded : undefined}
+        >
+          <span className="erp-mobile-drawer-item-icon">{icon}</span>
+          <span>{label}</span>
+          {status === 'planned' && <span className="erp-sidebar-item-badge">Soon</span>}
+          {status === 'demo' && <span className="erp-sidebar-item-badge">Demo</span>}
+          {submenuItems.length > 0 && <ChevronRight className={`erp-sidebar-submenu-chevron ${expanded ? 'is-open' : ''}`} size={16} />}
+        </button>
+        {expanded && (
+          <div className="erp-mobile-drawer-submenu">
+            {submenuItems.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => handleMobileSubmenuNavigate(item)}
+                className={`erp-mobile-drawer-subitem ${activeSubmenuId === item.id || activeSubmenuId === item.state.reportCategory ? 'is-active' : ''}`}
+              >
+                <span className="erp-sidebar-subitem-icon">{item.icon}</span>
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <>
     <aside className={`erp-sidebar ${collapsed ? 'is-collapsed' : ''} bg-white border-r border-slate-200 shrink-0 hidden lg:flex flex-col transition-all duration-300`}>
@@ -237,50 +295,59 @@ export default function Sidebar({ activePage, activeSubmenuId = '', collapsed = 
         </div>
       </div>
     </aside>
-    <nav className="erp-mobile-nav lg:hidden" aria-label="Mobile navigation">
-      {expandedModuleId && (submenuItemsByModule[expandedModuleId] || []).filter((item) => item.enabled).length > 0 && (
-        <div className="erp-mobile-submenu">
-          {(submenuItemsByModule[expandedModuleId] || []).filter((item) => item.enabled).map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => {
-                setExpandedState({ page: activePage, moduleId: item.moduleId });
-                onNavigate(item.moduleId, { state: item.state });
-              }}
-              className={`erp-mobile-subitem ${activeSubmenuId === item.id || activeSubmenuId === item.state.reportCategory ? 'is-active' : ''}`}
-            >
-              {item.icon}
-              <span>{item.label}</span>
-            </button>
-          ))}
+    <button
+      type="button"
+      onClick={() => setMobileMenuOpen(true)}
+      className="erp-mobile-menu-button lg:hidden"
+      aria-label="Open menu"
+    >
+      <Menu size={22} />
+    </button>
+    <div className={`erp-mobile-drawer-shell lg:hidden ${mobileMenuOpen ? 'is-open' : ''}`} aria-hidden={!mobileMenuOpen}>
+      <button
+        type="button"
+        className="erp-mobile-drawer-backdrop"
+        onClick={() => setMobileMenuOpen(false)}
+        aria-label="Close menu"
+      />
+      <aside className="erp-mobile-drawer" aria-label="Mobile modules">
+        <div className="erp-mobile-drawer-header">
+          <div className="erp-sidebar-logo">
+            <img src={devloftLogo} alt="" className="h-full w-full object-contain rounded-lg" />
+          </div>
+          <div className="erp-mobile-drawer-title">Devloft College Management</div>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(false)}
+            className="erp-mobile-drawer-close"
+            aria-label="Close menu"
+          >
+            <X size={20} />
+          </button>
         </div>
-      )}
-      <div className="erp-mobile-nav-scroll">
-        {visibleMobileItems.map(({ id, label, icon }) => {
-          const active = activePage === id;
-          const submenuItems = (submenuItemsByModule[id] || []).filter((item) => item.enabled);
-          return (
-            <button
-              key={id}
-              type="button"
-              onClick={() => {
-                if (submenuItems.length) {
-                  setExpandedState({ page: activePage, moduleId: expandedModuleId === id ? '' : id });
-                  return;
-                }
-                setExpandedState({ page: activePage, moduleId: '' });
-                onNavigate(id);
-              }}
-              className={`erp-mobile-nav-item ${active ? 'is-active' : ''}`}
-            >
-              <span>{icon}</span>
-              <span>{label}</span>
-            </button>
-          );
-        })}
-      </div>
-    </nav>
+        <nav className="erp-mobile-drawer-nav">
+          {visibleMobileItems.map(renderMobileDrawerItem)}
+        </nav>
+        <div className="erp-mobile-drawer-theme" aria-label="Theme mode">
+          <button
+            type="button"
+            onClick={() => selectTheme('light')}
+            className={themeMode === 'light' ? 'is-active' : ''}
+          >
+            <Sun size={16} />
+            Light
+          </button>
+          <button
+            type="button"
+            onClick={() => selectTheme('dark')}
+            className={themeMode === 'dark' ? 'is-active' : ''}
+          >
+            <Moon size={16} />
+            Dark
+          </button>
+        </div>
+      </aside>
+    </div>
     </>
   );
 }

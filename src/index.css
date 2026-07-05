@@ -3158,99 +3158,207 @@ html{color-scheme:dark}::selection{background:rgba(0,255,136,.18);color:#eafff5}
   color:currentColor;
 }
 
-.erp-mobile-nav {
+.erp-mobile-menu-button {
   position:fixed;
-  left:10px;
-  right:10px;
-  bottom:10px;
-  z-index:90;
-  pointer-events:none;
-}
-
-.erp-mobile-nav-scroll {
-  min-height:64px;
-  padding:8px;
-  display:flex;
-  align-items:center;
-  gap:7px;
-  overflow-x:auto;
+  left:14px;
+  top:15px;
+  z-index:120;
+  width:42px;
+  height:42px;
   border:1px solid var(--erp-border);
-  border-radius:22px;
-  background:rgba(3,10,14,.94);
-  box-shadow:0 18px 42px rgba(0,0,0,.28);
-  backdrop-filter:blur(18px);
-  pointer-events:auto;
-  scrollbar-width:none;
-}
-
-.erp-mobile-nav-scroll::-webkit-scrollbar {
-  display:none;
-}
-
-.erp-mobile-nav-item {
-  min-width:68px;
-  height:48px;
-  padding:5px 8px;
-  border:0;
-  border-radius:16px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:3px;
-  color:var(--erp-muted);
-  background:transparent;
-  font-size:10px;
-  font-weight:750;
-  line-height:1;
-}
-
-.erp-mobile-nav-item svg {
-  width:19px;
-  height:19px;
-}
-
-.erp-mobile-nav-item.is-active {
-  color:var(--erp-accent);
-  background:rgba(0,255,136,.13);
-}
-
-.erp-mobile-submenu {
-  margin:0 6px 8px;
-  padding:8px;
-  display:flex;
-  gap:8px;
-  overflow-x:auto;
-  border:1px solid var(--erp-border);
-  border-radius:18px;
-  background:rgba(3,10,14,.96);
-  box-shadow:0 14px 34px rgba(0,0,0,.26);
-  pointer-events:auto;
-  scrollbar-width:none;
-}
-
-.erp-mobile-submenu::-webkit-scrollbar {
-  display:none;
-}
-
-.erp-mobile-subitem {
-  height:40px;
-  padding:0 12px;
-  border:0;
   border-radius:14px;
   display:flex;
   align-items:center;
-  gap:8px;
+  justify-content:center;
+  color:var(--erp-text);
+  background:rgba(3,10,14,.88);
+  box-shadow:0 10px 28px rgba(0,0,0,.24);
+  backdrop-filter:blur(14px);
+}
+
+.erp-mobile-drawer-shell {
+  position:fixed;
+  inset:0;
+  z-index:130;
+  pointer-events:none;
+  visibility:hidden;
+}
+
+.erp-mobile-drawer-shell.is-open {
+  pointer-events:auto;
+  visibility:visible;
+}
+
+.erp-mobile-drawer-backdrop {
+  position:absolute;
+  inset:0;
+  border:0;
+  background:rgba(0,0,0,.48);
+  opacity:0;
+  transition:opacity .18s ease;
+}
+
+.erp-mobile-drawer-shell.is-open .erp-mobile-drawer-backdrop {
+  opacity:1;
+}
+
+.erp-mobile-drawer {
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+  width:min(318px,86vw);
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  color:var(--erp-text);
+  background:rgba(3,10,14,.98);
+  border-right:1px solid var(--erp-border);
+  box-shadow:26px 0 54px rgba(0,0,0,.38);
+  transform:translateX(-104%);
+  transition:transform .22s cubic-bezier(.22,1,.36,1);
+}
+
+.erp-mobile-drawer-shell.is-open .erp-mobile-drawer {
+  transform:translateX(0);
+}
+
+.erp-mobile-drawer-header {
+  min-height:58px;
+  padding:8px 4px 12px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  border-bottom:1px solid var(--erp-border);
+}
+
+.erp-mobile-drawer-title {
+  min-width:0;
+  flex:1;
+  color:var(--erp-text);
+  font-size:13px;
+  font-weight:850;
+  line-height:1.15;
+}
+
+.erp-mobile-drawer-close {
+  width:38px;
+  height:38px;
+  border:1px solid var(--erp-border);
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   color:var(--erp-muted);
   background:rgba(255,255,255,.04);
-  white-space:nowrap;
+}
+
+.erp-mobile-drawer-nav {
+  min-height:0;
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  overflow-y:auto;
+  padding-right:2px;
+}
+
+.erp-mobile-drawer-nav::-webkit-scrollbar {
+  width:0;
+}
+
+.erp-mobile-drawer-item-wrap {
+  width:100%;
+}
+
+.erp-mobile-drawer-item,
+.erp-mobile-drawer-subitem {
+  width:100%;
+  border:0;
+  display:flex;
+  align-items:center;
+  color:var(--erp-muted);
+  background:transparent;
+  text-align:left;
+}
+
+.erp-mobile-drawer-item {
+  min-height:46px;
+  padding:0 10px;
+  border-radius:13px;
+  gap:11px;
+  font-size:13px;
+  font-weight:820;
+}
+
+.erp-mobile-drawer-item.is-active {
+  color:var(--erp-accent);
+  background:rgba(0,255,136,.12);
+}
+
+.erp-mobile-drawer-item-icon {
+  width:22px;
+  min-width:22px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.erp-mobile-drawer-item .erp-sidebar-submenu-chevron {
+  margin-left:auto;
+}
+
+.erp-mobile-drawer-submenu {
+  margin:2px 0 6px 18px;
+  padding-left:12px;
+  border-left:1px solid rgba(148,163,184,.22);
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+
+.erp-mobile-drawer-subitem {
+  min-height:38px;
+  padding:0 10px;
+  border-radius:11px;
+  gap:9px;
+  font-size:12.5px;
+  font-weight:760;
+}
+
+.erp-mobile-drawer-subitem.is-active {
+  color:var(--erp-accent);
+  background:rgba(0,255,136,.10);
+}
+
+.erp-mobile-drawer-theme {
+  padding:7px;
+  border:1px solid var(--erp-border);
+  border-radius:16px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  background:rgba(255,255,255,.035);
+}
+
+.erp-mobile-drawer-theme button {
+  height:38px;
+  border:0;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  color:var(--erp-muted);
+  background:transparent;
   font-size:12px;
   font-weight:800;
 }
 
-.erp-mobile-subitem.is-active {
-  color:var(--erp-accent);
-  background:rgba(0,255,136,.13);
+.erp-mobile-drawer-theme button.is-active {
+  color:#02100d;
+  background:var(--erp-accent);
 }
 
 .erp-attendance-status-wrap {
@@ -3330,22 +3438,44 @@ html{color-scheme:dark}::selection{background:rgba(0,255,136,.18);color:#eafff5}
   color:#4f46e5!important;
 }
 
-.erp-shell.light-mode .erp-mobile-nav-scroll,
-.erp-shell.light-mode .erp-mobile-submenu {
+.erp-shell.light-mode .erp-mobile-menu-button {
+  color:#033500!important;
+  background:rgba(255,255,255,.92)!important;
+  border-color:rgba(3,53,0,.15)!important;
+  box-shadow:0 10px 24px rgba(3,53,0,.12)!important;
+}
+
+.erp-shell.light-mode .erp-mobile-drawer {
   background:rgba(255,255,255,.94)!important;
   border-color:rgba(3,53,0,.16)!important;
   box-shadow:0 16px 34px rgba(3,53,0,.12)!important;
 }
 
-.erp-shell.light-mode .erp-mobile-nav-item,
-.erp-shell.light-mode .erp-mobile-subitem {
+.erp-shell.light-mode .erp-mobile-drawer-header,
+.erp-shell.light-mode .erp-mobile-drawer-theme,
+.erp-shell.light-mode .erp-mobile-drawer-close {
+  border-color:rgba(3,53,0,.14)!important;
+}
+
+.erp-shell.light-mode .erp-mobile-drawer-title {
+  color:#033500!important;
+}
+
+.erp-shell.light-mode .erp-mobile-drawer-item,
+.erp-shell.light-mode .erp-mobile-drawer-subitem,
+.erp-shell.light-mode .erp-mobile-drawer-theme button {
   color:#536079!important;
 }
 
-.erp-shell.light-mode .erp-mobile-nav-item.is-active,
-.erp-shell.light-mode .erp-mobile-subitem.is-active {
+.erp-shell.light-mode .erp-mobile-drawer-item.is-active,
+.erp-shell.light-mode .erp-mobile-drawer-subitem.is-active {
   color:#033500!important;
   background:rgba(3,53,0,.10)!important;
+}
+
+.erp-shell.light-mode .erp-mobile-drawer-theme button.is-active {
+  color:#ffffff!important;
+  background:#033500!important;
 }
 
 .erp-shell.light-mode .erp-attendance-status-button {
@@ -3368,11 +3498,12 @@ html{color-scheme:dark}::selection{background:rgba(0,255,136,.18);color:#eafff5}
 
 @media(max-width:1023px) {
   .erp-main-scroll {
-    padding-bottom:100px!important;
+    padding-bottom:14px!important;
   }
 
   .erp-header {
     min-height:auto!important;
+    padding-left:64px!important;
   }
 
   .erp-header-grid {
@@ -3427,6 +3558,9 @@ html{color-scheme:dark}::selection{background:rgba(0,255,136,.18);color:#eafff5}
 
   .erp-workspace {
     padding:14px!important;
+    border-radius:0!important;
+    border-left:0!important;
+    border-right:0!important;
   }
 
   .attendance-table {
@@ -3435,18 +3569,115 @@ html{color-scheme:dark}::selection{background:rgba(0,255,136,.18);color:#eafff5}
 }
 
 @media(max-width:640px) {
-  .erp-mobile-nav {
-    left:8px;
-    right:8px;
-    bottom:8px;
+  .erp-mobile-menu-button {
+    left:12px;
+    top:13px;
+    width:40px;
+    height:40px;
   }
 
-  .erp-mobile-nav-item {
-    min-width:62px;
-    font-size:9.5px;
+  .erp-header {
+    padding-top:13px!important;
+    padding-right:12px!important;
+    padding-bottom:12px!important;
+    padding-left:60px!important;
   }
 
-  .erp-mobile-subitem {
+  .erp-header-grid {
+    gap:8px;
+  }
+
+  .erp-header-college-title {
+    max-width:calc(100vw - 120px);
+    font-size:13px;
+    line-height:1.15;
+  }
+
+  .erp-header-actions {
+    gap:7px;
+  }
+
+  .erp-header-filters {
+    grid-template-columns:minmax(0,1fr) 98px;
+  }
+
+  .erp-header-select,
+  .erp-header-year-select {
+    height:33px!important;
+    border-radius:9px!important;
+    font-size:11.5px!important;
+  }
+
+  .erp-header-year-select {
+    max-width:none;
+  }
+
+  .erp-header .erp-profile-menu-wrap > button {
+    width:38px!important;
+    height:38px!important;
+  }
+
+  .erp-workspace {
+    padding:12px!important;
+  }
+
+  .erp-dashboard > .flex:first-child {
+    padding-bottom:14px!important;
+    margin-bottom:2px;
+  }
+
+  .erp-dashboard h1 {
+    font-size:24px!important;
+    line-height:1.1!important;
+  }
+
+  .erp-dashboard p {
+    font-size:12px!important;
+  }
+
+  .erp-dashboard .erp-dashboard-card {
+    min-height:78px!important;
+    padding:12px!important;
+    gap:12px!important;
+    border-radius:12px!important;
+  }
+
+  .erp-dashboard .erp-dashboard-card > span:first-child {
+    width:44px!important;
+    height:44px!important;
+    border-radius:12px!important;
+  }
+
+  .erp-dashboard .erp-dashboard-card .text-2xl,
+  .erp-dashboard .erp-dashboard-card [class*="text-2xl"] {
+    font-size:22px!important;
+    line-height:1.05!important;
+  }
+
+  .erp-dashboard > .grid {
+    gap:12px!important;
+  }
+
+  .erp-dashboard section,
+  .erp-dashboard > .rounded-lg {
+    padding:14px!important;
+    border-radius:12px!important;
+  }
+
+  .erp-dashboard svg.w-full {
+    height:190px!important;
+  }
+
+  .erp-dashboard .h-64 {
+    height:190px!important;
+  }
+
+  .erp-mobile-drawer {
+    width:min(304px,88vw);
+  }
+
+  .erp-mobile-drawer-item {
+    min-height:44px;
     font-size:12.5px;
   }
 
